@@ -1,4 +1,4 @@
-import express, { Express, Request, Response } from "express";
+import express, { Express, Request, Response, NextFunction } from "express";
 import cors from "cors";
 
 const app: Express = express();
@@ -18,7 +18,7 @@ app.get("/", (_req: Request, res: Response) => {
 });
 
 // Error handling middleware
-app.use((_err: Error, _req: Request, res: Response) => {
+app.use((_err: Error, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: "Internal Server Error" });
 });
 
