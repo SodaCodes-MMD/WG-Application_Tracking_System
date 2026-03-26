@@ -1,0 +1,24 @@
+{
+  "name": "ats-application-tracking-system",
+  "version": "1.0.0",
+  "description": "ATS for Candidates - A candidate-facing application tracking system",
+  "private": true,
+  "workspaces": [
+    "apps/backend",
+    "apps/frontend"
+  ],
+  "scripts": {
+    "install-all": "npm install",
+    "dev": "concurrently \"npm run dev --workspace=@ats/backend\" \"npm run dev --workspace=@ats/frontend\"",
+    "build": "npm run build --workspaces",
+    "test": "npm test --workspaces",
+    "lint": "npm run lint --workspaces"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
