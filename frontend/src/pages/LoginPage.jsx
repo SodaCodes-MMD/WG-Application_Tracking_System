@@ -30,6 +30,9 @@ export default function LoginPage() {
 
 			// Store token in browser (VERY IMPORTANT)
 			localStorage.setItem("token", data.data.token);
+
+			// Save user info too (optional but useful)
+			localStorage.setItem("user", JSON.stringify(data.data.user));
 		}
 	};
 

@@ -4,6 +4,11 @@ export const isStrongPassword = (password) => {
     return regex.test(password);
 };
 
+// Get token from storage
+export const getToken = () => {
+    return localStorage.getItem("token");
+};
+
 // Handles API calls to backend auth endpoints
 export const registerUser = async (email, password) => {
     try {

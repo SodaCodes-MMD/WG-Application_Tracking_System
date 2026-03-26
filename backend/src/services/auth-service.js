@@ -48,3 +48,7 @@ export const registerUser = async (email, password) => {
         email: user.email
     };
 };
+
+export const loginUser = async (email, password) => {
+    // your login logic
+};
