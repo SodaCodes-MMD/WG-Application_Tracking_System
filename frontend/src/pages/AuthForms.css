@@ -10,7 +10,7 @@
 }
 
 .auth-card {
-  background: white;
+  background: var(--card-bg);
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   width: 100%;
@@ -44,11 +44,11 @@
 .auth-header h2 {
   font-size: 1.5rem;
   margin-bottom: 10px;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .auth-header p {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 0.95rem;
 }
 
@@ -64,15 +64,17 @@
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .form-group input {
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid #ddd;
+  border: 2px solid var(--border-color);
   border-radius: 8px;
   font-size: 1rem;
+  background: var(--input-bg);
+  color: var(--text-primary);
   transition: all 0.3s ease;
 }
 
@@ -87,9 +89,9 @@
 }
 
 .form-group input.input-disabled {
-  background: #f8f9fa;
+  background: var(--bg-secondary);
   cursor: not-allowed;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .error-message {
@@ -129,7 +131,7 @@
 .password-requirements {
   margin-top: 10px;
   padding: 15px;
-  background: #f8f9fa;
+  background: var(--bg-secondary);
   border-radius: 8px;
   font-size: 0.875rem;
 }
@@ -137,7 +139,7 @@
 .password-requirements p {
   margin-bottom: 8px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .password-requirements ul {
@@ -148,7 +150,7 @@
 
 .password-requirements li {
   padding: 4px 0;
-  color: #666;
+  color: var(--text-secondary);
   transition: all 0.3s ease;
 }
 

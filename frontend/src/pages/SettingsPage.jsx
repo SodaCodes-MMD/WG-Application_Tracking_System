@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { isStrongPassword, changePassword } from "../services/auth-service.js";
+import { ThemeContext } from "../context/ThemeContext.jsx";
 import "./AuthForms.css";
 
 export default function SettingsPage() {
@@ -16,8 +17,8 @@ export default function SettingsPage() {
   const [pwSuccess, setPwSuccess]               = useState("");
   const [pwLoading, setPwLoading]               = useState(false);
 
-  // ── Theme preference (UI only — not wired to any state yet) ───────────────
-  const [theme, setTheme] = useState("light");
+  // ── Theme ──────────────────────────────────────────────────────────────────
+  const { theme, toggleTheme } = useContext(ThemeContext);
 
   // ── Delete account modal ──────────────────────────────────────────────────
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -176,14 +177,14 @@ export default function SettingsPage() {
               <button
                 type="button"
                 className={`theme-btn${theme === "light" ? " theme-btn-active" : ""}`}
-                onClick={() => setTheme("light")}
+                onClick={() => theme !== "light" && toggleTheme()}
               >
                 Light
               </button>
               <button
                 type="button"
                 className={`theme-btn${theme === "dark" ? " theme-btn-active" : ""}`}
-                onClick={() => setTheme("dark")}
+                onClick={() => theme !== "dark" && toggleTheme()}
               >
                 Dark
               </button>
