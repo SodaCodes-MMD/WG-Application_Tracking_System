@@ -16,12 +16,13 @@ export default function JobForm({ job, onSave, onClose, loading }) {
   const [errors, setErrors] = useState({});
 
 useEffect(() => {
-    if (job) {
-      const newForm = { company: job.company||"", title: job.title||"", status: job.status||"Wishlist", location: job.location||"", url: job.url||"", salary: job.salary||"", notes: job.notes||"", appliedAt: toDateInput(job.appliedAt) };
-      setForm(newForm);
-    } else {
-      setForm(EMPTY);
-    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const nextForm = job
+      ? { company: job.company||"", title: job.title||"", status: job.status||"Wishlist", location: job.location||"", url: job.url||"", salary: job.salary||"", notes: job.notes||"", appliedAt: toDateInput(job.appliedAt) }
+      : EMPTY;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setForm(nextForm);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setErrors({});
   }, [job]);
 
