@@ -1,10 +1,18 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function DashboardPage({ onLogout }) {
 	const [user] = useState(() => {
 		const u = localStorage.getItem("user");
 		return u ? JSON.parse(u) : null;
 	});
+	
+	const navigate = useNavigate();
+
+	const handleLogout = () => {
+		onLogout();
+		navigate("/login", { replace: true });
+	};
 
 	return (
 		<div style={{ display: "flex", height: "100vh" }}>
@@ -31,7 +39,19 @@ export default function DashboardPage({ onLogout }) {
 							{user?.email}
 						</span>
 
-						<button onClick={onLogout}>Logout</button>
+						<button 
+							onClick={handleLogout}
+							style={{
+								padding: "8px 16px",
+								backgroundColor: "#dc3545",
+								color: "white",
+								border: "none",
+								borderRadius: "4px",
+								cursor: "pointer"
+							}}
+						>
+							Logout
+						</button>
 					</div>
 				</div>
 

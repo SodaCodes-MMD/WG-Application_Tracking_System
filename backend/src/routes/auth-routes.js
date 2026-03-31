@@ -7,6 +7,7 @@ import {
   validateResetToken,
   resetPassword
 } from "../controllers/password-reset-controller.js";
+import { User } from "../models/user-model.js";
 
 const router = express.Router();
 
@@ -48,11 +49,45 @@ router.post("/auth/reset-password", resetPasswordValidation, resetPassword);
  * PROTECTED ROUTES
  */
 
-router.get("/auth/me", authenticate, (req, res) => {
-  return res.json({
-    success: true,
-    data: { userId: req.user.userId }
-  });
+/**
+ * GET /api/auth/me
+ * Returns the authenticated user's profile
+ * Protected route - requires valid JWT token
+ */
+router.get("/auth/me", authenticate, async (req, res) => {
+  try {
+    // Fetch full user data from database (excluding password)
+    const user = await User.findById(req.user.userId).select('-passwordHash');
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: "USER_NOT_FOUND",
+          message: "User not found"
+        }
+      });
+    }
+    
+    return res.json({
+      success: true,
+      data: {
+        userId: user._id.toString(),
+        email: user.email,
+        name: user.name || null,
+        createdAt: user.createdAt
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: "SERVER_ERROR",
+        message: "Failed to fetch user profile"
+      }
+    });
+  }
 });
 
 export default router;

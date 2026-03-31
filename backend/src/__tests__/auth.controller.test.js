@@ -284,4 +284,38 @@ describe('Auth Controller - Password Reset', () => {
       expect(response.body.success).toBe(false);
     });
   });
+
+  /**
+   * ROUTE PROTECTION TESTS
+   * Tests for the /auth/me endpoint and authentication middleware
+   */
+  describe('Route Protection - GET /api/auth/me', () => {
+    it('should return 401 for request without token', async () => {
+      const response = await request(app)
+        .get('/api/auth/me');
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('NO_TOKEN');
+    });
+
+    it('should return 401 for request with invalid token format', async () => {
+      const response = await request(app)
+        .get('/api/auth/me')
+        .set('Authorization', 'InvalidFormat');
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should return 401 for request with expired/invalid token', async () => {
+      const response = await request(app)
+        .get('/api/auth/me')
+        .set('Authorization', 'Bearer invalid-token-123');
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('INVALID_TOKEN');
+    });
+  });
 });
