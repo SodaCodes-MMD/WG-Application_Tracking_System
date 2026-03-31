@@ -41,8 +41,6 @@ export const registerUser = async (email, password) => {
         passwordHash
     });
 
-    console.log("USER CREATED:", user);
-
     return {
         id: user._id,
         email: user.email
@@ -68,22 +66,21 @@ export const loginUser = async (email, password) => {
     }
 
     // 3. Compare submitted password against stored hash
-    const passwordMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!passwordMatch) {
+    const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+    if (!passwordMatches) {
         throw {
             code: "INVALID_CREDENTIALS",
             message: "Invalid email or password"
         };
     }
 
-    // 4. Sign JWT with userId payload
+    // 4. Sign JWT — include userId and email for ownership enforcement (SCRUM-20)
     const token = jwt.sign(
-        { userId: user._id },
+        { userId: user._id.toString(), email: user.email },
         process.env.JWT_SECRET,
-        { expiresIn: "7d" }
+        { expiresIn: "1h" }
     );
 
-    // 5. Return token and safe user object (never return passwordHash)
     return {
         token,
         user: {
