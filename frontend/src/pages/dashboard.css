@@ -26,13 +26,14 @@
 
 .sidebar-brand {
   padding: 24px 20px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 3px solid #f0c800;
+  background: linear-gradient(135deg, #1a1a1a 60%, #0a3d1f 100%);
 }
 
 .sidebar-brand h1 {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #ffffff;
+  color: #f0c800;
   margin: 0;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -80,8 +81,8 @@
 }
 
 .sidebar-nav a.active {
-  background: rgba(88, 166, 255, 0.12);
-  color: #58a6ff;
+  background: rgba(0, 170, 68, 0.18);
+  color: #00dd55;
 }
 
 .nav-icon {
@@ -269,23 +270,16 @@
 .btn-primary {
   padding: 8px 18px;
   font-size: 0.875rem;
-  font-weight: 500;
-  background: #0969da;
-  color: #ffffff;
+  font-weight: 600;
+  background: #f0c800;
+  color: #1a1a1a;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.15s;
 }
-
-.btn-primary:hover {
-  background: #0860ca;
-}
-
-.btn-primary:disabled {
-  background: #8c96a3;
-  cursor: not-allowed;
-}
+.btn-primary:hover { background: #d4af00; }
+.btn-primary:disabled { background: #8c96a3; color: #fff; cursor: not-allowed; }
 
 /* ===========================
    Stub Page
