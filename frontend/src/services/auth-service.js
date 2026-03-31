@@ -24,7 +24,7 @@ export const registerUser = async (email, password) => {
 
         return data; // already matches { success, data/error }
 
-    } catch (error) {
+    } catch {
         return {
             success: false,
             error: {
@@ -49,7 +49,7 @@ export const loginUser = async (email, password) => {
 
         return data; // matches { success, data: { token, user } } or { success, error }
 
-    } catch (error) {
+    } catch {
         return {
             success: false,
             error: {
