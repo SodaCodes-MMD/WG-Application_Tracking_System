@@ -86,7 +86,7 @@ function ForgotPassword() {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-header">
-          <h1>ATS Application</h1>
+          <h1>Hirify</h1>
           <h2>Reset Your Password</h2>
           <p>Enter your email address and we'll send you a link to reset your password.</p>
         </div>
