@@ -1,19 +1,26 @@
-import { User } from "../models/user-model.js";
+import { getProfileForUser, saveProfileForUser } from "../services/profile-service.js";
 
 export const getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select("-passwordHash").lean();
-    if (!user) return res.status(404).json({ success: false, error: { message: "User not found" } });
-    return res.json({ success: true, data: { id: user._id, email: user.email, displayName: user.displayName || "", bio: user.bio || "", location: user.location || "", createdAt: user.createdAt, passwordUpdatedAt: user.passwordUpdatedAt } });
-  } catch { return res.status(500).json({ success: false, error: { message: "Failed to fetch profile" } }); }
+    const profile = await getProfileForUser(req.user.userId);
+    return res.json({ success: true, data: profile });
+  } catch {
+    return res.status(500).json({ success: false, error: { message: "Failed to fetch profile" } });
+  }
 };
 
-export const updateProfile = async (req, res) => {
+export const saveProfile = async (req, res) => {
   try {
-    const allowed = ["displayName", "bio", "location"];
-    const updates = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)).map(([k, v]) => [k, typeof v === "string" ? v.trim() : v]));
-    const user = await User.findByIdAndUpdate(req.user.userId, { $set: updates }, { new: true, runValidators: true }).select("-passwordHash").lean();
-    if (!user) return res.status(404).json({ success: false, error: { message: "User not found" } });
-    return res.json({ success: true, data: { id: user._id, email: user.email, displayName: user.displayName || "", bio: user.bio || "", location: user.location || "", createdAt: user.createdAt, passwordUpdatedAt: user.passwordUpdatedAt } });
-  } catch { return res.status(500).json({ success: false, error: { message: "Failed to update profile" } }); }
+    // Reject attempts to write to another user's profile via body userId
+    if (req.body.userId && req.body.userId.toString() !== req.user.userId) {
+      return res.status(403).json({
+        success: false,
+        error: { code: "FORBIDDEN", message: "Cannot modify another user's profile" },
+      });
+    }
+    const profile = await saveProfileForUser(req.user.userId, req.body);
+    return res.json({ success: true, data: profile });
+  } catch {
+    return res.status(500).json({ success: false, error: { message: "Failed to save profile" } });
+  }
 };
