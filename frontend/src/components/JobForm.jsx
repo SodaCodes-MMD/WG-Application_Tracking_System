@@ -15,8 +15,13 @@ export default function JobForm({ job, onSave, onClose, loading }) {
   const [form, setForm] = useState(EMPTY);
   const [errors, setErrors] = useState({});
 
-  useEffect(() => {
-    setForm(job ? { company: job.company||"", title: job.title||"", status: job.status||"Wishlist", location: job.location||"", url: job.url||"", salary: job.salary||"", notes: job.notes||"", appliedAt: toDateInput(job.appliedAt) } : EMPTY);
+useEffect(() => {
+    if (job) {
+      const newForm = { company: job.company||"", title: job.title||"", status: job.status||"Wishlist", location: job.location||"", url: job.url||"", salary: job.salary||"", notes: job.notes||"", appliedAt: toDateInput(job.appliedAt) };
+      setForm(newForm);
+    } else {
+      setForm(EMPTY);
+    }
     setErrors({});
   }, [job]);
 
