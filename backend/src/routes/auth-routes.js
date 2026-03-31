@@ -1,58 +1,91 @@
-import express from "express";
-import { body } from "express-validator";
-import { register, login } from "../controllers/auth-controller.js";
-import { authenticate } from "../middleware/auth-middleware.js";
-import {
-  forgotPassword,
-  validateResetToken,
-  resetPassword
-} from "../controllers/password-reset-controller.js";
+import { findUserByEmail, createUser } from "../repositories/user-repository.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken"
 
-const router = express.Router();
+export const registerUser = async (email, password) => {
+    // 1. Validation
+    if (!email || !password) {
+        throw {
+            code: "VALIDATION_ERROR",
+            message: "Email and password are required"
+        };
+    }
 
-// Validation rules for password reset endpoints
-const PASSWORD_MIN_LENGTH = 8;
-const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+    // Password must:
+    // - be at least 8 characters
+    // - contain at least one special character
 
-const forgotPasswordValidation = [
-  body("email")
-    .isEmail()
-    .normalizeEmail()
-    .withMessage("Please provide a valid email address")
-];
+    const passwordRegex = /^(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
 
-const resetPasswordValidation = [
-  body("token")
-    .notEmpty()
-    .withMessage("Reset token is required"),
-  body("password")
-    .isLength({ min: PASSWORD_MIN_LENGTH })
-    .withMessage(`Password must be at least ${PASSWORD_MIN_LENGTH} characters long`)
-    .matches(PASSWORD_REGEX)
-    .withMessage("Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)")
-];
+    if (!passwordRegex.test(password)) {
+        throw {
+            code: "WEAK_PASSWORD",
+            message: "Password must be at least 8 characters and include a special character"
+        };
+    }
 
-/**
- * PUBLIC ROUTES
- */
+    // 2. Duplicate check
+    const existingUser = await findUserByEmail(email);
+    if (existingUser) {
+        throw {
+            code: "EMAIL_ALREADY_EXISTS",
+            message: "Email already registered"
+        };
+    }
 
-router.post("/auth/register", register);
-router.post("/auth/login", login);
+    // 3. Hash password
+    const passwordHash = await bcrypt.hash(password, 10);
 
-// Password reset
-router.post("/auth/forgot-password", forgotPasswordValidation, forgotPassword);
-router.get("/auth/validate-reset-token/:token", validateResetToken);
-router.post("/auth/reset-password", resetPasswordValidation, resetPassword);
+    // 4. Create user
+    const user = await createUser({
+        email,
+        passwordHash
+    });
 
-/**
- * PROTECTED ROUTES
- */
+    //console.log("USER CREATED:", user);
 
-router.get("/auth/me", authenticate, (req, res) => {
-  return res.json({
-    success: true,
-    data: { userId: req.user.userId }
-  });
-});
+    return {
+        id: user._id,
+        email: user.email
+    };
+};
 
-export default router;
+export const loginUser = async (email, password) => {
+    if (!email || !password) {
+        throw {
+            code: "VALIDATION_ERROR",
+            message: "Email and password are required"
+        };
+};
+}
+
+
+const user = await findUserByEmail(email);
+
+if (!user) {
+        throw {
+            code: "INVALID_CREDENTIALS",
+            message: "Invalid email or password"
+        };
+}
+
+const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+if (!passwordMatches) {
+        throw {
+            code: "INVALID_CREDENTIALS",
+            message: "Invalid email or password"
+        };
+}
+const token = jwt.sign(
+        { userId: user._id.toString(), email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+);
+    
+return {
+        token,
+        user: {
+            id: user._id,
+            email: user.email
+        }
+    };
