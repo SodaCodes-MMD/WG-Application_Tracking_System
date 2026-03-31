@@ -1,12 +1,12 @@
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 // Constants
 const TOKEN_EXPIRY_HOURS = 1;
-const DEFAULT_FRONTEND_PORT = '8080';
+const DEFAULT_FRONTEND_PORT = '5173';
 
 /**
  * Email Service for sending password reset emails
- * 
+ *
  * For development/demo purposes, this logs emails to console.
  * In production, replace with actual email service (SendGrid, AWS SES, etc.)
  */
@@ -16,17 +16,10 @@ class EmailService {
     this.frontendUrl = process.env.FRONTEND_URL || `http://localhost:${DEFAULT_FRONTEND_PORT}`;
   }
 
-  /**
-   * Send password reset email
-   * @param {string} email - User's email address
-   * @param {string} token - Reset token
-   * @param {string} userName - User's name (optional)
-   * @returns {Promise<Object>} - Email send result
-   */
   async sendPasswordResetEmail(email, token, userName = '') {
-    const resetUrl = `${this.frontendUrl}/reset-password.html?token=${token}`;
+    const resetUrl = `${this.frontendUrl}/reset-password?token=${token}`;
     const greeting = userName ? `Hello ${userName},` : 'Hello,';
-    
+
     const emailContent = {
       to: email,
       subject: 'Password Reset Request - ATS Application',
@@ -39,7 +32,6 @@ class EmailService {
     }
 
     // Production: integrate with actual email provider
-    // Example with SendGrid: await sgMail.send(emailContent);
     return {
       success: false,
       messageId: null,
@@ -47,20 +39,16 @@ class EmailService {
     };
   }
 
-  /**
-   * Log email in development mode
-   * @private
-   */
   _logDevModeEmail(email, subject, resetUrl) {
     console.log('\n========================================');
-    console.log('📧 PASSWORD RESET EMAIL (DEV MODE)');
+    console.log('PASSWORD RESET EMAIL (DEV MODE)');
     console.log('========================================');
     console.log(`To: ${email}`);
     console.log(`Subject: ${subject}`);
     console.log('----------------------------------------');
     console.log('Reset URL:', resetUrl);
     console.log('========================================\n');
-    
+
     return {
       success: true,
       messageId: `dev-${crypto.randomUUID()}`,
@@ -68,10 +56,6 @@ class EmailService {
     };
   }
 
-  /**
-   * Generate plain text email body
-   * @private
-   */
   _generatePlainTextEmail(resetUrl, greeting) {
     return `${greeting}
 
@@ -88,10 +72,6 @@ Best regards,
 ATS Application Team`;
   }
 
-  /**
-   * Generate HTML email body
-   * @private
-   */
   _generateHtmlEmail(resetUrl, greeting) {
     return `<!DOCTYPE html>
 <html>
@@ -101,13 +81,13 @@ ATS Application Team`;
   <style>
     body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .button { 
-      display: inline-block; 
-      padding: 12px 24px; 
-      background-color: #007bff; 
-      color: white; 
-      text-decoration: none; 
-      border-radius: 4px; 
+    .button {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #007bff;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
       margin: 20px 0;
     }
     .footer { margin-top: 30px; font-size: 12px; color: #666; }
@@ -133,4 +113,4 @@ ATS Application Team`;
   }
 }
 
-module.exports = new EmailService();
+export default new EmailService();

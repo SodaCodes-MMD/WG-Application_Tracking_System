@@ -1,17 +1,35 @@
 import { useState } from "react";
+import { Routes, Route } from "react-router-dom";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
+import ForgotPassword from "./pages/ForgotPassword.jsx";
+import ResetPassword from "./pages/ResetPassword.jsx";
+
+function AuthPages({ onLogin }) {
+	const [isLoginPage, setIsLoginPage] = useState(true);
+
+	return (
+		<div>
+			<button onClick={() => setIsLoginPage(!isLoginPage)}>
+				{isLoginPage ? "Go to Register" : "Go to Login"}
+			</button>
+
+			{isLoginPage ? (
+				<LoginPage onLogin={onLogin} />
+			) : (
+				<RegisterPage />
+			)}
+		</div>
+	);
+}
 
 function App() {
 	const [token, setToken] = useState(localStorage.getItem("token"));
-	const [isLoginPage, setIsLoginPage] = useState(true);
 
 	const handleLogin = (token, user) => {
 		localStorage.setItem("token", token);
 		localStorage.setItem("user", JSON.stringify(user));
-
-		// 🔥 Force React to re-render immediately
 		setToken(token);
 	};
 
@@ -21,23 +39,19 @@ function App() {
 		setToken(null);
 	};
 
-	// 🔥 THIS is the only condition that matters
-	if (token) {
-		return <DashboardPage onLogout={handleLogout} />;
-	}
-
 	return (
-		<div>
-		<button onClick={() => setIsLoginPage(!isLoginPage)}>
-		{isLoginPage ? "Go to Register" : "Go to Login"}
-		</button>
-
-		{isLoginPage ? (
-			<LoginPage onLogin={handleLogin} />
-		) : (
-			<RegisterPage />
-		)}
-		</div>
+		<Routes>
+			<Route path="/forgot-password" element={<ForgotPassword />} />
+			<Route path="/reset-password" element={<ResetPassword />} />
+			<Route
+				path="*"
+				element={
+					token
+						? <DashboardPage onLogout={handleLogout} />
+						: <AuthPages onLogin={handleLogin} />
+				}
+			/>
+		</Routes>
 	);
 }
 

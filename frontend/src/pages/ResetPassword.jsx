@@ -20,7 +20,6 @@ function ResetPassword() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  // Password requirement states
   const [requirements, setRequirements] = useState({
     length: false,
     uppercase: false,
@@ -39,7 +38,6 @@ function ResetPassword() {
 
       try {
         const response = await authApi.validateResetToken(token)
-        
         if (response.data.success) {
           setEmail(response.data.data.email)
           setIsTokenValid(true)
@@ -68,34 +66,18 @@ function ResetPassword() {
   }
 
   const validatePassword = (value) => {
-    if (!value) {
-      return 'Password is required'
-    }
-    if (value.length < 8) {
-      return 'Password must be at least 8 characters'
-    }
-    if (!/[A-Z]/.test(value)) {
-      return 'Password must contain an uppercase letter'
-    }
-    if (!/[a-z]/.test(value)) {
-      return 'Password must contain a lowercase letter'
-    }
-    if (!/\d/.test(value)) {
-      return 'Password must contain a number'
-    }
-    if (!/[@$!%*?&]/.test(value)) {
-      return 'Password must contain a special character (@$!%*?&)'
-    }
+    if (!value) return 'Password is required'
+    if (value.length < 8) return 'Password must be at least 8 characters'
+    if (!/[A-Z]/.test(value)) return 'Password must contain an uppercase letter'
+    if (!/[a-z]/.test(value)) return 'Password must contain a lowercase letter'
+    if (!/\d/.test(value)) return 'Password must contain a number'
+    if (!/[@$!%*?&]/.test(value)) return 'Password must contain a special character (@$!%*?&)'
     return ''
   }
 
   const validateConfirmPassword = (value) => {
-    if (!value) {
-      return 'Please confirm your password'
-    }
-    if (value !== password) {
-      return 'Passwords do not match'
-    }
+    if (!value) return 'Please confirm your password'
+    if (value !== password) return 'Passwords do not match'
     return ''
   }
 
@@ -103,29 +85,18 @@ function ResetPassword() {
     const value = e.target.value
     setPassword(value)
     checkPasswordRequirements(value)
-    if (passwordError) {
-      setPasswordError(validatePassword(value))
-    }
-    if (confirmPassword) {
-      setConfirmPasswordError(validateConfirmPassword(confirmPassword))
-    }
+    if (passwordError) setPasswordError(validatePassword(value))
+    if (confirmPassword) setConfirmPasswordError(validateConfirmPassword(confirmPassword))
   }
 
   const handleConfirmPasswordChange = (e) => {
     const value = e.target.value
     setConfirmPassword(value)
-    if (confirmPasswordError) {
-      setConfirmPasswordError(validateConfirmPassword(value))
-    }
+    if (confirmPasswordError) setConfirmPasswordError(validateConfirmPassword(value))
   }
 
-  const handlePasswordBlur = () => {
-    setPasswordError(validatePassword(password))
-  }
-
-  const handleConfirmPasswordBlur = () => {
-    setConfirmPasswordError(validateConfirmPassword(confirmPassword))
-  }
+  const handlePasswordBlur = () => setPasswordError(validatePassword(password))
+  const handleConfirmPasswordBlur = () => setConfirmPasswordError(validateConfirmPassword(confirmPassword))
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -144,7 +115,6 @@ function ResetPassword() {
 
     try {
       const response = await authApi.resetPassword(token, password)
-
       if (response.data.success) {
         setIsSuccess(true)
       } else {
@@ -152,7 +122,6 @@ function ResetPassword() {
       }
     } catch (err) {
       console.error('Reset password error:', err)
-      
       if (err.response?.status === 400) {
         setIsTokenValid(false)
       } else {
@@ -181,7 +150,7 @@ function ResetPassword() {
       <div className="auth-container">
         <div className="auth-card">
           <div className="auth-header">
-            <h1>⚠️ Invalid or Expired Link</h1>
+            <h1>Invalid or Expired Link</h1>
             <p>This password reset link is invalid or has expired.</p>
           </div>
           <div className="auth-links">
@@ -199,7 +168,7 @@ function ResetPassword() {
       <div className="auth-container">
         <div className="auth-card">
           <div className="auth-header">
-            <h1>✅ Password Reset Successful</h1>
+            <h1>Password Reset Successful</h1>
             <p>Your password has been reset successfully.</p>
           </div>
           <div className="auth-links">
@@ -214,7 +183,7 @@ function ResetPassword() {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-header">
-          <h1>🔐 Create New Password</h1>
+          <h1>Create New Password</h1>
           <p>Please enter your new password below.</p>
         </div>
 
@@ -249,7 +218,7 @@ function ResetPassword() {
                 className="toggle-password"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? '🙈' : '👁️'}
+                {showPassword ? 'Hide' : 'Show'}
               </button>
             </div>
             {passwordError && <span className="error-message">{passwordError}</span>}
@@ -257,21 +226,11 @@ function ResetPassword() {
             <div className="password-requirements">
               <p>Password must contain:</p>
               <ul>
-                <li className={requirements.length ? 'valid' : ''}>
-                  At least 8 characters
-                </li>
-                <li className={requirements.uppercase ? 'valid' : ''}>
-                  One uppercase letter
-                </li>
-                <li className={requirements.lowercase ? 'valid' : ''}>
-                  One lowercase letter
-                </li>
-                <li className={requirements.number ? 'valid' : ''}>
-                  One number
-                </li>
-                <li className={requirements.special ? 'valid' : ''}>
-                  One special character (@$!%*?&)
-                </li>
+                <li className={requirements.length ? 'valid' : ''}>At least 8 characters</li>
+                <li className={requirements.uppercase ? 'valid' : ''}>One uppercase letter</li>
+                <li className={requirements.lowercase ? 'valid' : ''}>One lowercase letter</li>
+                <li className={requirements.number ? 'valid' : ''}>One number</li>
+                <li className={requirements.special ? 'valid' : ''}>One special character (@$!%*?&)</li>
               </ul>
             </div>
           </div>
@@ -295,7 +254,7 @@ function ResetPassword() {
                 className="toggle-password"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               >
-                {showConfirmPassword ? '🙈' : '👁️'}
+                {showConfirmPassword ? 'Hide' : 'Show'}
               </button>
             </div>
             {confirmPasswordError && (
@@ -308,11 +267,7 @@ function ResetPassword() {
             className="btn btn-primary"
             disabled={isLoading}
           >
-            {isLoading ? (
-              <span className="spinner">Resetting...</span>
-            ) : (
-              'Reset Password'
-            )}
+            {isLoading ? <span className="spinner">Resetting...</span> : 'Reset Password'}
           </button>
         </form>
 

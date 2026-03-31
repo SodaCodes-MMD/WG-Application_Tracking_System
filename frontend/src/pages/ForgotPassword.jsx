@@ -46,17 +46,11 @@ function ForgotPassword() {
     setError('')
 
     try {
-      const response = await authApi.forgotPassword(email)
-      
-      if (response.data.success) {
-        setIsSuccess(true)
-      } else {
-        // Still show success to prevent email enumeration
-        setIsSuccess(true)
-      }
+      await authApi.forgotPassword(email)
+      setIsSuccess(true)
     } catch (err) {
       console.error('Forgot password error:', err)
-      // Always show success message for security
+      // Always show success message for security (prevent email enumeration)
       setIsSuccess(true)
     } finally {
       setIsLoading(false)
@@ -68,14 +62,14 @@ function ForgotPassword() {
       <div className="auth-container">
         <div className="auth-card">
           <div className="auth-header">
-            <h1>📧 Check Your Email</h1>
+            <h1>Check Your Email</h1>
           </div>
           <div className="alert alert-success">
             <div className="alert-icon">✓</div>
             <div className="alert-content">
               <h3>Reset Link Sent</h3>
               <p>
-                If an account with that email exists, we've sent a password reset link. 
+                If an account with that email exists, we've sent a password reset link.
                 Please check your inbox and spam folder.
               </p>
             </div>
@@ -92,7 +86,7 @@ function ForgotPassword() {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-header">
-          <h1>🔒 ATS Application</h1>
+          <h1>ATS Application</h1>
           <h2>Reset Your Password</h2>
           <p>Enter your email address and we'll send you a link to reset your password.</p>
         </div>
@@ -114,18 +108,12 @@ function ForgotPassword() {
             {emailError && <span className="error-message">{emailError}</span>}
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="btn btn-primary"
             disabled={isLoading}
           >
-            {isLoading ? (
-              <>
-                <span className="spinner">Sending...</span>
-              </>
-            ) : (
-              'Send Reset Link'
-            )}
+            {isLoading ? <span className="spinner">Sending...</span> : 'Send Reset Link'}
           </button>
         </form>
 
