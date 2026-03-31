@@ -1,45 +1,42 @@
-import { useEffect, useState } from "react";
-import RegisterPage from "./pages/RegisterPage";
-import LoginPage from "./pages/LoginPage";
+import { useState } from "react";
+import RegisterPage from "./pages/RegisterPage.jsx";
+import LoginPage from "./pages/LoginPage.jsx";
+import DashboardPage from "./pages/DashboardPage.jsx";
 
 function App() {
-	const [isLoggedIn, setIsLoggedIn] = useState(false);
+	const [token, setToken] = useState(localStorage.getItem("token"));
 	const [isLoginPage, setIsLoginPage] = useState(true);
 
-	// Runs when app loads
-	useEffect(() => {
-		const token = localStorage.getItem("token");
+	const handleLogin = (token, user) => {
+		localStorage.setItem("token", token);
+		localStorage.setItem("user", JSON.stringify(user));
 
-		if (token) {
-			setIsLoggedIn(true);
-		}
-	}, []);
+		// 🔥 Force React to re-render immediately
+		setToken(token);
+	};
 
-	// Logout function
 	const handleLogout = () => {
 		localStorage.removeItem("token");
 		localStorage.removeItem("user");
-		setIsLoggedIn(false);
+		setToken(null);
 	};
 
-	// If logged in → show dashboard placeholder
-	if (isLoggedIn) {
-		return (
-			<div>
-			<h2>Dashboard (Logged In)</h2>
-			<button onClick={handleLogout}>Logout</button>
-			</div>
-		);
+	// 🔥 THIS is the only condition that matters
+	if (token) {
+		return <DashboardPage onLogout={handleLogout} />;
 	}
 
-	// Otherwise show auth pages
 	return (
 		<div>
 		<button onClick={() => setIsLoginPage(!isLoginPage)}>
 		{isLoginPage ? "Go to Register" : "Go to Login"}
 		</button>
 
-		{isLoginPage ? <LoginPage /> : <RegisterPage />}
+		{isLoginPage ? (
+			<LoginPage onLogin={handleLogin} />
+		) : (
+			<RegisterPage />
+		)}
 		</div>
 	);
 }

@@ -1,16 +1,14 @@
 import dotenv from "dotenv";
-dotenv.config();   // MUST be before anything else
+dotenv.config(); // Must be the very first executable line
 
 import express from "express";
-
-console.log("SERVER STARTING...");
-console.log("ENV TEST:", process.env.MONGO_URI);
-
 import mongoose from "mongoose";
 import cors from "cors";
 import authRoutes from "./routes/auth-routes.js";
 
-dotenv.config();
+console.log("SERVER STARTING...");
+console.log("ENV CHECK - MONGO_URI:", process.env.MONGO_URI ? "loaded" : "MISSING");
+console.log("ENV CHECK - JWT_SECRET:", process.env.JWT_SECRET ? "loaded" : "MISSING");
 
 const app = express();
 
@@ -20,11 +18,11 @@ app.use(express.json());
 app.use("/api", authRoutes);
 
 mongoose.connect(process.env.MONGO_URI)
-	.then(() => {
-		console.log("MongoDB connected");
+.then(() => {
+	console.log("MongoDB connected");
 
-		app.listen(5000, () => {
-			console.log("Server running on port 5000");
-		});
-	})
-	.catch(err => console.error(err));
+	app.listen(process.env.PORT || 5000, () => {
+		console.log(`Server running on port ${process.env.PORT || 5000}`);
+	});
+})
+.catch(err => console.error("MongoDB connection error:", err));
