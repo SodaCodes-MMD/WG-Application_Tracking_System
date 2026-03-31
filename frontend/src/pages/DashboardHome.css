@@ -1,0 +1,13 @@
+.dh-page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.dh-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; align-items: center; }
+.dh-stat-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 0.775rem; font-weight: 500; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-secondary); cursor: pointer; transition: background 0.15s; }
+.dh-stat-chip:hover { background: var(--bg-secondary); color: var(--text-primary); }
+.dh-stat-count { font-weight: 700; font-size: 0.75rem; }
+.dh-clear-filter { font-size: 0.775rem; background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+.dh-clear-filter:hover { color: var(--text-primary); }
+.dh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+@media (max-width: 600px) { .dh-grid { grid-template-columns: 1fr; } }
+.dh-loading { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 80px 0; color: var(--text-secondary); font-size: 0.875rem; }
+.dh-spinner { width: 32px; height: 32px; border: 3px solid var(--border-color); border-top-color: #f0c800; border-radius: 50%; animation: dh-spin 0.8s linear infinite; }
+@keyframes dh-spin { to { transform: rotate(360deg); } }
+.dh-error { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 60px 24px; text-align: center; color: var(--text-secondary); font-size: 0.875rem; }

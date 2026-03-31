@@ -1,0 +1,19 @@
+.job-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; transition: box-shadow 0.15s, border-color 0.15s; }
+.job-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); border-color: #a0b0c8; }
+.job-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.job-card-info { flex: 1; min-width: 0; }
+.job-title { font-size: 0.95rem; font-weight: 600; color: var(--text-primary); margin: 0 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.job-company { font-size: 0.875rem; color: var(--text-secondary); margin: 0 0 2px; font-weight: 500; }
+.job-location { font-size: 0.8rem; color: var(--text-secondary); margin: 0; }
+.job-status-badge { font-size: 0.72rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+.job-card-meta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.job-meta-item { font-size: 0.8rem; color: var(--text-secondary); }
+.job-link { text-decoration: none; color: #0969da; }
+.job-link:hover { text-decoration: underline; }
+.job-date { margin-left: auto; }
+.job-notes { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin: 0; padding: 10px 12px; background: var(--bg-secondary); border-radius: 6px; border-left: 3px solid var(--border-color); white-space: pre-wrap; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.job-card-actions { display: flex; gap: 8px; justify-content: flex-end; padding-top: 4px; border-top: 1px solid var(--border-color); }
+.btn-card-edit { padding: 5px 14px; font-size: 0.8rem; font-weight: 500; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; }
+.btn-card-edit:hover { background: var(--border-color); }
+.btn-card-delete { padding: 5px 14px; font-size: 0.8rem; font-weight: 500; background: transparent; color: #cf222e; border: 1px solid #cf222e; border-radius: 6px; cursor: pointer; }
+.btn-card-delete:hover { background: #cf222e; color: #fff; }

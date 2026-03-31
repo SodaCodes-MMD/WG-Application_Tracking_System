@@ -1,0 +1,23 @@
+.jf-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 400; padding: 16px; }
+.jf-modal { background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+.jf-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; background: var(--card-bg); z-index: 1; }
+.jf-header h3 { font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0; }
+.jf-close { background: none; border: none; font-size: 1rem; color: var(--text-secondary); cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+.jf-close:hover { background: var(--bg-secondary); }
+.jf-form { padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
+.jf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 480px) { .jf-row { grid-template-columns: 1fr; } }
+.jf-group { display: flex; flex-direction: column; gap: 5px; }
+.jf-group label { font-size: 0.8rem; font-weight: 600; color: var(--text-primary); }
+.jf-required label::after { content: " *"; color: #cf222e; }
+.jf-group input, .jf-group select, .jf-group textarea { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem; background: var(--input-bg); color: var(--text-primary); font-family: inherit; }
+.jf-group input:focus, .jf-group select:focus, .jf-group textarea:focus { outline: none; border-color: #f0c800; box-shadow: 0 0 0 3px rgba(240,200,0,0.15); }
+.jf-group textarea { resize: vertical; min-height: 72px; }
+.jf-err { border-color: #cf222e !important; }
+.jf-error { font-size: 0.775rem; color: #cf222e; }
+.jf-actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 4px; }
+.jf-btn-cancel { padding: 7px 18px; font-size: 0.875rem; font-weight: 500; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; }
+.jf-btn-cancel:hover:not(:disabled) { background: var(--border-color); }
+.jf-btn-save { padding: 7px 18px; font-size: 0.875rem; font-weight: 500; background: #f0c800; color: #1a1a1a; border: none; border-radius: 6px; cursor: pointer; }
+.jf-btn-save:hover:not(:disabled) { background: #d4af00; }
+.jf-btn-save:disabled, .jf-btn-cancel:disabled { opacity: 0.6; cursor: not-allowed; }
