@@ -92,6 +92,14 @@
 }
 
 /* ===========================
+   Mobile Overlay
+   =========================== */
+
+.sidebar-overlay {
+  display: none;
+}
+
+/* ===========================
    Main Area
    =========================== */
 
@@ -116,6 +124,41 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Hamburger button — hidden on desktop, shown on mobile */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 32px;
+  height: 32px;
+  padding: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.hamburger span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: #57606a;
+  border-radius: 2px;
+  transition: background 0.15s;
+}
+
+.hamburger:hover span {
+  background: #24292f;
 }
 
 .header-title {
@@ -283,4 +326,48 @@
   max-width: 300px;
   line-height: 1.6;
   margin: 0;
+}
+
+/* ===========================
+   Mobile Responsive (≤ 768px)
+   =========================== */
+
+@media (max-width: 768px) {
+  /* Sidebar slides in over content */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+
+  /* Dim overlay behind open sidebar */
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 199;
+  }
+
+  /* Show hamburger button */
+  .hamburger {
+    display: flex;
+  }
+
+  /* Reduce content padding on small screens */
+  .dashboard-content {
+    padding: 20px 16px;
+  }
+
+  .dashboard-header {
+    padding: 0 16px;
+  }
 }

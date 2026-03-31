@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, Routes, Route, Navigate } from "react-router-dom";
+import { NavLink, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import DashboardHome from "./DashboardHome.jsx";
 import DocumentsPage from "./DocumentsPage.jsx";
 import ProfilePage from "./ProfilePage.jsx";
@@ -7,23 +7,40 @@ import SettingsPage from "./SettingsPage.jsx";
 import "./dashboard.css";
 
 const NAV_ITEMS = [
-  { to: "/",          label: "Dashboard",       icon: "▦" },
-  { to: "/documents", label: "Document Library", icon: "⊞" },
-  { to: "/profile",   label: "Profile",          icon: "◯" },
-  { to: "/settings",  label: "Settings",         icon: "⚙" },
+  { to: "/",          label: "Dashboard",        icon: "▦", end: true  },
+  { to: "/documents", label: "Document Library",  icon: "⊞", end: false },
+  { to: "/profile",   label: "Profile",           icon: "◯", end: false },
+  { to: "/settings",  label: "Settings",          icon: "⚙", end: false },
 ];
 
-export default function DashboardPage({ onLogout }) {
+export default function DashboardPage() {
+  const navigate = useNavigate();
+
   const [user] = useState(() => {
     const u = localStorage.getItem("user");
     return u ? JSON.parse(u) : null;
   });
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
+
+  const closeSidebar = () => setSidebarOpen(false);
+
   return (
     <div className="dashboard-layout">
 
+      {/* Mobile overlay — click outside sidebar to close */}
+      {sidebarOpen && (
+        <div className="sidebar-overlay" onClick={closeSidebar} />
+      )}
+
       {/* Sidebar */}
-      <aside className="sidebar">
+      <aside className={`sidebar${sidebarOpen ? " sidebar-open" : ""}`}>
         <div className="sidebar-brand">
           <h1>ATS</h1>
           <p>Applicant Tracking System</p>
@@ -31,12 +48,13 @@ export default function DashboardPage({ onLogout }) {
 
         <nav className="sidebar-nav">
           <ul>
-            {NAV_ITEMS.map(({ to, label, icon }) => (
+            {NAV_ITEMS.map(({ to, label, icon, end }) => (
               <li key={to}>
                 <NavLink
                   to={to}
-                  end={to === "/"}
+                  end={end}
                   className={({ isActive }) => isActive ? "active" : undefined}
+                  onClick={closeSidebar}
                 >
                   <span className="nav-icon">{icon}</span>
                   {label}
@@ -52,10 +70,20 @@ export default function DashboardPage({ onLogout }) {
 
         {/* Header */}
         <header className="dashboard-header">
-          <span className="header-title">ATS Dashboard</span>
+          <div className="header-left">
+            <button
+              className="hamburger"
+              onClick={() => setSidebarOpen((o) => !o)}
+              aria-label="Toggle navigation"
+            >
+              <span /><span /><span />
+            </button>
+            <span className="header-title">ATS Dashboard</span>
+          </div>
+
           <div className="header-user">
             <span className="user-email">{user?.email}</span>
-            <button className="btn-logout" onClick={onLogout}>
+            <button className="btn-logout" onClick={handleLogout}>
               Log out
             </button>
           </div>

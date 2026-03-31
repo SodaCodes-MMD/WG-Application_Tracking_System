@@ -1,62 +1,85 @@
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../services/auth-service.js";
+import "./AuthForms.css";
 
 export default function RegisterPage() {
-	// Store form inputs
+	const navigate = useNavigate();
+
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
-
-	// UI feedback states
 	const [error, setError] = useState("");
-	const [success, setSuccess] = useState("");
+	const [isLoading, setIsLoading] = useState(false);
 
-	// Handles form submission
 	const handleSubmit = async (e) => {
-		e.preventDefault(); // prevent page refresh
-
+		e.preventDefault();
 		setError("");
-		setSuccess("");
+		setIsLoading(true);
 
-		// Call backend API
 		const res = await registerUser(email, password);
 
-		// Handle response
+		setIsLoading(false);
+
 		if (!res.success) {
-			setError(res.error.message);
+			setError(res.error?.message ?? "Registration failed");
 		} else {
-			setSuccess("Account created successfully!");
+			navigate("/login");
 		}
 	};
 
 	return (
-		<div>
-			<h2>Register</h2>
+		<div className="auth-container">
+			<div className="auth-card">
+				<div className="auth-header">
+					<h1>ATS</h1>
+					<h2>Create an account</h2>
+				</div>
 
-			<form onSubmit={handleSubmit}>
-				{/* Email input */}
-				<input
-					type="email"
-					placeholder="Email"
-					value={email}
-					onChange={(e) => setEmail(e.target.value)}
-				/>
+				<form onSubmit={handleSubmit} className="auth-form" noValidate>
+					<div className="form-group">
+						<label htmlFor="email">Email address</label>
+						<input
+							id="email"
+							type="email"
+							placeholder="you@example.com"
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
+							autoComplete="email"
+							disabled={isLoading}
+						/>
+					</div>
 
-				{/* Password input */}
-				<input
-					type="password"
-					placeholder="Password"
-					value={password}
-					onChange={(e) => setPassword(e.target.value)}
-				/>
+					<div className="form-group">
+						<label htmlFor="password">Password</label>
+						<input
+							id="password"
+							type="password"
+							placeholder="Min. 8 chars, include a special character"
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+							autoComplete="new-password"
+							disabled={isLoading}
+						/>
+					</div>
 
-				<button type="submit">Register</button>
-			</form>
+					{error && (
+						<div className="alert alert-error">
+							<div className="alert-icon">✗</div>
+							<div className="alert-content">
+								<p>{error}</p>
+							</div>
+						</div>
+					)}
 
-			{/* Error message */}
-			{error && <p style={{ color: "red" }}>{error}</p>}
+					<button type="submit" className="btn btn-primary" disabled={isLoading}>
+						{isLoading ? <span className="spinner">Creating account...</span> : "Create account"}
+					</button>
+				</form>
 
-			{/* Success message */}
-			{success && <p style={{ color: "green" }}>{success}</p>}
+				<div className="auth-links">
+					Already have an account?{" "}<Link to="/login">Sign in</Link>
+				</div>
+			</div>
 		</div>
 	);
 }
