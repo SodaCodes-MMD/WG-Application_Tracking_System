@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { logoutUser } from "../services/auth-service.js";
 import DashboardHome from "./DashboardHome.jsx";
 import DocumentsPage from "./DocumentsPage.jsx";
 import ProfilePage from "./ProfilePage.jsx";
@@ -23,7 +24,12 @@ export default function DashboardPage() {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await logoutUser(); // blacklist the token on the server
+    } catch {
+      // API unavailable — still complete local logout
+    }
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/login");

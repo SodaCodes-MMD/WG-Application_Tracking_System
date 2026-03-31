@@ -1,6 +1,6 @@
 import express from "express";
 import { body } from "express-validator";
-import { register, login } from "../controllers/auth-controller.js";
+import { register, login, logout, changePassword } from "../controllers/auth-controller.js";
 import { authenticate } from "../middleware/auth-middleware.js";
 import {
   forgotPassword,
@@ -10,9 +10,11 @@ import {
 
 const router = express.Router();
 
-// Validation rules for password reset endpoints
+// ─── Shared validation constants ──────────────────────────────────────────────
 const PASSWORD_MIN_LENGTH = 8;
-const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+const PASSWORD_RESET_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+
+// ─── Validation rule arrays ────────────────────────────────────────────────────
 
 const forgotPasswordValidation = [
   body("email")
@@ -28,25 +30,32 @@ const resetPasswordValidation = [
   body("password")
     .isLength({ min: PASSWORD_MIN_LENGTH })
     .withMessage(`Password must be at least ${PASSWORD_MIN_LENGTH} characters long`)
-    .matches(PASSWORD_REGEX)
-    .withMessage("Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)")
+    .matches(PASSWORD_RESET_REGEX)
+    .withMessage("Password must contain uppercase, lowercase, a number, and a special character (@$!%*?&)")
 ];
 
-/**
- * PUBLIC ROUTES
- */
+const changePasswordValidation = [
+  body("currentPassword")
+    .notEmpty()
+    .withMessage("Current password is required"),
+  body("newPassword")
+    .isLength({ min: PASSWORD_MIN_LENGTH })
+    .withMessage(`New password must be at least ${PASSWORD_MIN_LENGTH} characters long`)
+    .matches(PASSWORD_RESET_REGEX)
+    .withMessage("New password must contain uppercase, lowercase, a number, and a special character (@$!%*?&)")
+];
+
+// ─── Public routes ─────────────────────────────────────────────────────────────
 
 router.post("/auth/register", register);
 router.post("/auth/login", login);
 
-// Password reset
+// Password reset flow
 router.post("/auth/forgot-password", forgotPasswordValidation, forgotPassword);
 router.get("/auth/validate-reset-token/:token", validateResetToken);
 router.post("/auth/reset-password", resetPasswordValidation, resetPassword);
 
-/**
- * PROTECTED ROUTES
- */
+// ─── Protected routes ──────────────────────────────────────────────────────────
 
 router.get("/auth/me", authenticate, (req, res) => {
   return res.json({
@@ -54,5 +63,9 @@ router.get("/auth/me", authenticate, (req, res) => {
     data: { userId: req.user.userId }
   });
 });
+
+router.post("/auth/logout", authenticate, logout);
+
+router.post("/auth/change-password", authenticate, changePasswordValidation, changePassword);
 
 export default router;
