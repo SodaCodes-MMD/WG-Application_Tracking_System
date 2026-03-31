@@ -47,8 +47,6 @@ describe('ProtectedRoute', () => {
   })
 
   it('should redirect to login when no token exists', async () => {
-    mockFetch.mockResolvedValue({ ok: false, status: 401 })
-    
     vi.stubGlobal('localStorage', {
       getItem: () => null
     })
@@ -98,6 +96,35 @@ describe('ProtectedRoute', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('protected-content')).toBeDefined()
+    })
+  })
+
+  it('should redirect to login when token is invalid', async () => {
+    const removeItemMock = vi.fn()
+    vi.stubGlobal('localStorage', {
+      getItem: () => 'invalid-token',
+      removeItem: removeItemMock
+    })
+    mockFetch.mockResolvedValue({ ok: false, status: 401 })
+
+    render(
+      <MemoryRouter initialEntries={['/protected']}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/protected"
+            element={
+              <ProtectedRoute>
+                <TestComponent />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('login-page')).toBeDefined()
     })
   })
 })

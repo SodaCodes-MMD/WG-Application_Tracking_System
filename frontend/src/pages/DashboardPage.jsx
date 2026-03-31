@@ -1,76 +1,106 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { NavLink, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import DashboardHome from "./DashboardHome.jsx";
+import DocumentsPage from "./DocumentsPage.jsx";
+import ProfilePage from "./ProfilePage.jsx";
+import SettingsPage from "./SettingsPage.jsx";
+import "./dashboard.css";
 
-export default function DashboardPage({ onLogout }) {
-	const [user] = useState(() => {
-		const u = localStorage.getItem("user");
-		return u ? JSON.parse(u) : null;
-	});
-	
-	const navigate = useNavigate();
+const NAV_ITEMS = [
+  { to: "/",          label: "Dashboard",        icon: "▦", end: true  },
+  { to: "/documents", label: "Document Library",  icon: "⊞", end: false },
+  { to: "/profile",   label: "Profile",           icon: "◯", end: false },
+  { to: "/settings",  label: "Settings",          icon: "⚙", end: false },
+];
 
-	const handleLogout = () => {
-		onLogout();
-		navigate("/login", { replace: true });
-	};
+export default function DashboardPage() {
+  const navigate = useNavigate();
 
-	return (
-		<div style={{ display: "flex", height: "100vh" }}>
-			
-			{/* Sidebar */}
-			<div style={{ width: "200px", background: "#222", color: "white", padding: "20px" }}>
-				<h3>ATS</h3>
-				<ul style={{ listStyle: "none", padding: 0 }}>
-					<li>Dashboard</li>
-					<li>Jobs</li>
-					<li>Profile</li>
-				</ul>
-			</div>
+  const [user] = useState(() => {
+    const u = localStorage.getItem("user");
+    return u ? JSON.parse(u) : null;
+  });
 
-			{/* Main content */}
-			<div style={{ flex: 1, padding: "20px" }}>
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-				{/* Header */}
-				<div style={{ display: "flex", justifyContent: "space-between" }}>
-					<h2>Dashboard</h2>
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
-					<div>
-						<span style={{ marginRight: "10px" }}>
-							{user?.email}
-						</span>
+  const closeSidebar = () => setSidebarOpen(false);
 
-						<button 
-							onClick={handleLogout}
-							style={{
-								padding: "8px 16px",
-								backgroundColor: "#dc3545",
-								color: "white",
-								border: "none",
-								borderRadius: "4px",
-								cursor: "pointer"
-							}}
-						>
-							Logout
-						</button>
-					</div>
-				</div>
+  return (
+    <div className="dashboard-layout">
 
-				<hr />
+      {/* Mobile overlay — click outside sidebar to close */}
+      {sidebarOpen && (
+        <div className="sidebar-overlay" onClick={closeSidebar} />
+      )}
 
-				{/* Content area */}
-				<div>
-					<h3>Welcome to your workspace</h3>
-					<p>This is your job tracking dashboard.</p>
+      {/* Sidebar */}
+      <aside className={`sidebar${sidebarOpen ? " sidebar-open" : ""}`}>
+        <div className="sidebar-brand">
+          <h1>ATS</h1>
+          <p>Applicant Tracking System</p>
+        </div>
 
-					{/* Placeholder cards */}
-					<div style={{ marginTop: "20px" }}>
-						<div>📄 Applications (coming soon)</div>
-						<div>📊 Stats (coming soon)</div>
-						<div>📅 Activity (coming soon)</div>
-					</div>
-				</div>
+        <nav className="sidebar-nav">
+          <ul>
+            {NAV_ITEMS.map(({ to, label, icon, end }) => (
+              <li key={to}>
+                <NavLink
+                  to={to}
+                  end={end}
+                  className={({ isActive }) => isActive ? "active" : undefined}
+                  onClick={closeSidebar}
+                >
+                  <span className="nav-icon">{icon}</span>
+                  {label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </aside>
 
-			</div>
-		</div>
-	);
+      {/* Main area */}
+      <div className="dashboard-main">
+
+        {/* Header */}
+        <header className="dashboard-header">
+          <div className="header-left">
+            <button
+              className="hamburger"
+              onClick={() => setSidebarOpen((o) => !o)}
+              aria-label="Toggle navigation"
+            >
+              <span /><span /><span />
+            </button>
+            <span className="header-title">ATS Dashboard</span>
+          </div>
+
+          <div className="header-user">
+            <span className="user-email">{user?.email}</span>
+            <button className="btn-logout" onClick={handleLogout}>
+              Log out
+            </button>
+          </div>
+        </header>
+
+        {/* Routed content */}
+        <main className="dashboard-content">
+          <Routes>
+            <Route path="/"          element={<DashboardHome />} />
+            <Route path="/documents" element={<DocumentsPage />} />
+            <Route path="/profile"   element={<ProfilePage user={user} />} />
+            <Route path="/settings"  element={<SettingsPage />} />
+            <Route path="*"          element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+
+      </div>
+    </div>
+  );
 }
