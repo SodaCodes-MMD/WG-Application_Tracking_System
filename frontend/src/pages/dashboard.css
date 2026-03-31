@@ -18,7 +18,7 @@
 .sidebar {
   width: 240px;
   flex-shrink: 0;
-  background: var(--bg-sidebar);
+  background: #009B3A;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -27,7 +27,7 @@
 .sidebar-brand {
   padding: 24px 20px 20px;
   border-bottom: 3px solid #f0c800;
-  background: linear-gradient(135deg, #1a1a1a 60%, #0a3d1f 100%);
+  background: linear-gradient(135deg, #007a2e 60%, #005a20 100%);
 }
 
 .sidebar-brand h1 {
@@ -41,7 +41,7 @@
 
 .sidebar-brand p {
   font-size: 0.72rem;
-  color: #8b949e;
+  color: rgba(255, 255, 255, 0.75);
   margin: 3px 0 0;
   letter-spacing: 0.03em;
 }
@@ -71,18 +71,18 @@
   text-decoration: none;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #8b949e;
+  color: #ffffff;
   transition: background 0.15s, color 0.15s;
 }
 
 .sidebar-nav a:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #e6edf3;
+  background: rgba(0, 0, 0, 0.15);
+  color: #ffffff;
 }
 
 .sidebar-nav a.active {
-  background: rgba(0, 170, 68, 0.18);
-  color: #00dd55;
+  background: #00aa44;
+  color: #ffffff;
 }
 
 .nav-icon {

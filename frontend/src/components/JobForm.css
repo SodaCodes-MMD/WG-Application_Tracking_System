@@ -1,5 +1,5 @@
-.jf-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 400; padding: 16px; }
-.jf-modal { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; box-shadow: 0 12px 40px rgba(0,0,0,0.2); }
+.jf-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 400; padding: 16px; }
+.jf-modal { background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
 .jf-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; background: var(--card-bg); z-index: 1; }
 .jf-header h3 { font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0; }
 .jf-close { background: none; border: none; font-size: 1rem; color: var(--text-secondary); cursor: pointer; padding: 4px 8px; border-radius: 4px; }
