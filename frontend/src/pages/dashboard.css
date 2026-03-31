@@ -323,6 +323,65 @@
 }
 
 /* ===========================
+   Profile Page
+   =========================== */
+
+.profile-completion-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+}
+
+.profile-completion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.profile-completion-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.profile-completion-pct {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.profile-completion-track {
+  height: 6px;
+  background: var(--border-color);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.profile-completion-bar {
+  height: 100%;
+  background: #0969da;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.profile-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 540px) {
+  .profile-field-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===========================
    Settings Page
    =========================== */
 
