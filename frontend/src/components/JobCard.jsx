@@ -5,6 +5,8 @@ export default function JobCard({ job, onEdit, onDelete }) {
   const colors = STATUS_COLORS[job.status] || STATUS_COLORS["Wishlist"];
   const appliedDate = job.appliedAt ? new Date(job.appliedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : null;
   const createdDate = new Date(job.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  const deadlineDate = job.deadline ? new Date(job.deadline).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : null;
+  const isPastDeadline = job.deadline && new Date(job.deadline) < new Date();
 
   return (
     <div className="job-card">
@@ -24,6 +26,8 @@ export default function JobCard({ job, onEdit, onDelete }) {
         <span className="job-meta-item job-date">{appliedDate ? `Applied ${appliedDate}` : `Added ${createdDate}`}</span>
       </div>
       {job.notes && <p className="job-notes">{job.notes}</p>}
+      {deadlineDate && <p className={`job-deadline ${isPastDeadline ? "job-deadline-past" : ""}`}>📅 Deadline: {deadlineDate}{isPastDeadline ? " (past)" : ""}</p>}
+      {job.recruiterNotes && <p className="job-recruiter-notes">{job.recruiterNotes}</p>}
       <div className="job-card-actions">
         <button className="btn-card-edit" onClick={() => onEdit(job)}>Edit</button>
         <button className="btn-card-delete" onClick={() => onDelete(job._id)}>Delete</button>

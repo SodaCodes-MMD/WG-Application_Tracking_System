@@ -12,6 +12,9 @@
 .job-link:hover { text-decoration: underline; }
 .job-date { margin-left: auto; }
 .job-notes { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin: 0; padding: 10px 12px; background: var(--bg-secondary); border-radius: 6px; border-left: 3px solid var(--border-color); white-space: pre-wrap; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.job-deadline { font-size: 0.8rem; color: var(--text-secondary); margin: 0; }
+.job-deadline-past { color: #cf222e; font-weight: 500; }
+.job-recruiter-notes { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin: 0; padding: 10px 12px; background: var(--bg-secondary); border-radius: 6px; border-left: 3px solid #0969da; white-space: pre-wrap; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 .job-card-actions { display: flex; gap: 8px; justify-content: flex-end; padding-top: 4px; border-top: 1px solid var(--border-color); }
 .btn-card-edit { padding: 5px 14px; font-size: 0.8rem; font-weight: 500; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; }
 .btn-card-edit:hover { background: var(--border-color); }

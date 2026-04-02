@@ -15,6 +15,9 @@ const jobBodyValidation = [
   body("location").optional().trim(),
   body("salary").optional().trim(),
   body("notes").optional().trim(),
+  body("appliedAt").optional({ nullable: true }).isISO8601().toDate().withMessage("Invalid date format"),
+  body("deadline").optional({ nullable: true }).isISO8601().toDate().withMessage("Invalid date format"),
+  body("recruiterNotes").optional().trim().isLength({ max: 5000 }).withMessage("Recruiter notes too long"),
 ];
 
 router.get("/jobs", listJobs);
