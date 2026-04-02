@@ -11,6 +11,7 @@ export default function DashboardHome() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filterStatus, setFilterStatus] = useState(ALL);
+  const [searchQuery, setSearchQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
@@ -23,7 +24,18 @@ export default function DashboardHome() {
 
   useEffect(() => { fetchJobs(); }, [fetchJobs]);
 
-  const filtered = filterStatus === ALL ? jobs : jobs.filter(j => j.status === filterStatus);
+  const filtered = jobs
+    .filter(j => filterStatus === ALL || j.status === filterStatus)
+    .filter(j => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        j.title?.toLowerCase().includes(q) ||
+        j.company?.toLowerCase().includes(q) ||
+        j.location?.toLowerCase().includes(q) ||
+        j.notes?.toLowerCase().includes(q)
+      );
+    });
   const statusCounts = JOB_STATUSES.reduce((acc, s) => { acc[s] = jobs.filter(j => j.status === s).length; return acc; }, {});
 
   const openAdd = () => { setEditingJob(null); setShowForm(true); };
@@ -51,6 +63,19 @@ export default function DashboardHome() {
       <div className="page-header dh-page-header">
         <div><h2>Job Board</h2><p>Track and manage your job applications in one place.</p></div>
         <button className="btn-primary" onClick={openAdd}>+ Add Job</button>
+      </div>
+
+      <div className="dh-search-bar">
+        <input
+          className="dh-search-input"
+          type="search"
+          placeholder="Search by title, company, location or notes..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+        />
+        {searchQuery && (
+          <button className="dh-clear-filter" onClick={() => setSearchQuery("")}>✕ Clear</button>
+        )}
       </div>
 
       {jobs.length > 0 && (
