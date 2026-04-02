@@ -52,10 +52,28 @@ export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
+    async function fetchNotifications() {
+      try {
+        const data = await notificationsApi.list();
+        setNotifications(data.data.notifications);
+        setUnreadCount(data.data.unreadCount);
+      } catch (err) {
+        console.error("Failed to fetch notifications:", err);
+      }
+    }
+
+    async function fetchUnreadCount() {
+      try {
+        const data = await notificationsApi.getUnreadCount();
+        setUnreadCount(data.data.count);
+      } catch (err) {
+        console.error("Failed to fetch unread count:", err);
+      }
+    }
+
     fetchNotifications();
     const interval = setInterval(fetchUnreadCount, 120000);
     return () => clearInterval(interval);
@@ -72,25 +90,6 @@ export default function NotificationBell() {
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
-
-  const fetchNotifications = async () => {
-    try {
-      const data = await notificationsApi.list();
-      setNotifications(data.data.notifications);
-      setUnreadCount(data.data.unreadCount);
-    } catch (err) {
-      console.error("Failed to fetch notifications:", err);
-    }
-  };
-
-  const fetchUnreadCount = async () => {
-    try {
-      const data = await notificationsApi.getUnreadCount();
-      setUnreadCount(data.data.count);
-    } catch (err) {
-      console.error("Failed to fetch unread count:", err);
-    }
-  };
 
   const handleMarkAsRead = async (id) => {
     try {
