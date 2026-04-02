@@ -1,6 +1,6 @@
 import { validationResult } from "express-validator";
 import {
-  findJobsByUser, findJobByIdAndUser,
+  findJobsByUser, findJobById, findJobByIdAndUser,
   createJob, updateJobByIdAndUser, deleteJobByIdAndUser,
 } from "../repositories/job-repository.js";
 
@@ -19,8 +19,10 @@ export const listJobs = async (req, res) => {
 
 export const getJob = async (req, res) => {
   try {
-    const job = await findJobByIdAndUser(req.params.id, req.user.userId);
+    const job = await findJobById(req.params.id);
     if (!job) return notFound(res);
+    if (job.userId.toString() !== req.user.userId)
+      return res.status(403).json({ success: false, error: { code: "FORBIDDEN", message: "Access denied" } });
     return res.json({ success: true, data: job });
   } catch { return res.status(500).json({ success: false, error: { message: "Failed to fetch job" } }); }
 };

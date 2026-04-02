@@ -10,6 +10,15 @@
   --input-bg: #ffffff;
 }
 
+/* Explicitly reset boilerplate vars when light is selected, so the
+   @media (prefers-color-scheme: dark) block below cannot bleed through. */
+[data-theme="light"] {
+  --bg: #fff;
+  --text: #6b6375;
+  --text-h: #08060d;
+  color-scheme: light;
+}
+
 [data-theme="dark"] {
   --bg-primary: #1a1a2e;
   --bg-secondary: #16213e;
@@ -19,6 +28,11 @@
   --border-color: #2d2d4e;
   --card-bg: #16213e;
   --input-bg: #1e1e3e;
+  /* Keep boilerplate vars consistent */
+  --bg: #1a1a2e;
+  --text: #a0a0b0;
+  --text-h: #e8e8f0;
+  color-scheme: dark;
 }
 
 /* ── Base token variables ────────────────────────────────────────────────── */

@@ -6,16 +6,20 @@
   align-items: center;
   min-height: 100vh;
   padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #006428 0%, #009B3A 100%);
 }
 
 .auth-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   background: var(--card-bg);
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   width: 100%;
-  max-width: 450px;
+  max-width: 420px;
   padding: 40px;
+  box-sizing: border-box;
   animation: slideIn 0.3s ease;
 }
 
@@ -31,6 +35,7 @@
 }
 
 .auth-header {
+  width: 100%;
   text-align: center;
   margin-bottom: 30px;
 }
@@ -38,7 +43,7 @@
 .auth-header h1 {
   font-size: 2rem;
   margin-bottom: 10px;
-  color: #007bff;
+  color: #009B3A;
 }
 
 .auth-header h2 {
@@ -53,10 +58,12 @@
 }
 
 .auth-form {
+  width: 100%;
   margin-bottom: 20px;
 }
 
 .form-group {
+  width: 100%;
   margin-bottom: 20px;
 }
 
@@ -69,6 +76,7 @@
 
 .form-group input {
   width: 100%;
+  box-sizing: border-box;
   padding: 12px 16px;
   border: 2px solid var(--border-color);
   border-radius: 8px;
@@ -78,10 +86,25 @@
   transition: all 0.3s ease;
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group textarea:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  border-color: #009B3A;
+  box-shadow: 0 0 0 3px rgba(0, 155, 58, 0.15);
+}
+
+.form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  background: var(--input-bg);
+  color: var(--text-primary);
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
 }
 
 .form-group input.error {
@@ -184,12 +207,12 @@
 }
 
 .btn-primary {
-  background: #007bff;
+  background: #009B3A;
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #0056b3;
+  background: #007a2e;
   transform: translateY(-1px);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
@@ -201,12 +224,13 @@
 }
 
 .auth-links {
+  width: 100%;
   text-align: center;
   margin-top: 20px;
 }
 
 .auth-links a {
-  color: #007bff;
+  color: #009B3A;
   text-decoration: none;
   font-size: 0.95rem;
 }
@@ -217,6 +241,8 @@
 
 /* Alerts */
 .alert {
+  width: 100%;
+  box-sizing: border-box;
   display: flex;
   align-items: flex-start;
   padding: 20px;
@@ -273,7 +299,7 @@
   width: 50px;
   height: 50px;
   border: 4px solid #ddd;
-  border-top-color: #007bff;
+  border-top-color: #009B3A;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 20px;

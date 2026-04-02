@@ -3,7 +3,9 @@ import { ThemeContext } from "./ThemeContext.jsx";
 
 export default function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem("theme") || "light";
+    const saved = localStorage.getItem("theme") || "light";
+    document.documentElement.setAttribute("data-theme", saved);
+    return saved;
   });
 
   useEffect(() => {

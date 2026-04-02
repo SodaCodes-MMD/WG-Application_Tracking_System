@@ -48,8 +48,8 @@ export default function DashboardPage() {
       {/* Sidebar */}
       <aside className={`sidebar${sidebarOpen ? " sidebar-open" : ""}`}>
         <div className="sidebar-brand">
-          <h1>ATS</h1>
-          <p>Applicant Tracking System</p>
+          <h1>Hirify</h1>
+          <p>Your job search, organized</p>
         </div>
 
         <nav className="sidebar-nav">
@@ -84,7 +84,7 @@ export default function DashboardPage() {
             >
               <span /><span /><span />
             </button>
-            <span className="header-title">ATS Dashboard</span>
+            <span className="header-title">Hirify</span>
           </div>
 
           <div className="header-user">
