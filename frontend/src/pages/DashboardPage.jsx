@@ -5,6 +5,7 @@ import DashboardHome from "./DashboardHome.jsx";
 import DocumentsPage from "./DocumentsPage.jsx";
 import ProfilePage from "./ProfilePage.jsx";
 import SettingsPage from "./SettingsPage.jsx";
+import FlagPet from "../components/FlagPet.jsx";
 import "./dashboard.css";
 
 const NAV_ITEMS = [
@@ -107,6 +108,7 @@ export default function DashboardPage() {
         </main>
 
       </div>
+      <FlagPet />
     </div>
   );
 }
