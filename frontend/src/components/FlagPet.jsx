@@ -19,8 +19,9 @@ function randomPos() {
 }
 
 export default function FlagPet() {
-  const posRef    = useRef({ x: MARGIN, y: window.innerHeight - 140 });
-  const [pos,     setPos]      = useState(posRef.current);
+  const initialPos = { x: MARGIN, y: window.innerHeight - 140 };
+  const posRef    = useRef(initialPos);
+  const [pos,     setPos]      = useState(initialPos);
   const [facing,  setFacing]   = useState(1);
   const [walking, setWalking]  = useState(false);
   const [bouncing,setBouncing] = useState(false);
