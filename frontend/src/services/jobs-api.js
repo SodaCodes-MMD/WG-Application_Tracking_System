@@ -10,7 +10,10 @@ async function request(method, path, body) {
   if (body) options.body = JSON.stringify(body);
   const res = await fetch(`${API_URL}${path}`, options);
   const data = await res.json();
-  if (!res.ok) { const error = new Error(data.error?.message || "Request failed"); error.response = { status: res.status, data }; throw error; }
+  if (!res.ok) {
+    if (res.status === 401) { localStorage.removeItem("token"); localStorage.removeItem("user"); window.location.href = "/login"; }
+    const error = new Error(data.error?.message || "Request failed"); error.response = { status: res.status, data }; throw error;
+  }
   return data;
 }
 
