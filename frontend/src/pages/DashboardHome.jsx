@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { jobsApi, JOB_STATUSES, STATUS_COLORS } from "../services/jobs-api.js";
 import JobCard from "../components/JobCard.jsx";
 import JobForm from "../components/JobForm.jsx";
@@ -10,8 +10,11 @@ export default function DashboardHome() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [filterStatus, setFilterStatus] = useState(ALL);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState(ALL);
+  const [filterLocation, setFilterLocation] = useState(ALL);
+  const [filterDateFrom, setFilterDateFrom] = useState("");
+  const [filterDateTo, setFilterDateTo] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
@@ -24,8 +27,22 @@ export default function DashboardHome() {
 
   useEffect(() => { fetchJobs(); }, [fetchJobs]);
 
+  const locations = useMemo(() => {
+    const locs = jobs.map(j => j.location).filter(Boolean);
+    return [...new Set(locs)].sort();
+  }, [jobs]);
+
   const filtered = jobs
     .filter(j => filterStatus === ALL || j.status === filterStatus)
+    .filter(j => filterLocation === ALL || j.location === filterLocation)
+    .filter(j => {
+      if (!filterDateFrom && !filterDateTo) return true;
+      const d = j.appliedAt ? new Date(j.appliedAt) : null;
+      if (!d) return false;
+      if (filterDateFrom && d < new Date(filterDateFrom)) return false;
+      if (filterDateTo   && d > new Date(filterDateTo + "T23:59:59")) return false;
+      return true;
+    })
     .filter(j => {
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
@@ -36,7 +53,11 @@ export default function DashboardHome() {
         j.notes?.toLowerCase().includes(q)
       );
     });
+
   const statusCounts = JOB_STATUSES.reduce((acc, s) => { acc[s] = jobs.filter(j => j.status === s).length; return acc; }, {});
+  const hasActiveFilters = filterStatus !== ALL || filterLocation !== ALL || filterDateFrom || filterDateTo;
+
+  const clearFilters = () => { setFilterStatus(ALL); setFilterLocation(ALL); setFilterDateFrom(""); setFilterDateTo(""); };
 
   const openAdd = () => { setEditingJob(null); setShowForm(true); };
   const openEdit = (job) => { setEditingJob(job); setShowForm(true); };
@@ -78,21 +99,39 @@ export default function DashboardHome() {
         )}
       </div>
 
-      {jobs.length > 0 && (
-        <div className="dh-stats">
-          {JOB_STATUSES.filter(s => statusCounts[s] > 0).map(s => {
-            const c = STATUS_COLORS[s];
-            return (
-              <button key={s} className={`dh-stat-chip${filterStatus === s ? " dh-stat-chip--active" : ""}`}
-                style={filterStatus === s ? { background: c.bg, color: c.text, borderColor: c.border } : {}}
-                onClick={() => setFilterStatus(filterStatus === s ? ALL : s)}>
-                {s}<span className="dh-stat-count">{statusCounts[s]}</span>
-              </button>
-            );
-          })}
-          {filterStatus !== ALL && <button className="dh-clear-filter" onClick={() => setFilterStatus(ALL)}>✕ Clear filter</button>}
+      <div className="dh-filters">
+        <div className="dh-filter-group">
+          <label className="dh-filter-label">Stage</label>
+          <select className="dh-filter-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+            <option value={ALL}>All stages</option>
+            {JOB_STATUSES.map(s => (
+              <option key={s} value={s}>{s}{statusCounts[s] ? ` (${statusCounts[s]})` : ""}</option>
+            ))}
+          </select>
         </div>
-      )}
+
+        <div className="dh-filter-group">
+          <label className="dh-filter-label">Location</label>
+          <select className="dh-filter-select" value={filterLocation} onChange={e => setFilterLocation(e.target.value)} disabled={locations.length === 0}>
+            <option value={ALL}>All locations</option>
+            {locations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
+          </select>
+        </div>
+
+        <div className="dh-filter-group">
+          <label className="dh-filter-label">Applied from</label>
+          <input className="dh-filter-date" type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} />
+        </div>
+
+        <div className="dh-filter-group">
+          <label className="dh-filter-label">Applied to</label>
+          <input className="dh-filter-date" type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} />
+        </div>
+
+        {hasActiveFilters && (
+          <button className="dh-clear-all-filters" onClick={clearFilters}>✕ Clear filters</button>
+        )}
+      </div>
 
       {loading ? (
         <div className="dh-loading"><div className="dh-spinner" /><p>Loading jobs…</p></div>
@@ -108,8 +147,8 @@ export default function DashboardHome() {
       ) : filtered.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">🔍</div>
-          <h3>No jobs match this filter</h3>
-          <button className="btn-primary" onClick={() => setFilterStatus(ALL)}>Show all</button>
+          <h3>No jobs match these filters</h3>
+          <button className="btn-primary" onClick={clearFilters}>Clear filters</button>
         </div>
       ) : (
         <div className="dh-grid">
