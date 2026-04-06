@@ -2,6 +2,7 @@ import { validationResult } from "express-validator";
 import {
   findJobsByUser, findJobById, findJobByIdAndUser,
   createJob, updateJobByIdAndUser, deleteJobByIdAndUser,
+  addInterview, updateInterview, removeInterview,
 } from "../repositories/job-repository.js";
 import { triggerImmediateNotification, removeDeadlineNotifications } from "../services/deadline-checker.js";
 
@@ -95,6 +96,48 @@ export const updateJobHandler = async (req, res) => {
   } catch (err) {
     console.error("[JobController] updateJob:", err);
     return handleError(res, "Failed to update job");
+  }
+};
+
+export const addInterviewHandler = async (req, res) => {
+  try {
+    const { roundType, date, interviewer, notes } = req.body;
+    if (!roundType) return res.status(400).json({ success: false, error: { code: "VALIDATION_ERROR", message: "Round type is required" } });
+    const job = await addInterview(req.params.id, req.user.userId, {
+      roundType,
+      date: date || null,
+      interviewer: interviewer || "",
+      notes: notes || "",
+    });
+    if (!job) return notFound(res);
+    return res.status(201).json({ success: true, data: job });
+  } catch (err) {
+    console.error("[JobController] addInterview:", err);
+    return handleError(res, "Failed to add interview");
+  }
+};
+
+export const updateInterviewHandler = async (req, res) => {
+  try {
+    const allowed = ["roundType", "date", "interviewer", "notes"];
+    const updates = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
+    const job = await updateInterview(req.params.id, req.user.userId, req.params.interviewId, updates);
+    if (!job) return notFound(res);
+    return res.json({ success: true, data: job });
+  } catch (err) {
+    console.error("[JobController] updateInterview:", err);
+    return handleError(res, "Failed to update interview");
+  }
+};
+
+export const deleteInterviewHandler = async (req, res) => {
+  try {
+    const job = await removeInterview(req.params.id, req.user.userId, req.params.interviewId);
+    if (!job) return notFound(res);
+    return res.json({ success: true, data: job });
+  } catch (err) {
+    console.error("[JobController] deleteInterview:", err);
+    return handleError(res, "Failed to delete interview");
   }
 };
 
