@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { JOB_STATUSES } from "../services/jobs-api.js";
 import "./JobForm.css";
 
-const EMPTY = { company: "", title: "", status: "Wishlist", location: "", url: "", salary: "", notes: "", appliedAt: "" };
+const EMPTY = { company: "", title: "", status: "Wishlist", location: "", url: "", salary: "", notes: "", appliedAt: "", deadline: "", recruiterNotes: "" };
 
 function toDateInput(d) {
   if (!d) return "";
@@ -15,9 +15,9 @@ export default function JobForm({ job, onSave, onClose, loading }) {
   const [form, setForm] = useState(EMPTY);
   const [errors, setErrors] = useState({});
 
-useEffect(() => {
+  useEffect(() => {
     const nextForm = job
-      ? { company: job.company||"", title: job.title||"", status: job.status||"Wishlist", location: job.location||"", url: job.url||"", salary: job.salary||"", notes: job.notes||"", appliedAt: toDateInput(job.appliedAt) }
+      ? { company: job.company||"", title: job.title||"", status: job.status||"Wishlist", location: job.location||"", url: job.url||"", salary: job.salary||"", notes: job.notes||"", appliedAt: toDateInput(job.appliedAt), deadline: toDateInput(job.deadline), recruiterNotes: job.recruiterNotes||"" }
       : EMPTY;
     if (job) { setForm(nextForm); } else { setForm(EMPTY); } // eslint-disable-line react-hooks/set-state-in-effect
     setErrors({});
@@ -31,7 +31,7 @@ useEffect(() => {
     if (!form.company.trim()) errs.company = "Company is required";
     if (!form.title.trim()) errs.title = "Job title is required";
     if (Object.keys(errs).length) { setErrors(errs); return; }
-    onSave({ ...form, appliedAt: form.appliedAt || null });
+    onSave({ ...form, appliedAt: form.appliedAt || null, deadline: form.deadline || null, recruiterNotes: form.recruiterNotes?.trim() || "" });
   };
 
   return (
@@ -74,13 +74,23 @@ useEffect(() => {
               <input type="date" value={form.appliedAt} onChange={set("appliedAt")} disabled={loading} />
             </div>
           </div>
+          <div className="jf-row">
+            <div className="jf-group">
+              <label>Deadline</label>
+              <input type="date" value={form.deadline} onChange={set("deadline")} disabled={loading} />
+            </div>
+          </div>
           <div className="jf-group">
             <label>Job Posting URL</label>
             <input type="url" value={form.url} onChange={set("url")} placeholder="https://..." disabled={loading} />
           </div>
           <div className="jf-group">
             <label>Notes</label>
-            <textarea value={form.notes} onChange={set("notes")} placeholder="Recruiter name, next steps..." rows={3} disabled={loading} />
+            <textarea value={form.notes} onChange={set("notes")} placeholder="Application notes..." rows={3} disabled={loading} />
+          </div>
+          <div className="jf-group">
+            <label>Recruiter / Contact Notes</label>
+            <textarea value={form.recruiterNotes} onChange={set("recruiterNotes")} placeholder="Recruiter name, email, phone, next steps..." rows={3} disabled={loading} />
           </div>
           <div className="jf-actions">
             <button type="button" className="jf-btn-cancel" onClick={onClose} disabled={loading}>Cancel</button>

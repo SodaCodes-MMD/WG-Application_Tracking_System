@@ -6,6 +6,7 @@ import DocumentsPage from "./DocumentsPage.jsx";
 import ProfilePage from "./ProfilePage.jsx";
 import SettingsPage from "./SettingsPage.jsx";
 import FlagPet from "../components/FlagPet.jsx";
+import NotificationBell from "../components/NotificationBell.jsx";
 import "./dashboard.css";
 
 const NAV_ITEMS = [
@@ -89,6 +90,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="header-user">
+            <NotificationBell />
             <span className="user-email">{user?.email}</span>
             <button className="btn-logout" onClick={handleLogout}>
               Log out
