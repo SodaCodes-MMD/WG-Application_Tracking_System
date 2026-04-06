@@ -27,23 +27,43 @@ export const getJob = async (req, res) => {
   } catch { return res.status(500).json({ success: false, error: { message: "Failed to fetch job" } }); }
 };
 
+//Updated - seeds initial status history entry when creating a job, and adds new entry on status change during update
 export const createJobHandler = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return validationError(res, errors);
   try {
     const { company, title, status, location, url, salary, notes, appliedAt } = req.body;
-    const job = await createJob({ userId: req.user.userId, company, title, status, location, url, salary, notes, appliedAt: appliedAt || null });
+    const initialStatus = status || "Wishlist";
+    const job = await createJob({ 
+      userId: req.user.userId, 
+      company, title, 
+      status: initialStatus, 
+      location, url, salary, notes, 
+      appliedAt: appliedAt || null,
+      statusHistory: [{ status: initialStatus, changedAt: new Date() }],
+   });
     return res.status(201).json({ success: true, data: job });
   } catch { return res.status(500).json({ success: false, error: { message: "Failed to create job" } }); }
 };
 
+//Updated - detects status changed and appends a history entry
 export const updateJobHandler = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return validationError(res, errors);
   try {
     const allowed = ["company", "title", "status", "location", "url", "salary", "notes", "appliedAt"];
     const updates = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
-    const job = await updateJobByIdAndUser(req.params.id, req.user.userId, updates);
+    //
+    let historyEntry = null;
+    if (updates.status) {
+      const current = await findJobByIdAndUser(req.params.id, req.user.userId);
+      if (!current) return notFound(res);
+      if (current.status !== updates.status) {
+        historyEntry = { status: updates.status, changedAt: new Date() };
+      }
+    }
+    //
+    const job = await updateJobByIdAndUser(req.params.id, req.user.userId, updates, historyEntry);
     if (!job) return notFound(res);
     return res.json({ success: true, data: job });
   } catch { return res.status(500).json({ success: false, error: { message: "Failed to update job" } }); }

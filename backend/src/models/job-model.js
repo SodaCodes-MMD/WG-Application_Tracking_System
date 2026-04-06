@@ -16,6 +16,13 @@ const jobSchema = new mongoose.Schema(
     salary: { type: String, trim: true, maxlength: 100, default: "" },
     notes: { type: String, trim: true, maxlength: 5000, default: "" },
     appliedAt: { type: Date, default: null },
+    //New - records ststus change history
+    statusHistory: [
+      {
+        status: { type: String, enum: JOB_STATUSES, required: true},
+        changedAt: { type: Date, default: Date.now },
+      }
+    ],
   },
   { collection: "jobs", timestamps: true }
 );
