@@ -39,3 +39,15 @@ export const reorderExperience = (token, orderedIds)      => send(token, "PATCH"
 export const addEducation    = (token, data)           => send(token, "POST",   "/profile/education",          data);
 export const updateEducation = (token, entryId, data)  => send(token, "PATCH",  `/profile/education/${entryId}`, data);
 export const deleteEducation = (token, entryId)        => send(token, "DELETE", `/profile/education/${entryId}`);
+
+// ── Skills ───────────────────────────────────────────────────────────────────
+
+export const addSkill      = (token, data)            => send(token, "POST",   "/profile/skills",             data);
+export const updateSkill   = (token, skillId, data)   => send(token, "PATCH",  `/profile/skills/${skillId}`,  data);
+export const deleteSkill   = (token, skillId)         => send(token, "DELETE", `/profile/skills/${skillId}`);
+export const reorderSkills = (token, orderedIds)      => send(token, "PATCH",  "/profile/skills/reorder",     { orderedIds });
+
+// ── Career Preferences ───────────────────────────────────────────────────────
+
+export const getPreferences  = (token)       => send(token, "GET", "/profile/preferences");
+export const savePreferences = (token, data) => send(token, "PUT", "/profile/preferences", data);

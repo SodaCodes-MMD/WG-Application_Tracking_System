@@ -2,6 +2,8 @@ import {
   getProfileForUser, saveProfileForUser,
   addExperience, updateExperience, deleteExperience, reorderExperience,
   addEducation, updateEducation, deleteEducation,
+  addSkill, updateSkill, deleteSkill, reorderSkills,
+  getPreferences, savePreferences,
 } from "../services/profile-service.js";
 
 const handleValidationOrServerError = (res, err, fallbackMessage) => {
@@ -106,5 +108,67 @@ export const deleteEducationHandler = async (req, res) => {
     return res.json({ success: true, data: profile });
   } catch (err) {
     return handleValidationOrServerError(res, err, "Failed to delete education");
+  }
+};
+
+// ── Skills ───────────────────────────────────────────────────────────────────
+
+export const addSkillHandler = async (req, res) => {
+  try {
+    const profile = await addSkill(req.user.userId, req.body);
+    return res.status(201).json({ success: true, data: profile });
+  } catch (err) {
+    return handleValidationOrServerError(res, err, "Failed to add skill");
+  }
+};
+
+export const updateSkillHandler = async (req, res) => {
+  try {
+    const profile = await updateSkill(req.user.userId, req.params.skillId, req.body);
+    if (!profile) return res.status(404).json({ success: false, error: { code: "NOT_FOUND", message: "Skill not found" } });
+    return res.json({ success: true, data: profile });
+  } catch (err) {
+    return handleValidationOrServerError(res, err, "Failed to update skill");
+  }
+};
+
+export const deleteSkillHandler = async (req, res) => {
+  try {
+    const profile = await deleteSkill(req.user.userId, req.params.skillId);
+    if (!profile) return res.status(404).json({ success: false, error: { code: "NOT_FOUND", message: "Profile not found" } });
+    return res.json({ success: true, data: profile });
+  } catch (err) {
+    return handleValidationOrServerError(res, err, "Failed to delete skill");
+  }
+};
+
+export const reorderSkillsHandler = async (req, res) => {
+  try {
+    const profile = await reorderSkills(req.user.userId, req.body.orderedIds);
+    if (!profile) return res.status(404).json({ success: false, error: { code: "NOT_FOUND", message: "Profile not found" } });
+    return res.json({ success: true, data: profile });
+  } catch (err) {
+    return handleValidationOrServerError(res, err, "Failed to reorder skills");
+  }
+};
+
+// ── Career Preferences ───────────────────────────────────────────────────────
+
+export const getPreferencesHandler = async (req, res) => {
+  try {
+    const data = await getPreferences(req.user.userId);
+    return res.json({ success: true, data });
+  } catch (err) {
+    console.error("[ProfileController] getPreferences:", err);
+    return res.status(500).json({ success: false, error: { message: "Failed to fetch preferences" } });
+  }
+};
+
+export const savePreferencesHandler = async (req, res) => {
+  try {
+    const profile = await savePreferences(req.user.userId, req.body);
+    return res.json({ success: true, data: profile.careerPreferences || {} });
+  } catch (err) {
+    return handleValidationOrServerError(res, err, "Failed to save preferences");
   }
 };
