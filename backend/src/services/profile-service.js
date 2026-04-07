@@ -1,6 +1,13 @@
-import { findProfileByUserId, upsertProfile } from "../repositories/profile-repository.js";
+import {
+  findProfileByUserId, upsertProfile,
+  addExperienceEntry, updateExperienceEntry, deleteExperienceEntry, reorderExperienceEntries,
+  addEducationEntry, updateEducationEntry, deleteEducationEntry,
+} from "../repositories/profile-repository.js";
 
 const ALLOWED_FIELDS = ["firstName", "lastName", "phone", "location", "headline", "summary"];
+
+const EXP_FIELDS = ["jobTitle", "company", "location", "startDate", "endDate", "isCurrent", "description", "accomplishments"];
+const EDU_FIELDS = ["institution", "degree", "fieldOfStudy", "startDate", "endDate", "gpa", "honors"];
 
 export const getProfileForUser = async (userId) => {
   const profile = await findProfileByUserId(userId);
@@ -15,3 +22,52 @@ export const saveProfileForUser = async (userId, data) => {
   );
   return upsertProfile(userId, filtered);
 };
+
+// ── Experience ──────────────────────────────────────────────────────────────
+
+export const addExperience = async (userId, data) => {
+  const filtered = Object.fromEntries(Object.entries(data).filter(([k]) => EXP_FIELDS.includes(k)));
+  if (!filtered.jobTitle || !filtered.company || !filtered.startDate) {
+    const err = new Error("jobTitle, company, and startDate are required");
+    err.code = "VALIDATION_ERROR";
+    throw err;
+  }
+  return addExperienceEntry(userId, filtered);
+};
+
+export const updateExperience = async (userId, entryId, data) => {
+  const filtered = Object.fromEntries(Object.entries(data).filter(([k]) => EXP_FIELDS.includes(k)));
+  return updateExperienceEntry(userId, entryId, filtered);
+};
+
+export const deleteExperience = (userId, entryId) =>
+  deleteExperienceEntry(userId, entryId);
+
+export const reorderExperience = async (userId, orderedIds) => {
+  if (!Array.isArray(orderedIds)) {
+    const err = new Error("orderedIds must be an array");
+    err.code = "VALIDATION_ERROR";
+    throw err;
+  }
+  return reorderExperienceEntries(userId, orderedIds);
+};
+
+// ── Education ───────────────────────────────────────────────────────────────
+
+export const addEducation = async (userId, data) => {
+  const filtered = Object.fromEntries(Object.entries(data).filter(([k]) => EDU_FIELDS.includes(k)));
+  if (!filtered.institution || !filtered.degree || !filtered.fieldOfStudy || !filtered.startDate) {
+    const err = new Error("institution, degree, fieldOfStudy, and startDate are required");
+    err.code = "VALIDATION_ERROR";
+    throw err;
+  }
+  return addEducationEntry(userId, filtered);
+};
+
+export const updateEducation = async (userId, entryId, data) => {
+  const filtered = Object.fromEntries(Object.entries(data).filter(([k]) => EDU_FIELDS.includes(k)));
+  return updateEducationEntry(userId, entryId, filtered);
+};
+
+export const deleteEducation = (userId, entryId) =>
+  deleteEducationEntry(userId, entryId);
