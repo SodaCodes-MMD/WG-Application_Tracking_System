@@ -4,6 +4,8 @@ import {
   getProfile, saveProfile,
   addExperience, updateExperience, deleteExperience, reorderExperience,
   addEducation, updateEducation, deleteEducation,
+  addSkill, updateSkill, deleteSkill, reorderSkills,
+  getPreferences, savePreferences,
 } from "../services/profile-api.js";
 import "./AuthForms.css";
 
@@ -12,8 +14,13 @@ import "./AuthForms.css";
 const BASIC_FIELDS = ["firstName", "lastName", "phone", "location", "headline", "summary"];
 const EMPTY_PROFILE = { firstName: "", lastName: "", phone: "", location: "", headline: "", summary: "" };
 
-const EMPTY_EXP = { jobTitle: "", company: "", location: "", startDate: "", endDate: "", isCurrent: false, description: "", accomplishments: "" };
-const EMPTY_EDU = { institution: "", degree: "", fieldOfStudy: "", startDate: "", endDate: "", gpa: "", honors: "" };
+const EMPTY_EXP   = { jobTitle: "", company: "", location: "", startDate: "", endDate: "", isCurrent: false, description: "", accomplishments: "" };
+const EMPTY_EDU   = { institution: "", degree: "", fieldOfStudy: "", startDate: "", endDate: "", gpa: "", honors: "" };
+const EMPTY_SKILL = { name: "", category: "", proficiency: "" };
+const EMPTY_PREF  = { targetRoles: [], targetLocations: [], workMode: "Any", salaryMin: "", salaryMax: "", salaryCurrency: "USD", openToRelocation: false, notes: "" };
+
+const PROFICIENCY_COLORS = { Beginner: "#6e7681", Intermediate: "#1a7fc1", Advanced: "#7c3aed", Expert: "#14a053" };
+const WORK_MODES = ["Any", "Remote", "Hybrid", "On-site"];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -39,6 +46,8 @@ export default function ProfilePage({ user }) {
   const [profile, setProfile]     = useState({ ...EMPTY_PROFILE });
   const [experience, setExp]       = useState([]);
   const [education, setEdu]        = useState([]);
+  const [skills, setSkills]        = useState([]);
+  const [prefs, setPrefs]          = useState({ ...EMPTY_PREF });
   const [loading, setLoading]      = useState(true);
   const [saving, setSaving]        = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -58,24 +67,59 @@ export default function ProfilePage({ user }) {
   const [eduLoading, setEduLoading]     = useState(false);
   const [eduError, setEduError]         = useState("");
 
+  // Skills form state
+  const [showSkillForm, setShowSkillForm] = useState(false);
+  const [editingSkill, setEditingSkill]   = useState(null);
+  const [skillForm, setSkillForm]         = useState(EMPTY_SKILL);
+  const [skillLoading, setSkillLoading]   = useState(false);
+  const [skillError, setSkillError]       = useState("");
+  const [quickSkillName, setQuickSkillName] = useState("");
+
+  // Career preferences state
+  const [prefLoading, setPrefLoading] = useState(false);
+  const [prefSaved, setPrefSaved]     = useState(false);
+  const [prefError, setPrefError]     = useState("");
+  const [roleInput, setRoleInput]     = useState("");
+  const [locInput, setLocInput]       = useState("");
+
   useEffect(() => {
-    const fetchProfile = async () => {
-      const result = await getProfile(getToken());
-      if (result.success && result.data) {
-        setProfile({ ...EMPTY_PROFILE, ...result.data });
-        setExp(result.data.experience || []);
-        setEdu(result.data.education || []);
+    const fetchAll = async () => {
+      const token = getToken();
+      const [profileResult, prefResult] = await Promise.all([
+        getProfile(token),
+        getPreferences(token),
+      ]);
+      if (profileResult.success && profileResult.data) {
+        setProfile({ ...EMPTY_PROFILE, ...profileResult.data });
+        setExp(profileResult.data.experience || []);
+        setEdu(profileResult.data.education || []);
+        setSkills(profileResult.data.skills || []);
+      }
+      if (prefResult.success && prefResult.data) {
+        const d = prefResult.data;
+        setPrefs({
+          targetRoles:      d.targetRoles      || [],
+          targetLocations:  d.targetLocations  || [],
+          workMode:         d.workMode         || "Any",
+          salaryMin:        d.salaryMin        ?? "",
+          salaryMax:        d.salaryMax        ?? "",
+          salaryCurrency:   d.salaryCurrency   || "USD",
+          openToRelocation: d.openToRelocation || false,
+          notes:            d.notes            || "",
+        });
       }
       setLoading(false);
     };
-    fetchProfile();
+    fetchAll();
   }, []);
 
   // ── Completion indicator ───────────────────────────────────────────────────
-  // email(1) + 6 basic fields + hasExp(1) + hasEdu(1) = 9 total
+  // email(1) + 6 basic fields + hasExp(1) + hasEdu(1) + hasSkills(1) + hasPrefs(1) = 11 total
   const filledBasic = BASIC_FIELDS.filter((f) => profile[f]?.trim()).length;
-  const filledCount = 1 + filledBasic + (experience.length > 0 ? 1 : 0) + (education.length > 0 ? 1 : 0);
-  const totalFields = 9;
+  const hasPrefs = prefs.targetRoles.length > 0 || prefs.targetLocations.length > 0 || prefs.workMode !== "Any";
+  const filledCount = 1 + filledBasic + (experience.length > 0 ? 1 : 0) + (education.length > 0 ? 1 : 0)
+    + (skills.length > 0 ? 1 : 0) + (hasPrefs ? 1 : 0);
+  const totalFields = 11;
   const completionPct = Math.round((filledCount / totalFields) * 100);
 
   // ── Basic profile save ─────────────────────────────────────────────────────
@@ -228,6 +272,101 @@ export default function ProfilePage({ user }) {
     setEduLoading(false);
     if (!result.success) { setEduError(result.error?.message || "Failed to delete education"); return; }
     setEdu(result.data.education || []);
+  };
+
+  // ── Skills handlers ────────────────────────────────────────────────────────
+  const openAddSkill = () => {
+    setEditingSkill(null);
+    setSkillForm(EMPTY_SKILL);
+    setSkillError("");
+    setShowSkillForm(true);
+  };
+
+  const openEditSkill = (entry) => {
+    setEditingSkill(entry);
+    setSkillForm({ name: entry.name || "", category: entry.category || "", proficiency: entry.proficiency || "" });
+    setSkillError("");
+    setShowSkillForm(true);
+  };
+
+  const cancelSkillForm = () => { setShowSkillForm(false); setEditingSkill(null); setSkillError(""); };
+  const setSF = (field) => (e) => setSkillForm((f) => ({ ...f, [field]: e.target.value }));
+
+  const handleSkillSave = async (e) => {
+    e.preventDefault();
+    if (!skillForm.name.trim()) { setSkillError("Skill name is required."); return; }
+    setSkillLoading(true);
+    setSkillError("");
+    const payload = { name: skillForm.name.trim(), category: skillForm.category.trim(), proficiency: skillForm.proficiency };
+    const result = editingSkill
+      ? await updateSkill(getToken(), editingSkill._id, payload)
+      : await addSkill(getToken(), payload);
+    setSkillLoading(false);
+    if (!result.success) { setSkillError(result.error?.message || "Failed to save skill"); return; }
+    setSkills(result.data.skills || []);
+    cancelSkillForm();
+  };
+
+  const handleQuickAddSkill = async (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const name = quickSkillName.trim();
+    if (!name) return;
+    setSkillLoading(true);
+    const result = await addSkill(getToken(), { name });
+    setSkillLoading(false);
+    if (!result.success) { setSkillError(result.error?.message || "Failed to add skill"); return; }
+    setSkills(result.data.skills || []);
+    setQuickSkillName("");
+  };
+
+  const handleSkillDelete = async (skillId) => {
+    if (!window.confirm("Delete this skill?")) return;
+    setSkillLoading(true);
+    const result = await deleteSkill(getToken(), skillId);
+    setSkillLoading(false);
+    if (!result.success) { setSkillError(result.error?.message || "Failed to delete skill"); return; }
+    setSkills(result.data.skills || []);
+  };
+
+  const handleSkillMove = async (index, direction) => {
+    const next = [...skills];
+    const swap = index + direction;
+    if (swap < 0 || swap >= next.length) return;
+    [next[index], next[swap]] = [next[swap], next[index]];
+    setSkills(next);
+    const result = await reorderSkills(getToken(), next.map((s) => s._id));
+    if (!result.success) setSkillError(result.error?.message || "Failed to reorder skills");
+  };
+
+  // ── Career Preferences handlers ────────────────────────────────────────────
+  const addTag = (field, inputVal, setInput) => {
+    const val = inputVal.trim();
+    if (!val) return;
+    setPrefs((p) => ({ ...p, [field]: [...p[field], val] }));
+    setInput("");
+  };
+
+  const removeTag = (field, index) =>
+    setPrefs((p) => ({ ...p, [field]: p[field].filter((_, i) => i !== index) }));
+
+  const setPF = (field) => (e) =>
+    setPrefs((p) => ({ ...p, [field]: e.target.type === "checkbox" ? e.target.checked : e.target.value }));
+
+  const handleSavePrefs = async (e) => {
+    e.preventDefault();
+    setPrefLoading(true);
+    setPrefError("");
+    setPrefSaved(false);
+    const payload = {
+      ...prefs,
+      salaryMin: prefs.salaryMin !== "" ? Number(prefs.salaryMin) : null,
+      salaryMax: prefs.salaryMax !== "" ? Number(prefs.salaryMax) : null,
+    };
+    const result = await savePreferences(getToken(), payload);
+    setPrefLoading(false);
+    if (!result.success) { setPrefError(result.error?.message || "Failed to save preferences"); return; }
+    setPrefSaved(true);
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -501,6 +640,202 @@ export default function ProfilePage({ user }) {
             </div>
           </form>
         )}
+      </section>
+
+      {/* ── Skills section ───────────────────────────────────────────────── */}
+      <section className="settings-section">
+        <div className="profile-section-header">
+          <h3 className="settings-section-title" style={{ margin: 0 }}>Skills</h3>
+          {!showSkillForm && (
+            <button className="btn-profile-add" onClick={openAddSkill} disabled={skillLoading}>+ Add</button>
+          )}
+        </div>
+
+        {skillError && <p className="profile-section-error">{skillError}</p>}
+
+        {/* Quick-add input */}
+        {!showSkillForm && (
+          <div className="form-group" style={{ marginBottom: 12 }}>
+            <input
+              type="text"
+              value={quickSkillName}
+              onChange={(e) => setQuickSkillName(e.target.value)}
+              onKeyDown={handleQuickAddSkill}
+              placeholder="Quick add — type a skill name and press Enter"
+              disabled={skillLoading}
+            />
+          </div>
+        )}
+
+        {skills.length === 0 && !showSkillForm && (
+          <p className="profile-empty-hint">No skills added yet.</p>
+        )}
+
+        {skills.map((entry, idx) => (
+          <div key={entry._id} className="profile-entry-card">
+            <div className="profile-entry-header">
+              <div className="profile-entry-title-block">
+                <span className="profile-entry-title">{entry.name}</span>
+                {entry.category && (
+                  <span className="profile-entry-subtitle">{entry.category}</span>
+                )}
+                {entry.proficiency && (
+                  <span
+                    className="profile-entry-dates"
+                    style={{ color: PROFICIENCY_COLORS[entry.proficiency] || "#6e7681", fontWeight: 500 }}
+                  >
+                    {entry.proficiency}
+                  </span>
+                )}
+              </div>
+              <div className="profile-entry-controls">
+                <button className="btn-entry-move" onClick={() => handleSkillMove(idx, -1)} disabled={idx === 0 || skillLoading} title="Move up">▲</button>
+                <button className="btn-entry-move" onClick={() => handleSkillMove(idx, 1)} disabled={idx === skills.length - 1 || skillLoading} title="Move down">▼</button>
+                <button className="btn-entry-edit" onClick={() => openEditSkill(entry)} disabled={skillLoading}>Edit</button>
+                <button className="btn-entry-delete" onClick={() => handleSkillDelete(entry._id)} disabled={skillLoading}>Delete</button>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {showSkillForm && (
+          <form className="profile-entry-form" onSubmit={handleSkillSave}>
+            <h4 className="profile-entry-form-title">{editingSkill ? "Edit Skill" : "Add Skill"}</h4>
+            <div className="profile-field-row">
+              <div className="form-group">
+                <label>Skill Name *</label>
+                <input type="text" value={skillForm.name} onChange={setSF("name")} placeholder="e.g. TypeScript" disabled={skillLoading} />
+              </div>
+              <div className="form-group">
+                <label>Category</label>
+                <input type="text" value={skillForm.category} onChange={setSF("category")} placeholder="e.g. Frontend" disabled={skillLoading} />
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Proficiency</label>
+              <select value={skillForm.proficiency} onChange={setSF("proficiency")} disabled={skillLoading}>
+                <option value="">— select —</option>
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+                <option value="Expert">Expert</option>
+              </select>
+            </div>
+            {skillError && <p className="profile-section-error">{skillError}</p>}
+            <div className="profile-form-actions">
+              <button type="button" className="btn-form-cancel" onClick={cancelSkillForm} disabled={skillLoading}>Cancel</button>
+              <button type="submit" className="btn-form-save" disabled={skillLoading}>{skillLoading ? "Saving…" : editingSkill ? "Update" : "Add Skill"}</button>
+            </div>
+          </form>
+        )}
+      </section>
+
+      {/* ── Career Preferences section ───────────────────────────────────── */}
+      <section className="settings-section">
+        <h3 className="settings-section-title">Career Preferences</h3>
+        <form onSubmit={handleSavePrefs}>
+          <div className="settings-card">
+
+            {/* Target Roles tag input */}
+            <div className="form-group">
+              <label>Target Roles</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
+                {prefs.targetRoles.map((r, i) => (
+                  <span key={i} style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: 4, padding: "2px 8px", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: 4 }}>
+                    {r}
+                    <button type="button" onClick={() => removeTag("targetRoles", i)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", lineHeight: 1, padding: 0 }}>×</button>
+                  </span>
+                ))}
+              </div>
+              <input
+                type="text"
+                value={roleInput}
+                onChange={(e) => setRoleInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag("targetRoles", roleInput, setRoleInput); } }}
+                placeholder="Type a role and press Enter to add"
+              />
+            </div>
+
+            {/* Target Locations tag input */}
+            <div className="form-group">
+              <label>Target Locations</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
+                {prefs.targetLocations.map((l, i) => (
+                  <span key={i} style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: 4, padding: "2px 8px", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: 4 }}>
+                    {l}
+                    <button type="button" onClick={() => removeTag("targetLocations", i)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", lineHeight: 1, padding: 0 }}>×</button>
+                  </span>
+                ))}
+              </div>
+              <input
+                type="text"
+                value={locInput}
+                onChange={(e) => setLocInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag("targetLocations", locInput, setLocInput); } }}
+                placeholder="Type a location and press Enter to add"
+              />
+            </div>
+
+            {/* Work Mode */}
+            <div className="form-group">
+              <label>Work Mode</label>
+              <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 4 }}>
+                {WORK_MODES.map((mode) => (
+                  <label key={mode} style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal", cursor: "pointer", fontSize: "0.875rem" }}>
+                    <input type="radio" name="workMode" value={mode} checked={prefs.workMode === mode} onChange={setPF("workMode")} />
+                    {mode}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Salary Range */}
+            <div className="profile-field-row">
+              <div className="form-group">
+                <label>Salary Min</label>
+                <input type="number" value={prefs.salaryMin} onChange={setPF("salaryMin")} placeholder="e.g. 80000" min="0" />
+              </div>
+              <div className="form-group">
+                <label>Salary Max</label>
+                <input type="number" value={prefs.salaryMax} onChange={setPF("salaryMax")} placeholder="e.g. 120000" min="0" />
+              </div>
+              <div className="form-group">
+                <label>Currency</label>
+                <input type="text" value={prefs.salaryCurrency} onChange={setPF("salaryCurrency")} placeholder="USD" maxLength={10} />
+              </div>
+            </div>
+
+            {/* Open to Relocation */}
+            <div className="form-group profile-checkbox-group">
+              <label className="profile-checkbox-label">
+                <input type="checkbox" checked={prefs.openToRelocation} onChange={setPF("openToRelocation")} />
+                Open to relocation
+              </label>
+            </div>
+
+            {/* Notes */}
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Notes</label>
+              <textarea value={prefs.notes} onChange={setPF("notes")} rows={3} placeholder="Any other preferences or context for recruiters..." />
+            </div>
+          </div>
+
+          {prefSaved && (
+            <div className="alert alert-success" style={{ marginTop: 12 }}>
+              <div className="alert-icon">✓</div>
+              <div className="alert-content"><p>Preferences saved.</p></div>
+            </div>
+          )}
+          {prefError && (
+            <div className="alert alert-error" style={{ marginTop: 12 }}>
+              <div className="alert-icon">✗</div>
+              <div className="alert-content"><p>{prefError}</p></div>
+            </div>
+          )}
+          <button type="submit" className="btn btn-primary" style={{ marginTop: 16 }} disabled={prefLoading}>
+            {prefLoading ? <span className="spinner">Saving...</span> : "Save Preferences"}
+          </button>
+        </form>
       </section>
     </>
   );

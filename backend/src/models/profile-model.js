@@ -1,5 +1,29 @@
 import mongoose from "mongoose";
 
+const skillSchema = new mongoose.Schema(
+  {
+    name:        { type: String, required: true, trim: true, maxlength: 200 },
+    category:    { type: String, trim: true, maxlength: 100, default: "" },
+    proficiency: { type: String, enum: ["", "Beginner", "Intermediate", "Advanced", "Expert"], default: "" },
+    order:       { type: Number, default: 0 },
+  },
+  { timestamps: true }
+);
+
+const careerPreferencesSchema = new mongoose.Schema(
+  {
+    targetRoles:      { type: [String], default: [] },
+    targetLocations:  { type: [String], default: [] },
+    workMode:         { type: String, enum: ["Remote", "Hybrid", "On-site", "Any"], default: "Any" },
+    salaryMin:        { type: Number, default: null },
+    salaryMax:        { type: Number, default: null },
+    salaryCurrency:   { type: String, default: "USD" },
+    openToRelocation: { type: Boolean, default: false },
+    notes:            { type: String, trim: true, maxlength: 2000, default: "" },
+  },
+  { _id: false }
+);
+
 const experienceSchema = new mongoose.Schema(
   {
     jobTitle:        { type: String, required: true, trim: true, maxlength: 200 },
@@ -36,8 +60,10 @@ const profileSchema = new mongoose.Schema(
     location:   { type: String, trim: true, default: "" },
     headline:   { type: String, trim: true, default: "" },
     summary:    { type: String, trim: true, default: "" },
-    experience: { type: [experienceSchema], default: [] },
-    education:  { type: [educationSchema], default: [] },
+    experience:        { type: [experienceSchema], default: [] },
+    education:         { type: [educationSchema], default: [] },
+    skills:            { type: [skillSchema], default: [] },
+    careerPreferences: { type: careerPreferencesSchema, default: () => ({}) },
     createdAt:  { type: Date, default: Date.now },
     updatedAt:  { type: Date, default: Date.now },
   },
