@@ -31,8 +31,8 @@ export const createJobHandler = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return validationError(res, errors);
   try {
-    const { company, title, status, location, url, salary, notes, appliedAt } = req.body;
-    const job = await createJob({ userId: req.user.userId, company, title, status, location, url, salary, notes, appliedAt: appliedAt || null });
+    const { company, title, status, location, url, salary, notes, appliedAt, outcome, outcomeNotes } = req.body;
+    const job = await createJob({ userId: req.user.userId, company, title, status, location, url, salary, notes, appliedAt: appliedAt || null, outcome: outcome || "", outcomeNotes: outcomeNotes || "" });
     return res.status(201).json({ success: true, data: job });
   } catch { return res.status(500).json({ success: false, error: { message: "Failed to create job" } }); }
 };
@@ -41,7 +41,7 @@ export const updateJobHandler = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return validationError(res, errors);
   try {
-    const allowed = ["company", "title", "status", "location", "url", "salary", "notes", "appliedAt"];
+    const allowed = ["company", "title", "status", "location", "url", "salary", "notes", "appliedAt", "outcome", "outcomeNotes"];
     const updates = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
     const job = await updateJobByIdAndUser(req.params.id, req.user.userId, updates);
     if (!job) return notFound(res);

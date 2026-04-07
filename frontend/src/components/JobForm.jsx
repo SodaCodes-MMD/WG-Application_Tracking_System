@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { JOB_STATUSES } from "../services/jobs-api.js";
+import { JOB_STATUSES, JOB_OUTCOMES } from "../services/jobs-api.js";
 import "./JobForm.css";
 
-const EMPTY = { company: "", title: "", status: "Wishlist", location: "", url: "", salary: "", notes: "", appliedAt: "" };
+const EMPTY = { company: "", title: "", status: "Wishlist", location: "", url: "", salary: "", notes: "", appliedAt: "", outcome: "", outcomeNotes: "" };
 
 function toDateInput(d) {
   if (!d) return "";
@@ -17,7 +17,7 @@ export default function JobForm({ job, onSave, onClose, loading }) {
 
 useEffect(() => {
     const nextForm = job
-      ? { company: job.company||"", title: job.title||"", status: job.status||"Wishlist", location: job.location||"", url: job.url||"", salary: job.salary||"", notes: job.notes||"", appliedAt: toDateInput(job.appliedAt) }
+      ? { company: job.company||"", title: job.title||"", status: job.status||"Wishlist", location: job.location||"", url: job.url||"", salary: job.salary||"", notes: job.notes||"", appliedAt: toDateInput(job.appliedAt), outcome: job.outcome||"", outcomeNotes: job.outcomeNotes||"" }
       : EMPTY;
     if (job) { setForm(nextForm); } else { setForm(EMPTY); } // eslint-disable-line react-hooks/set-state-in-effect
     setErrors({});
@@ -82,6 +82,23 @@ useEffect(() => {
             <label>Notes</label>
             <textarea value={form.notes} onChange={set("notes")} placeholder="Recruiter name, next steps..." rows={3} disabled={loading} />
           </div>
+          <div className="jf-divider" />
+          <div className="jf-section-title">Outcome</div>
+          <div className="jf-row">
+            <div className="jf-group">
+              <label>Final Outcome</label>
+              <select value={form.outcome} onChange={set("outcome")} disabled={loading}>
+                <option value="">— Not recorded —</option>
+                {JOB_OUTCOMES.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+          </div>
+          {form.outcome && (
+            <div className="jf-group">
+              <label>Outcome Notes</label>
+              <textarea value={form.outcomeNotes} onChange={set("outcomeNotes")} placeholder="e.g. Rejected after final round, offer was below expectations..." rows={3} disabled={loading} />
+            </div>
+          )}
           <div className="jf-actions">
             <button type="button" className="jf-btn-cancel" onClick={onClose} disabled={loading}>Cancel</button>
             <button type="submit" className="jf-btn-save" disabled={loading}>{loading ? "Saving…" : isEdit ? "Save Changes" : "Add Job"}</button>

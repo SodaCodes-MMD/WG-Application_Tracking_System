@@ -26,6 +26,14 @@ export const jobsApi = {
 };
 
 export const JOB_STATUSES = ["Wishlist", "Applied", "Phone Screen", "Interview", "Offer", "Rejected", "Withdrawn"];
+export const JOB_OUTCOMES = ["Accepted", "Declined Offer", "Rejected", "Ghosted", "Withdrawn"];
+export const OUTCOME_COLORS = {
+  "Accepted":       { bg: "#d6f5e0", text: "#0a6b2e", border: "#00aa44" },
+  "Declined Offer": { bg: "#dbeafe", text: "#1e40af", border: "#3b82f6" },
+  "Rejected":       { bg: "#fee2e2", text: "#991b1b", border: "#ef4444" },
+  "Ghosted":        { bg: "#f3f4f6", text: "#6b7280", border: "#9ca3af" },
+  "Withdrawn":      { bg: "#f5f5f5", text: "#555555", border: "#cccccc" },
+};
 
 export const STATUS_COLORS = {
   Wishlist:      { bg: "#fff9db", text: "#7a5c00", border: "#f0c800" },

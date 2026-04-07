@@ -21,3 +21,5 @@
 .jf-btn-save { padding: 7px 18px; font-size: 0.875rem; font-weight: 500; background: #f0c800; color: #1a1a1a; border: none; border-radius: 6px; cursor: pointer; }
 .jf-btn-save:hover:not(:disabled) { background: #d4af00; }
 .jf-btn-save:disabled, .jf-btn-cancel:disabled { opacity: 0.6; cursor: not-allowed; }
+.jf-divider { border: none; border-top: 1px solid var(--border-color); margin: 4px 0; }
+.jf-section-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); }
