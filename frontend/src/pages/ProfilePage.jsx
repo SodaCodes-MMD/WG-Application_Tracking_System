@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getToken } from "../services/auth-service.js";
+import { getProfile, saveProfile } from "../services/profile-api.js";
 import "./AuthForms.css";
 
 // Fields that contribute to completion (email always counts as filled)
@@ -14,21 +16,26 @@ const EMPTY_PROFILE = {
 };
 
 export default function ProfilePage({ user }) {
-  const storageKey = `profile_${user?.email ?? "guest"}`;
-
-  const [profile, setProfile] = useState(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      return saved ? { ...EMPTY_PROFILE, ...JSON.parse(saved) } : { ...EMPTY_PROFILE };
-    } catch {
-      return { ...EMPTY_PROFILE };
-    }
-  });
-
+  const [profile, setProfile] = useState({ ...EMPTY_PROFILE });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState("");
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const result = await getProfile(getToken());
+      if (result.success && result.data) {
+        setProfile({ ...EMPTY_PROFILE, ...result.data });
+      }
+      setLoading(false);
+    };
+    fetchProfile();
+  }, []);
 
   const handleChange = (field) => (e) => {
     setSaveSuccess(false);
+    setSaveError("");
     setProfile((p) => ({ ...p, [field]: e.target.value }));
   };
 
@@ -37,11 +44,36 @@ export default function ProfilePage({ user }) {
   const totalFields = 1 + PROFILE_FIELDS.length; // 7 total
   const completionPct = Math.round((filledCount / totalFields) * 100);
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    localStorage.setItem(storageKey, JSON.stringify(profile));
-    setSaveSuccess(true);
+    setSaving(true);
+    setSaveSuccess(false);
+    setSaveError("");
+
+    const result = await saveProfile(getToken(), profile);
+    setSaving(false);
+
+    if (!result.success) {
+      setSaveError(result.error?.message ?? "Failed to save profile");
+    } else {
+      setSaveSuccess(true);
+    }
   };
+
+  if (loading) {
+    return (
+      <>
+        <div className="page-header">
+          <h2>Profile</h2>
+          <p>Your professional information used across applications.</p>
+        </div>
+        <div className="loading-container">
+          <div className="spinner-large" />
+          <p>Loading profile...</p>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -69,6 +101,13 @@ export default function ProfilePage({ user }) {
           <div className="alert alert-success" style={{ marginBottom: 20 }}>
             <div className="alert-icon">✓</div>
             <div className="alert-content"><p>Profile saved.</p></div>
+          </div>
+        )}
+
+        {saveError && (
+          <div className="alert alert-error" style={{ marginBottom: 20 }}>
+            <div className="alert-icon">✗</div>
+            <div className="alert-content"><p>{saveError}</p></div>
           </div>
         )}
 
@@ -164,8 +203,8 @@ export default function ProfilePage({ user }) {
           </div>
         </section>
 
-        <button type="submit" className="btn btn-primary">
-          Save profile
+        <button type="submit" className="btn btn-primary" disabled={saving}>
+          {saving ? <span className="spinner">Saving...</span> : "Save profile"}
         </button>
       </form>
     </>

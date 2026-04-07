@@ -5,6 +5,19 @@
 .dh-stat-count { font-weight: 700; font-size: 0.75rem; }
 .dh-clear-filter { font-size: 0.775rem; background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px 8px; border-radius: 4px; }
 .dh-clear-filter:hover { color: var(--text-primary); }
+.dh-search-bar { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 16px; }
+.dh-search-input { width: 100%; max-width: 720px; padding: 10px 16px; font-size: 0.95rem; border: 1px solid var(--border-color); border-radius: 8px; background: #ffffff; color: #1a1a1a; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+[data-theme="dark"] .dh-search-input { background: #1a1a1a; color: #ffffff; }
+.dh-search-input:focus { border-color: #f0c800; box-shadow: 0 0 0 3px rgba(240, 200, 0, 0.15); }
+.dh-filters { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: center; gap: 12px; margin-bottom: 20px; padding: 14px 16px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; }
+.dh-filter-group { display: flex; flex-direction: column; gap: 4px; }
+.dh-filter-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); }
+.dh-filter-select, .dh-filter-date { padding: 6px 10px; font-size: 0.85rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; transition: border-color 0.15s; }
+.dh-filter-select:focus, .dh-filter-date:focus { outline: none; border-color: #f0c800; }
+.dh-filter-select:disabled { opacity: 0.5; cursor: not-allowed; }
+.dh-clear-all-filters { align-self: flex-end; padding: 6px 12px; font-size: 0.8rem; font-weight: 500; background: none; border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-secondary); cursor: pointer; transition: background 0.15s, color 0.15s; }
+.dh-clear-all-filters:hover { background: var(--border-color); color: var(--text-primary); }
+@media (max-width: 600px) { .dh-filters { gap: 10px; } .dh-filter-select, .dh-filter-date { width: 100%; } }
 .dh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
 @media (max-width: 600px) { .dh-grid { grid-template-columns: 1fr; } }
 .dh-loading { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 80px 0; color: var(--text-secondary); font-size: 0.875rem; }

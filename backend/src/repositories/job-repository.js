@@ -19,3 +19,20 @@ export const updateJobByIdAndUser = (id, userId, updates, historyEntry = null) =
 
 export const deleteJobByIdAndUser = (id, userId) =>
   Job.findOneAndDelete({ _id: id, userId }).lean();
+
+export const addInterview = (jobId, userId, data) =>
+  Job.findOneAndUpdate({ _id: jobId, userId }, { $push: { interviews: data } }, { new: true, runValidators: true }).lean();
+
+export const updateInterview = (jobId, userId, interviewId, updates) =>
+  Job.findOneAndUpdate(
+    { _id: jobId, userId, "interviews._id": interviewId },
+    { $set: Object.fromEntries(Object.entries(updates).map(([k, v]) => [`interviews.$.${k}`, v])) },
+    { new: true, runValidators: true }
+  ).lean();
+
+export const removeInterview = (jobId, userId, interviewId) =>
+  Job.findOneAndUpdate(
+    { _id: jobId, userId },
+    { $pull: { interviews: { _id: interviewId } } },
+    { new: true }
+  ).lean();

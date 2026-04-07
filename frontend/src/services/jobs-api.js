@@ -10,7 +10,10 @@ async function request(method, path, body) {
   if (body) options.body = JSON.stringify(body);
   const res = await fetch(`${API_URL}${path}`, options);
   const data = await res.json();
-  if (!res.ok) { const error = new Error(data.error?.message || "Request failed"); error.response = { status: res.status, data }; throw error; }
+  if (!res.ok) {
+    if (res.status === 401) { localStorage.removeItem("token"); localStorage.removeItem("user"); window.location.href = "/login"; }
+    const error = new Error(data.error?.message || "Request failed"); error.response = { status: res.status, data }; throw error;
+  }
   return data;
 }
 
@@ -20,16 +23,20 @@ export const jobsApi = {
   create: (payload) => request("POST", "/jobs", payload),
   update: (id, payload) => request("PATCH", `/jobs/${id}`, payload),
   remove: (id) => request("DELETE", `/jobs/${id}`),
+  addInterview: (jobId, data) => request("POST", `/jobs/${jobId}/interviews`, data),
+  updateInterview: (jobId, interviewId, data) => request("PATCH", `/jobs/${jobId}/interviews/${interviewId}`, data),
+  removeInterview: (jobId, interviewId) => request("DELETE", `/jobs/${jobId}/interviews/${interviewId}`),
 };
 
 export const JOB_STATUSES = ["Wishlist", "Applied", "Phone Screen", "Interview", "Offer", "Rejected", "Withdrawn"];
 
 export const STATUS_COLORS = {
-  Wishlist:      { bg: "#fff9db", text: "#7a5c00", border: "#f0c800" },
-  Applied:       { bg: "#d6f5e0", text: "#0a6b2e", border: "#00aa44" },
-  "Phone Screen":{ bg: "#f0c800", text: "#1a1a1a", border: "#c9a800" },
-  Interview:     { bg: "#00aa44", text: "#ffffff", border: "#008833" },
-  Offer:         { bg: "#1a1a1a", text: "#f0c800", border: "#444444" },
-  Rejected:      { bg: "#2d2d2d", text: "#aaaaaa", border: "#555555" },
-  Withdrawn:     { bg: "#f5f5f5", text: "#555555", border: "#cccccc" },
+  Wishlist:      { bg: "#eff6ff", text: "#1d4ed8", border: "#3b82f6" },
+  Applied:       { bg: "#fffbeb", text: "#b45309", border: "#f59e0b" },
+  "Phone Screen":{ bg: "#f0f9ff", text: "#0369a1", border: "#0ea5e9" },
+  Interview:     { bg: "#f5f3ff", text: "#6d28d9", border: "#8b5cf6" },
+  Offer:         { bg: "#f0fdf4", text: "#15803d", border: "#22c55e" },
+  Rejected:      { bg: "#fef2f2", text: "#b91c1c", border: "#ef4444" },
+  Withdrawn:     { bg: "#f9fafb", text: "#374151", border: "#6b7280" },
+  Archived:      { bg: "#f9fafb", text: "#374151", border: "#6b7280" },
 };
