@@ -1,7 +1,7 @@
 import { validationResult } from "express-validator";
 import {
-  findJobsByUser, findJobById, findJobByIdAndUser,
-  createJob, updateJobByIdAndUser, deleteJobByIdAndUser,
+  findActiveJobsByUser, findArchivedJobsByUser, findJobById, findJobByIdAndUserInclusive,
+  createJob, updateJobByIdAndUser, archiveJobByIdAndUser, restoreJobByIdAndUser, deleteJobByIdAndUser,
 } from "../repositories/job-repository.js";
 
 const validationError = (res, errors) =>
@@ -12,9 +12,16 @@ const notFound = (res) =>
 
 export const listJobs = async (req, res) => {
   try {
-    const jobs = await findJobsByUser(req.user.userId);
+    const jobs = await findActiveJobsByUser(req.user.userId);
     return res.json({ success: true, data: jobs });
   } catch { return res.status(500).json({ success: false, error: { message: "Failed to fetch jobs" } }); }
+};
+
+export const listArchivedJobs = async (req, res) => {
+  try {
+    const jobs = await findArchivedJobsByUser(req.user.userId);
+    return res.json({ success: true, data: jobs });
+  } catch { return res.status(500).json({ success: false, error: { message: "Failed to fetch archived jobs" } }); }
 };
 
 export const getJob = async (req, res) => {
@@ -47,6 +54,22 @@ export const updateJobHandler = async (req, res) => {
     if (!job) return notFound(res);
     return res.json({ success: true, data: job });
   } catch { return res.status(500).json({ success: false, error: { message: "Failed to update job" } }); }
+};
+
+export const archiveJobHandler = async (req, res) => {
+  try {
+    const job = await archiveJobByIdAndUser(req.params.id, req.user.userId);
+    if (!job) return notFound(res);
+    return res.json({ success: true, data: job });
+  } catch { return res.status(500).json({ success: false, error: { message: "Failed to archive job" } }); }
+};
+
+export const restoreJobHandler = async (req, res) => {
+  try {
+    const job = await restoreJobByIdAndUser(req.params.id, req.user.userId);
+    if (!job) return notFound(res);
+    return res.json({ success: true, data: job });
+  } catch { return res.status(500).json({ success: false, error: { message: "Failed to restore job" } }); }
 };
 
 export const deleteJobHandler = async (req, res) => {

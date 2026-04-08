@@ -1,7 +1,13 @@
 import { Job } from "../models/job-model.js";
 
 export const findJobsByUser = (userId) =>
-  Job.find({ userId }).sort({ createdAt: -1 }).lean();
+  Job.find({ userId, archivedAt: null }).sort({ createdAt: -1 }).lean();
+
+export const findActiveJobsByUser = (userId) =>
+  Job.find({ userId, archivedAt: null }).sort({ createdAt: -1 }).lean();
+
+export const findArchivedJobsByUser = (userId) =>
+  Job.find({ userId, archivedAt: { $ne: null } }).sort({ archivedAt: -1 }).lean();
 
 export const findJobById = (id) =>
   Job.findById(id).lean();
@@ -9,10 +15,27 @@ export const findJobById = (id) =>
 export const findJobByIdAndUser = (id, userId) =>
   Job.findOne({ _id: id, userId }).lean();
 
+export const findJobByIdAndUserInclusive = (id, userId) =>
+  Job.findOne({ _id: id, userId }).lean();
+
 export const createJob = (data) => Job.create(data);
 
 export const updateJobByIdAndUser = (id, userId, updates) =>
-  Job.findOneAndUpdate({ _id: id, userId }, { $set: updates }, { new: true, runValidators: true }).lean();
+  Job.findOneAndUpdate({ _id: id, userId, archivedAt: null }, { $set: updates }, { new: true, runValidators: true }).lean();
+
+export const archiveJobByIdAndUser = (id, userId) =>
+  Job.findOneAndUpdate(
+    { _id: id, userId, archivedAt: null },
+    { $set: { archivedAt: new Date() } },
+    { new: true, runValidators: true }
+  ).lean();
+
+export const restoreJobByIdAndUser = (id, userId) =>
+  Job.findOneAndUpdate(
+    { _id: id, userId, archivedAt: { $ne: null } },
+    { $set: { archivedAt: null } },
+    { new: true, runValidators: true }
+  ).lean();
 
 export const deleteJobByIdAndUser = (id, userId) =>
   Job.findOneAndDelete({ _id: id, userId }).lean();

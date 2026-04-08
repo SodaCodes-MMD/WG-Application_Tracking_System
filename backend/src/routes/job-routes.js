@@ -1,7 +1,7 @@
 import express from "express";
 import { body } from "express-validator";
 import { authenticate } from "../middleware/auth-middleware.js";
-import { listJobs, getJob, createJobHandler, updateJobHandler, deleteJobHandler } from "../controllers/job-controller.js";
+import { listJobs, listArchivedJobs, getJob, createJobHandler, updateJobHandler, archiveJobHandler, restoreJobHandler, deleteJobHandler } from "../controllers/job-controller.js";
 import { JOB_STATUSES_LIST } from "../models/job-model.js";
 
 const router = express.Router();
@@ -18,9 +18,12 @@ const jobBodyValidation = [
 ];
 
 router.get("/jobs", listJobs);
+router.get("/jobs/archived", listArchivedJobs);
 router.get("/jobs/:id", getJob);
 router.post("/jobs", jobBodyValidation, createJobHandler);
 router.patch("/jobs/:id", jobBodyValidation, updateJobHandler);
+router.patch("/jobs/:id/archive", archiveJobHandler);
+router.patch("/jobs/:id/restore", restoreJobHandler);
 router.delete("/jobs/:id", deleteJobHandler);
 
 export default router;
