@@ -3,18 +3,31 @@ import "./FlagPet.css";
 
 const PHRASES_SAVED = [
   "Everyting irie! 😄", "Ya mon! 🎉", "One love! ❤️", "Blessed! 🙏",
+  "Wah gwaan! ✨", "Selecta! 🎵", "irie vibes! 🌴",
 ];
 
 const PHRASES_UNSAVED = [
   "Wagwan? 😢", "Save ya work! 🙁", "Don't forget! 😟", "One love! ❤️",
+  "Check it! 📝", "Ya work need ya! 😔",
 ];
 
 const PHRASES_SAVING = [
   "Hold on... ⏳", "Saving ya work! 🕐", "One moment! ⏰",
+  "Processing! ⚙️", "Soon come! 🏃",
+];
+
+const ANIMATIONS = [
+  "fp-bounce-gentle",
+  "fp-wiggle",
+  "fp-spin",
+  "fp-jump",
+  "fp-squish",
 ];
 
 export function MiniFlag({ mood = "saved" }) {
   const [phrase, setPhrase] = useState(null);
+  const [animClass, setAnimClass] = useState("");
+  const [isDancing, setIsDancing] = useState(false);
   const phraseTimer = useRef(null);
 
   const isSaving = mood === "saving";
@@ -22,16 +35,32 @@ export function MiniFlag({ mood = "saved" }) {
 
   useEffect(() => {
     const showPhrase = () => {
-      const phrases = isSaving ? PHRASES_SAVING : (isSaved ? PHRASES_SAVED : PHRASES_UNSAVED);
-      const p = phrases[Math.floor(Math.random() * phrases.length)];
+      const currentPhrases = isSaving ? PHRASES_SAVING : (isSaved ? PHRASES_SAVED : PHRASES_UNSAVED);
+      const p = currentPhrases[Math.floor(Math.random() * currentPhrases.length)];
       setPhrase(p);
       clearTimeout(phraseTimer.current);
-      phraseTimer.current = setTimeout(() => setPhrase(null), 2000);
+      phraseTimer.current = setTimeout(() => setPhrase(null), 2500);
     };
+    
+    const triggerRandomAnim = () => {
+      if (Math.random() > 0.5) {
+        const anim = ANIMATIONS[Math.floor(Math.random() * ANIMATIONS.length)];
+        setAnimClass(anim);
+        setIsDancing(true);
+        setTimeout(() => {
+          setAnimClass("");
+          setIsDancing(false);
+        }, 1500);
+      }
+    };
+
     showPhrase();
-    const interval = setInterval(showPhrase, 8000);
+    const phraseInterval = setInterval(showPhrase, 7000);
+    const animInterval = setInterval(triggerRandomAnim, 5000);
+
     return () => {
-      clearInterval(interval);
+      clearInterval(phraseInterval);
+      clearInterval(animInterval);
       clearTimeout(phraseTimer.current);
     };
   }, [mood, isSaving, isSaved]);
@@ -45,11 +74,15 @@ export function MiniFlag({ mood = "saved" }) {
   const mouthWidth = 8;
 
   return (
-    <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+    <div 
+      className={`mini-flag-container ${isDancing ? "dancing" : ""}`}
+      style={{ position: "relative", display: "inline-flex", alignItems: "center" }}
+    >
       <svg
         width="32"
         height="32"
         viewBox="0 0 48 48"
+        className={`mini-flag-svg ${animClass}`}
         style={{ display: "block", flexShrink: 0 }}
       >
         <defs>
@@ -88,26 +121,21 @@ export function MiniFlag({ mood = "saved" }) {
             strokeLinecap="round"
           />
         )}
+        {isDancing && (
+          <>
+            <circle cx="10" cy="24" r="4" fill="#F0C800" stroke="#1a1a1a" strokeWidth="1">
+              <animate attributeName="cx" values="10;8;12;10" dur="0.3s" repeatCount="3" />
+            </circle>
+            <circle cx="38" cy="24" r="4" fill="#F0C800" stroke="#1a1a1a" strokeWidth="1">
+              <animate attributeName="cx" values="38;40;36;38" dur="0.3s" repeatCount="3" />
+            </circle>
+          </>
+        )}
       </svg>
+      
       {phrase && (
         <div
-          style={{
-            position: "absolute",
-            top: "calc(100% + 6px)",
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "#fff",
-            color: "#1a1a1a",
-            fontSize: "0.72rem",
-            fontWeight: 600,
-            whiteSpace: "nowrap",
-            padding: "4px 8px",
-            borderRadius: "10px",
-            border: "2px solid #F0C800",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-            zIndex: 10,
-            animation: "fp-pop 0.2s ease-out",
-          }}
+          className="mini-flag-bubble"
         >
           {phrase}
         </div>
@@ -119,13 +147,40 @@ export function MiniFlag({ mood = "saved" }) {
 export function SectionSaveButton({ mood = "saved", onClick, disabled, children }) {
   const isSaving = mood === "saving";
   const isSaved = mood === "saved";
+  const [sparkles, setSparkles] = useState([]);
+
+  useEffect(() => {
+    if (isSaved) {
+      const addSparkle = () => {
+        const newSparkle = {
+          id: Date.now(),
+          x: Math.random() * 80 + 10,
+          y: Math.random() * 30 + 5,
+        };
+        setSparkles((prev) => [...prev.slice(-3), newSparkle]);
+        setTimeout(() => {
+          setSparkles((prev) => prev.filter((s) => s.id !== newSparkle.id));
+        }, 1000);
+      };
+      const interval = setInterval(addSparkle, 800);
+      return () => clearInterval(interval);
+    }
+  }, [isSaved]);
+
   return (
     <button
       type="button"
-      className={`btn btn-section-save ${isSaving ? "" : isSaved ? "btn-saved" : "btn-unsaved"}`}
+      className={`btn btn-section-save ${isSaving ? "" : isSaved ? "btn-saved" : "btn-unsaved"} ${isSaving ? "btn-saving" : ""}`}
       onClick={onClick}
       disabled={disabled}
     >
+      {sparkles.map((s) => (
+        <span
+          key={s.id}
+          className="sparkle"
+          style={{ left: `${s.x}%`, top: `${s.y}%` }}
+        />
+      ))}
       <MiniFlag mood={mood} />
       <span style={{ marginLeft: 8 }}>{children}</span>
     </button>
