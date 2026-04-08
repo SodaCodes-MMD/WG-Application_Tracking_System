@@ -10,6 +10,14 @@
   width: 48px;
 }
 
+/* ── Pet Body Container ── */
+.fp-pet-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 /* ── Flag ── */
 .fp-flag {
   display: block;
@@ -67,6 +75,67 @@
   100% { transform: scaleX(var(--fp-facing, 1)) translateY(0);    }
 }
 
+/* ── Job Action Animations ── */
+.fp--working {
+  animation: fp-work-intro 0.5s ease-out forwards;
+}
+
+@keyframes fp-work-intro {
+  0% { transform: scaleX(var(--fp-facing, 1)) translateY(0); }
+  50% { transform: scaleX(var(--fp-facing, 1)) translateY(-10px) scale(1.1); }
+  100% { transform: scaleX(var(--fp-facing, 1)) translateY(0) scale(1); }
+}
+
+/* Laptop working animation */
+.fp--laptop .fp-pet-body {
+  animation: fp-type 0.3s ease-in-out infinite;
+}
+
+@keyframes fp-type {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-2px) rotate(-1deg); }
+  75% { transform: translateY(-2px) rotate(1deg); }
+}
+
+/* Resume viewing animation */
+.fp--resume .fp-pet-body {
+  animation: fp-scan 1s ease-in-out infinite;
+}
+
+@keyframes fp-scan {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+/* Job board browsing animation */
+.fp--jobboard .fp-pet-body {
+  animation: fp-look-around 1.5s ease-in-out infinite;
+}
+
+@keyframes fp-look-around {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-1px) rotate(-2deg); }
+  50% { transform: translateY(-2px) rotate(0deg); }
+  75% { transform: translateY(-1px) rotate(2deg); }
+}
+
+/* Job icon container */
+.fp-job-icon-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  animation: fp-icon-appear 0.3s ease-out 0.3s forwards;
+  pointer-events: none;
+}
+
+@keyframes fp-icon-appear {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  to { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
+}
+
 /* ── Speech bubble ── */
 .fp-bubble {
   position: absolute;
@@ -99,4 +168,81 @@
 @keyframes fp-pop {
   from { transform: translateX(-50%) scale(0.7); opacity: 0; }
   to   { transform: translateX(-50%) scale(1);   opacity: 1; }
+}
+
+/* ── Job Action Bubble ── */
+.fp-job-bubble {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #009B3A 0%, #00b347 100%);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 6px 12px;
+  border-radius: 16px;
+  box-shadow: 0 3px 12px rgba(0, 155, 58, 0.4);
+  pointer-events: none;
+  animation: fp-job-bubble-pop 0.3s ease-out;
+  border: 2px solid #F0C800;
+  z-index: 10;
+}
+
+.fp-job-bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: #009B3A;
+}
+
+@keyframes fp-job-bubble-pop {
+  0% { transform: translateX(-50%) scale(0) translateY(10px); opacity: 0; }
+  50% { transform: translateX(-50%) scale(1.1) translateY(-2px); }
+  100% { transform: translateX(-50%) scale(1) translateY(0); opacity: 1; }
+}
+
+/* Working state - hide legs, show focus */
+.fp--working .fp-legs {
+  opacity: 0.5;
+  animation: fp-leg-work 0.2s ease-in-out infinite;
+}
+
+@keyframes fp-leg-work {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.8); }
+}
+
+/* Pulse glow when working */
+.fp--working::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 60px;
+  height: 60px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(0, 155, 58, 0.3) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: fp-work-glow 1s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes fp-work-glow {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+  50% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.8; }
+}
+
+/* Job icon animations */
+.fp-job-icon {
+  animation: fp-icon-bounce 0.6s ease-in-out infinite;
+}
+
+@keyframes fp-icon-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
 }
