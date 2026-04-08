@@ -6,11 +6,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: left 1.3s cubic-bezier(0.4, 0, 0.2, 1), top 1.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: 48px;
 }
 
-/* ── Flag ── */
+.fp-pet-body {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .fp-flag {
   display: block;
   filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
@@ -22,7 +27,6 @@
   transform: scale(1.12);
 }
 
-/* ── Legs ── */
 .fp-legs {
   display: flex;
   gap: 10px;
@@ -38,52 +42,134 @@
   transform-origin: top center;
 }
 
-/* Walking: legs alternate */
-.fp--walk .fp-leg--l {
-  animation: fp-leg-l 0.4s ease-in-out infinite;
-}
-.fp--walk .fp-leg--r {
-  animation: fp-leg-r 0.4s ease-in-out infinite;
-}
-
-@keyframes fp-leg-l {
-  0%, 100% { transform: rotate(-20deg); }
-  50%       { transform: rotate(20deg);  }
-}
-@keyframes fp-leg-r {
-  0%, 100% { transform: rotate(20deg);  }
-  50%       { transform: rotate(-20deg); }
-}
-
-/* ── Bounce on click ── */
+/* ── DVD-style Bounce Animation ── */
 .fp--bounce {
-  animation: fp-bounce 0.45s ease-out 2;
+  animation: fp-dvd-bounce 0.6s ease-out;
 }
 
-@keyframes fp-bounce {
-  0%   { transform: scaleX(var(--fp-facing, 1)) translateY(0);    }
-  40%  { transform: scaleX(var(--fp-facing, 1)) translateY(-18px); }
-  70%  { transform: scaleX(var(--fp-facing, 1)) translateY(-8px);  }
-  100% { transform: scaleX(var(--fp-facing, 1)) translateY(0);    }
+@keyframes fp-dvd-bounce {
+  0%   { transform: scale(1); }
+  10%  { transform: scale(1.15); }
+  20%  { transform: scale(1); }
+  30%  { transform: scale(1.1); }
+  40%  { transform: scale(1); }
+  50%  { transform: scale(1.08); }
+  60%  { transform: scale(1); }
+  100% { transform: scale(1); }
 }
 
-/* ── Speech bubble ── */
-.fp-bubble {
+.fp--bounce .fp-leg--l {
+  animation: fp-leg-bounce-l 0.15s ease-in-out infinite;
+}
+.fp--bounce .fp-leg--r {
+  animation: fp-leg-bounce-r 0.15s ease-in-out infinite;
+}
+
+@keyframes fp-leg-bounce-l {
+  0%, 100% { transform: rotate(-25deg); }
+  50%       { transform: rotate(25deg);  }
+}
+@keyframes fp-leg-bounce-r {
+  0%, 100% { transform: rotate(25deg);  }
+  50%       { transform: rotate(-25deg); }
+}
+
+/* ── Working State ── */
+.fp--working {
+  animation: fp-work-intro 0.6s ease-out forwards;
+}
+
+@keyframes fp-work-intro {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.2); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1.1); }
+}
+
+/* Working animations for each action */
+.fp--laptop {
+  animation: fp-work-intro 0.6s ease-out forwards, fp-type 0.4s ease-in-out 0.6s infinite;
+}
+
+.fp--resume {
+  animation: fp-work-intro 0.6s ease-out forwards, fp-read 1.2s ease-in-out 0.6s infinite;
+}
+
+.fp--jobboard {
+  animation: fp-work-intro 0.6s ease-out forwards, fp-search 1.5s ease-in-out 0.6s infinite;
+}
+
+@keyframes fp-type {
+  0%, 100% { transform: scale(1.1) rotate(0deg); }
+  25% { transform: scale(1.1) rotate(-2deg); }
+  75% { transform: scale(1.1) rotate(2deg); }
+}
+
+@keyframes fp-read {
+  0%, 100% { transform: scale(1.1) translateY(0); }
+  50% { transform: scale(1.1) translateY(-3px); }
+}
+
+@keyframes fp-search {
+  0%, 100% { transform: scale(1.1) rotate(0deg); }
+  25% { transform: scale(1.1) rotate(-3deg) translateX(-2px); }
+  75% { transform: scale(1.1) rotate(3deg) translateX(2px); }
+}
+
+/* Action icon wrapper */
+.fp-action-icon-wrapper {
   position: absolute;
-  bottom: calc(100% + 8px);
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  animation: fp-icon-appear 0.4s ease-out 0.3s forwards, fp-icon-bounce 0.8s ease-in-out 0.7s infinite;
+  pointer-events: none;
+  z-index: 5;
+}
+
+@keyframes fp-icon-appear {
+  0% { transform: translate(-50%, -50%) scale(0) rotate(-20deg); opacity: 0; }
+  60% { transform: translate(-50%, -50%) scale(1.2) rotate(5deg); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes fp-icon-bounce {
+  0%, 100% { transform: translate(-50%, -50%) scale(1) translateY(0); }
+  50% { transform: translate(-50%, -50%) scale(1) translateY(-4px); }
+}
+
+.fp-action-icon {
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+}
+
+/* Bubble wrapper - always faces forward */
+.fp-bubble-wrapper {
+  position: absolute;
+  z-index: 100;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ── Speech bubble (always faces forward) ── */
+.fp-bubble {
   background: #fff;
   color: #1a1a1a;
   font-size: 0.78rem;
   font-weight: 600;
   white-space: nowrap;
-  padding: 5px 10px;
-  border-radius: 12px;
+  padding: 6px 12px;
+  border-radius: 14px;
   border: 2px solid #F0C800;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-  pointer-events: none;
-  animation: fp-pop 0.2s ease-out;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+  animation: fp-pop 0.25s ease-out;
+  position: relative;
+}
+
+.fp-bubble-text {
+  display: inline-block;
+  transform: scaleX(1);
+  direction: ltr;
 }
 
 .fp-bubble::after {
@@ -92,11 +178,86 @@
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  border: 6px solid transparent;
+  border: 8px solid transparent;
   border-top-color: #F0C800;
 }
 
 @keyframes fp-pop {
-  from { transform: translateX(-50%) scale(0.7); opacity: 0; }
-  to   { transform: translateX(-50%) scale(1);   opacity: 1; }
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ── Job Bubble (always faces forward) ── */
+.fp-job-bubble {
+  background: linear-gradient(135deg, #009B3A 0%, #00b347 50%, #009B3A 100%);
+  background-size: 200% 200%;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 8px 14px;
+  border-radius: 18px;
+  box-shadow: 0 4px 15px rgba(0, 155, 58, 0.5), 0 0 0 3px #F0C800;
+  animation: fp-job-pop 0.4s ease-out, fp-job-shine 2s ease-in-out 0.4s infinite;
+  position: relative;
+}
+
+.fp-job-bubble .fp-bubble-text {
+  display: inline-block;
+  transform: scaleX(1);
+  direction: ltr;
+}
+
+@keyframes fp-job-pop {
+  0% { transform: scale(0) translateY(15px); opacity: 0; }
+  50% { transform: scale(1.15) translateY(-3px); }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes fp-job-shine {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.fp-job-bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 10px solid transparent;
+  border-top-color: #009B3A;
+}
+
+/* Working glow effect */
+.fp--working::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70px;
+  height: 70px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(0, 200, 100, 0.35) 0%, rgba(0, 155, 58, 0.15) 40%, transparent 70%);
+  border-radius: 50%;
+  animation: fp-work-pulse 1.2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes fp-work-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+  50% { transform: translate(-50%, -50%) scale(1.4); opacity: 1; }
+}
+
+/* Working legs - calmer */
+.fp--working .fp-legs {
+  opacity: 0.4;
+  animation: fp-leg-work 0.6s ease-in-out infinite;
+}
+
+@keyframes fp-leg-work {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.7); }
 }
