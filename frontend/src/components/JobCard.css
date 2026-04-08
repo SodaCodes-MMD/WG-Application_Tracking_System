@@ -1,5 +1,7 @@
 .job-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; transition: box-shadow 0.15s, border-color 0.15s; }
 .job-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); border-color: #a0b0c8; }
+.job-card--archived { opacity: 0.7; }
+.job-card--archived:hover { opacity: 0.85; }
 .job-card-stale { opacity: 0.82; }
 .job-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .job-card-info { flex: 1; min-width: 0; }
@@ -56,5 +58,10 @@
 .job-card-actions { display: flex; gap: 8px; justify-content: flex-end; padding-top: 4px; border-top: 1px solid var(--border-color); }
 .btn-card-edit { padding: 5px 14px; font-size: 0.8rem; font-weight: 500; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; }
 .btn-card-edit:hover { background: var(--border-color); }
+.btn-card-edit:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-card-archive { padding: 5px 14px; font-size: 0.8rem; font-weight: 500; background: transparent; color: #6e7781; border: 1px solid #6e7781; border-radius: 6px; cursor: pointer; }
+.btn-card-archive:hover { background: #6e7781; color: #fff; }
+.btn-card-restore { padding: 5px 14px; font-size: 0.8rem; font-weight: 500; background: transparent; color: #0969da; border: 1px solid #0969da; border-radius: 6px; cursor: pointer; }
+.btn-card-restore:hover { background: #0969da; color: #fff; }
 .btn-card-delete { padding: 5px 14px; font-size: 0.8rem; font-weight: 500; background: transparent; color: #cf222e; border: 1px solid #cf222e; border-radius: 6px; cursor: pointer; }
 .btn-card-delete:hover { background: #cf222e; color: #fff; }

@@ -30,6 +30,7 @@ const jobSchema = new mongoose.Schema(
     salary: { type: String, trim: true, maxlength: 100, default: "" },
     notes: { type: String, trim: true, maxlength: 5000, default: "" },
     appliedAt: { type: Date, default: null },
+    archivedAt: { type: Date, default: null, index: true },
     deadline: { type: Date, default: null },
     recruiterNotes: { type: String, trim: true, maxlength: 5000, default: "" },
     interviews: { type: [interviewSchema], default: [] },

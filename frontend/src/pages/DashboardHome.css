@@ -1,4 +1,8 @@
 .dh-page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.dh-view-toggle { display: flex; gap: 4px; background: var(--bg-secondary); padding: 4px; border-radius: 8px; }
+.dh-view-btn { padding: 6px 16px; font-size: 0.8rem; font-weight: 500; border: none; border-radius: 6px; background: transparent; color: var(--text-secondary); cursor: pointer; transition: background 0.15s, color 0.15s; }
+.dh-view-btn:hover { color: var(--text-primary); }
+.dh-view-btn--active { background: var(--card-bg); color: var(--text-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .dh-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; align-items: center; }
 .dh-stat-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 0.775rem; font-weight: 500; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-secondary); cursor: pointer; transition: background 0.15s; }
 .dh-stat-chip:hover { background: var(--bg-secondary); color: var(--text-primary); }
