@@ -7,6 +7,7 @@ import {
   addSkill, updateSkill, deleteSkill, reorderSkills,
   getPreferences, savePreferences,
 } from "../services/profile-api.js";
+import { MiniFlag, SectionSaveButton } from "../components/MiniFlag.jsx";
 import "./AuthForms.css";
 import "./ProfilePage.css";
 
@@ -54,7 +55,6 @@ export default function ProfilePage({ user }) {
   const [loading, setLoading]       = useState(true);
 
   const [savingBasic, setSavingBasic]       = useState(false);
-  const [savedBasic, setSavedBasic]         = useState(false);
   const [saveBasicError, setSaveBasicError] = useState("");
   const [dirtyBasic, setDirtyBasic]         = useState(false);
 
@@ -71,7 +71,6 @@ export default function ProfilePage({ user }) {
   const [saveSkillError, setSaveSkillError] = useState("");
 
   const [savingPref, setSavingPref]       = useState(false);
-  const [savedPref, setSavedPref]         = useState(false);
   const [savePrefError, setSavePrefError] = useState("");
   const [dirtyPref, setDirtyPref]         = useState(false);
 
@@ -138,7 +137,6 @@ export default function ProfilePage({ user }) {
   const completionPct = Math.round((filledCount / totalFields) * 100);
 
   const handleChange = (field) => (e) => {
-    setSavedBasic(false);
     setSaveBasicError("");
     const newValue = e.target.value;
     setProfile((p) => {
@@ -156,13 +154,11 @@ export default function ProfilePage({ user }) {
     e?.preventDefault();
     setSavingBasic(true);
     setSaveBasicError("");
-    setSavedBasic(false);
     const result = await saveProfile(getToken(), profile);
     setSavingBasic(false);
     if (!result.success) {
       setSaveBasicError(result.error?.message ?? "Failed to save profile");
     } else {
-      setSavedBasic(true);
       setOriginalProfile(profile);
       setDirtyBasic(false);
     }
@@ -377,7 +373,6 @@ export default function ProfilePage({ user }) {
       setDirtyPref(!isEqual(updated, originalPrefs));
       return updated;
     });
-    setSavedPref(false);
     setSavePrefError("");
     setInput("");
   };
@@ -388,7 +383,6 @@ export default function ProfilePage({ user }) {
       setDirtyPref(!isEqual(updated, originalPrefs));
       return updated;
     });
-    setSavedPref(false);
     setSavePrefError("");
   };
 
@@ -398,7 +392,6 @@ export default function ProfilePage({ user }) {
       setDirtyPref(!isEqual(updated, originalPrefs));
       return updated;
     });
-    setSavedPref(false);
     setSavePrefError("");
   };
 
@@ -406,7 +399,6 @@ export default function ProfilePage({ user }) {
     e.preventDefault();
     setSavingPref(true);
     setSavePrefError("");
-    setSavedPref(false);
     const payload = {
       ...prefs,
       salaryMin: prefs.salaryMin !== "" ? Number(prefs.salaryMin) : null,
@@ -415,7 +407,6 @@ export default function ProfilePage({ user }) {
     const result = await savePreferences(getToken(), payload);
     setSavingPref(false);
     if (!result.success) { setSavePrefError(result.error?.message || "Failed to save preferences"); return; }
-    setSavedPref(true);
     setOriginalPrefs(prefs);
     setDirtyPref(false);
   };
@@ -457,23 +448,7 @@ export default function ProfilePage({ user }) {
 
       {/* ── Basic profile form ───────────────────────────────────────────── */}
       <section className="settings-section">
-        <div className="profile-section-header">
-          <h3 className="settings-section-title">Identity &amp; Contact</h3>
-          <button
-            type="button"
-            className={`btn btn-primary btn-section-save ${dirtyBasic ? 'btn-unsaved' : ''}`}
-            onClick={handleSaveBasic}
-            disabled={savingBasic}
-          >
-            {savingBasic ? "Saving..." : savedBasic ? "✓ Saved" : dirtyBasic ? "Save Changes" : "Saved"}
-          </button>
-        </div>
-        {saveBasicError && (
-          <div className="alert alert-error" style={{ marginBottom: 12 }}>
-            <div className="alert-icon">✗</div>
-            <div className="alert-content"><p>{saveBasicError}</p></div>
-          </div>
-        )}
+        <h3 className="settings-section-title">Identity &amp; Contact</h3>
         <div className="settings-card">
           <div className="profile-field-row">
             <div className="form-group">
@@ -511,6 +486,22 @@ export default function ProfilePage({ user }) {
             <label htmlFor="summary">Summary</label>
             <textarea id="summary" value={profile.summary} onChange={handleChange("summary")} rows={5} placeholder="A short paragraph about your experience, skills, and goals..." />
           </div>
+        </div>
+
+        {saveBasicError && (
+          <div className="alert alert-error" style={{ marginTop: 16 }}>
+            <div className="alert-icon">✗</div>
+            <div className="alert-content"><p>{saveBasicError}</p></div>
+          </div>
+        )}
+        <div className="profile-section-footer">
+          <SectionSaveButton
+            mood={savingBasic ? "saving" : dirtyBasic ? "unsaved" : "saved"}
+            onClick={handleSaveBasic}
+            disabled={savingBasic}
+          >
+            {savingBasic ? "Saving..." : dirtyBasic ? "Save Changes" : "Saved"}
+          </SectionSaveButton>
         </div>
       </section>
 
@@ -781,24 +772,7 @@ export default function ProfilePage({ user }) {
 
       {/* ── Career Preferences section ───────────────────────────────────── */}
       <section className="settings-section">
-        <div className="profile-section-header">
-          <h3 className="settings-section-title" style={{ margin: 0 }}>Career Preferences</h3>
-          <button
-            type="button"
-            className={`btn btn-primary btn-section-save ${dirtyPref ? 'btn-unsaved' : ''}`}
-            onClick={handleSavePrefs}
-            disabled={savingPref}
-          >
-            {savingPref ? "Saving..." : savedPref ? "✓ Saved" : dirtyPref ? "Save Changes" : "Saved"}
-          </button>
-        </div>
-        {savePrefError && (
-          <div className="alert alert-error" style={{ marginTop: 12 }}>
-            <div className="alert-icon">✗</div>
-            <div className="alert-content"><p>{savePrefError}</p></div>
-          </div>
-        )}
-
+        <h3 className="settings-section-title">Career Preferences</h3>
         <div className="settings-card">
           {/* Target Roles tag input */}
           <div className="form-group">
@@ -882,6 +856,22 @@ export default function ProfilePage({ user }) {
             <label>Notes</label>
             <textarea value={prefs.notes} onChange={setPF("notes")} rows={3} placeholder="Any other preferences or context for recruiters..." />
           </div>
+        </div>
+
+        {savePrefError && (
+          <div className="alert alert-error" style={{ marginTop: 16 }}>
+            <div className="alert-icon">✗</div>
+            <div className="alert-content"><p>{savePrefError}</p></div>
+          </div>
+        )}
+        <div className="profile-section-footer">
+          <SectionSaveButton
+            mood={savingPref ? "saving" : dirtyPref ? "unsaved" : "saved"}
+            onClick={handleSavePrefs}
+            disabled={savingPref}
+          >
+            {savingPref ? "Saving..." : dirtyPref ? "Save Changes" : "Saved"}
+          </SectionSaveButton>
         </div>
       </section>
     </>
