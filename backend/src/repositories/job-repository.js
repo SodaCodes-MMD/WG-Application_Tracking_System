@@ -19,17 +19,13 @@ export const findJobByIdAndUserInclusive = (id, userId) =>
   Job.findOne({ _id: id, userId }).lean();
 
 export const createJob = (data) => Job.create(data);
-<<<<<<< HEAD
+
 //Updated - accepts optional history entry for status change
 export const updateJobByIdAndUser = (id, userId, updates, historyEntry = null) => {
-  const mongoUpdate = {$set: updates };
-  if (historyEntry) mongoUpdate.$push = { statusHistory: historyEntry};
+  const mongoUpdate = { $set: updates };
+  if (historyEntry) mongoUpdate.$push = { statusHistory: historyEntry };
   return Job.findOneAndUpdate({ _id: id, userId }, mongoUpdate, { new: true, runValidators: true }).lean();
 };
-=======
-
-export const updateJobByIdAndUser = (id, userId, updates) =>
-  Job.findOneAndUpdate({ _id: id, userId, archivedAt: null }, { $set: updates }, { new: true, runValidators: true }).lean();
 
 export const archiveJobByIdAndUser = (id, userId) =>
   Job.findOneAndUpdate(
@@ -44,7 +40,6 @@ export const restoreJobByIdAndUser = (id, userId) =>
     { $set: { archivedAt: null } },
     { new: true, runValidators: true }
   ).lean();
->>>>>>> origin/main
 
 export const deleteJobByIdAndUser = (id, userId) =>
   Job.findOneAndDelete({ _id: id, userId }).lean();
