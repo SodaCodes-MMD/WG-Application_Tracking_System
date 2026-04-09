@@ -3,6 +3,10 @@ import "./JobDetail.css";
 
 function formatSalary(raw) {
   if (!raw) return null;
+  const num = Number(raw);
+  if (!isNaN(num) && raw !== "") {
+    return "$" + num.toLocaleString();
+  }
   return raw;
 }
 
@@ -52,7 +56,7 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onStatusChan
           {job.salary && (
             <div className="jd-field">
               <span className="jd-field-label">Salary</span>
-              <span className="jd-field-value">💰 {job.salary}</span>
+              <span className="jd-field-value">💰 {formatSalary(job.salary)}</span>
             </div>
           )}
           {job.url && (
