@@ -20,7 +20,12 @@ const userSchema = new mongoose.Schema(
         passwordUpdatedAt: {
             type: Date,
             default: null
-        }
+        },
+        notificationPreferences: {
+            emailEnabled: { type: Boolean, default: true },
+            deadlineWarnings: { type: Boolean, default: true },
+            deadlineDaysWarning: { type: Number, default: 3 },
+        },
     },
     {
         collection: "users" // explicitly set — prevents Mongoose pluralization surprises

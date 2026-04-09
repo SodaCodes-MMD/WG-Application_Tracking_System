@@ -5,6 +5,20 @@ const JOB_STATUSES = [
   "Offer", "Rejected", "Withdrawn",
 ];
 
+const INTERVIEW_ROUND_TYPES = [
+  "Phone Screen", "Technical", "Behavioral", "System Design", "Final Round", "Other",
+];
+
+const interviewSchema = new mongoose.Schema(
+  {
+    roundType: { type: String, enum: INTERVIEW_ROUND_TYPES, required: true },
+    date: { type: Date, default: null },
+    interviewer: { type: String, trim: true, maxlength: 200, default: "" },
+    notes: { type: String, trim: true, maxlength: 5000, default: "" },
+  },
+  { timestamps: true }
+);
+
 const jobSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
@@ -16,6 +30,10 @@ const jobSchema = new mongoose.Schema(
     salary: { type: String, trim: true, maxlength: 100, default: "" },
     notes: { type: String, trim: true, maxlength: 5000, default: "" },
     appliedAt: { type: Date, default: null },
+    archivedAt: { type: Date, default: null, index: true },
+    deadline: { type: Date, default: null },
+    recruiterNotes: { type: String, trim: true, maxlength: 5000, default: "" },
+    interviews: { type: [interviewSchema], default: [] },
   },
   { collection: "jobs", timestamps: true }
 );
