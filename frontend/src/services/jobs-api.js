@@ -19,9 +19,12 @@ async function request(method, path, body) {
 
 export const jobsApi = {
   list: () => request("GET", "/jobs"),
+  listArchived: () => request("GET", "/jobs/archived"),
   get: (id) => request("GET", `/jobs/${id}`),
   create: (payload) => request("POST", "/jobs", payload),
   update: (id, payload) => request("PATCH", `/jobs/${id}`, payload),
+  archive: (id) => request("PATCH", `/jobs/${id}/archive`),
+  restore: (id) => request("PATCH", `/jobs/${id}/restore`),
   remove: (id) => request("DELETE", `/jobs/${id}`),
   addInterview: (jobId, data) => request("POST", `/jobs/${jobId}/interviews`, data),
   updateInterview: (jobId, interviewId, data) => request("PATCH", `/jobs/${jobId}/interviews/${interviewId}`, data),

@@ -7,6 +7,59 @@ import "./DashboardHome.css";
 
 const ALL = "All";
 
+
+function compareValues(a, b, sortBy, sortDirection) {
+  const direction = sortDirection === "asc" ? 1 : -1;
+
+  if (sortBy === "company") {
+    const aValue = (a.company || "").toLowerCase();
+    const bValue = (b.company || "").toLowerCase();
+    if (aValue < bValue) return -1 * direction;
+    if (aValue > bValue) return 1 * direction;
+    return 0;
+  }
+
+  if (sortBy === "deadline") {
+    const aValue = a.deadline ? new Date(a.deadline).getTime() : Number.MAX_SAFE_INTEGER;
+    const bValue = b.deadline ? new Date(b.deadline).getTime() : Number.MAX_SAFE_INTEGER;
+    return (aValue - bValue) * direction;
+  }
+
+  if (sortBy === "createdDate") {
+    const aValue = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const bValue = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return (aValue - bValue) * direction;
+  }
+
+  if (sortBy === "lastActivity") {
+    const aValue = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+    const bValue = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+    return (aValue - bValue) * direction;
+  }
+
+  return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export default function DashboardHome() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,6 +73,8 @@ export default function DashboardHome() {
   const [editingJob, setEditingJob] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null); // For JobDetailPanel
   const [formLoading, setFormLoading] = useState(false);
+  const [sortBy, setSortBy] = useState("lastActivity");
+  const [sortDirection, setSortDirection] = useState("desc");
 
   const fetchJobs = useCallback(async () => {
     try { const res = await jobsApi.list(); setJobs(res.data || []); setError(""); }
@@ -34,27 +89,28 @@ export default function DashboardHome() {
     return [...new Set(locs)].sort();
   }, [jobs]);
 
-  const filtered = jobs
-    .filter(j => filterStatus === ALL || j.status === filterStatus)
-    .filter(j => filterLocation === ALL || j.location === filterLocation)
-    .filter(j => {
-      if (!filterDateFrom && !filterDateTo) return true;
-      const d = j.appliedAt ? new Date(j.appliedAt) : null;
-      if (!d) return false;
-      if (filterDateFrom && d < new Date(filterDateFrom)) return false;
-      if (filterDateTo   && d > new Date(filterDateTo + "T23:59:59")) return false;
-      return true;
-    })
-    .filter(j => {
-      if (!searchQuery.trim()) return true;
-      const q = searchQuery.toLowerCase();
-      return (
-        j.title?.toLowerCase().includes(q) ||
-        j.company?.toLowerCase().includes(q) ||
-        j.location?.toLowerCase().includes(q) ||
-        j.notes?.toLowerCase().includes(q)
-      );
-    });
+const filtered = [...jobs]
+  .filter(j => filterStatus === ALL || j.status === filterStatus)
+  .filter(j => filterLocation === ALL || j.location === filterLocation)
+  .filter(j => {
+    if (!filterDateFrom && !filterDateTo) return true;
+    const d = j.appliedAt ? new Date(j.appliedAt) : null;
+    if (!d) return false;
+    if (filterDateFrom && d < new Date(filterDateFrom)) return false;
+    if (filterDateTo && d > new Date(filterDateTo + "T23:59:59")) return false;
+    return true;
+  })
+  .filter(j => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      j.title?.toLowerCase().includes(q) ||
+      j.company?.toLowerCase().includes(q) ||
+      j.location?.toLowerCase().includes(q) ||
+      j.notes?.toLowerCase().includes(q)
+    );
+  })
+  .sort((a, b) => compareValues(a, b, sortBy, sortDirection));
 
   const statusCounts = JOB_STATUSES.reduce((acc, s) => { acc[s] = jobs.filter(j => j.status === s).length; return acc; }, {});
   const hasActiveFilters = filterStatus !== ALL || filterLocation !== ALL || filterDateFrom || filterDateTo;
@@ -111,7 +167,7 @@ export default function DashboardHome() {
             ))}
           </select>
         </div>
-
+          
         <div className="dh-filter-group">
           <label className="dh-filter-label">Location</label>
           <select className="dh-filter-select" value={filterLocation} onChange={e => setFilterLocation(e.target.value)} disabled={locations.length === 0}>
@@ -129,6 +185,36 @@ export default function DashboardHome() {
           <label className="dh-filter-label">Applied to</label>
           <input className="dh-filter-date" type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} />
         </div>
+            
+            <div className="dh-filter-group">
+  <label className="dh-filter-label">Sort by</label>
+  <select
+    className="dh-filter-select"
+    value={sortBy}
+    onChange={e => setSortBy(e.target.value)}
+  >
+    <option value="lastActivity">Last activity</option>
+    <option value="deadline">Deadline</option>
+    <option value="company">Company</option>
+    <option value="createdDate">Created date</option>
+  </select>
+</div>
+
+<div className="dh-filter-group">
+  <label className="dh-filter-label">Order</label>
+  <select
+    className="dh-filter-select"
+    value={sortDirection}
+    onChange={e => setSortDirection(e.target.value)}
+  >
+    <option value="desc">Descending</option>
+    <option value="asc">Ascending</option>
+  </select>
+</div>
+
+
+
+
 
         {hasActiveFilters && (
           <button className="dh-clear-all-filters" onClick={clearFilters}>✕ Clear filters</button>
