@@ -1,0 +1,9 @@
+.cd-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.cd-dialog { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; width: 100%; max-width: 380px; padding: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+.cd-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0 0 8px; }
+.cd-message { font-size: 0.875rem; color: var(--text-secondary); margin: 0 0 20px; line-height: 1.5; }
+.cd-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.btn-cd-cancel { padding: 6px 16px; font-size: 0.85rem; font-weight: 500; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; }
+.btn-cd-cancel:hover { background: var(--border-color); }
+.btn-cd-confirm { padding: 6px 16px; font-size: 0.85rem; font-weight: 500; background: #cf222e; color: #fff; border: 1px solid #cf222e; border-radius: 6px; cursor: pointer; }
+.btn-cd-confirm:hover { background: #a11220; border-color: #a11220; }
