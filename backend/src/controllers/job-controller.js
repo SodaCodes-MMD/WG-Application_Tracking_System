@@ -47,26 +47,28 @@ export const getJob = async (req, res) => {
   }
 };
 
+//Updated - seeds initial status history entry when creating a job, and adds new entry on status change during update
 export const createJobHandler = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return validationError(res, errors);
   try {
     const { company, title, status, location, url, salary, notes, appliedAt, deadline, recruiterNotes } = req.body;
-    const jobData = {
+    const initialStatus = status || "Wishlist";
+    const job = await createJob({
       userId: req.user.userId,
       company,
       title,
-      status,
+      status: initialStatus,
       location,
       url,
       salary,
       notes,
       appliedAt: appliedAt || null,
       deadline: deadline || null,
-      recruiterNotes: recruiterNotes || ""
-    };
-    const job = await createJob(jobData);
-    
+      recruiterNotes: recruiterNotes || "",
+      statusHistory: [{ status: initialStatus, changedAt: new Date() }],
+    });
+
     if (job.deadline) {
       try {
         await triggerImmediateNotification(req.user.userId, job);
@@ -74,7 +76,7 @@ export const createJobHandler = async (req, res) => {
         console.error("[JobController] Failed to create immediate notification:", notifyErr);
       }
     }
-    
+
     return res.status(201).json({ success: true, data: job });
   } catch (err) {
     console.error("[JobController] createJob:", err);
@@ -82,13 +84,24 @@ export const createJobHandler = async (req, res) => {
   }
 };
 
+//Updated - detects status changed and appends a history entry
 export const updateJobHandler = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return validationError(res, errors);
   try {
     const allowed = ["company", "title", "status", "location", "url", "salary", "notes", "appliedAt", "deadline", "recruiterNotes"];
     const updates = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
-    const job = await updateJobByIdAndUser(req.params.id, req.user.userId, updates);
+    //
+    let historyEntry = null;
+    if (updates.status) {
+      const current = await findJobByIdAndUser(req.params.id, req.user.userId);
+      if (!current) return notFound(res);
+      if (current.status !== updates.status) {
+        historyEntry = { status: updates.status, changedAt: new Date() };
+      }
+    }
+    //
+    const job = await updateJobByIdAndUser(req.params.id, req.user.userId, updates, historyEntry);
     if (!job) return notFound(res);
     
     if (job.deadline) {

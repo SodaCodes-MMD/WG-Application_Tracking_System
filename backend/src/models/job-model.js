@@ -34,9 +34,15 @@ const jobSchema = new mongoose.Schema(
     deadline: { type: Date, default: null },
     recruiterNotes: { type: String, trim: true, maxlength: 5000, default: "" },
     interviews: { type: [interviewSchema], default: [] },
-  },
-  { collection: "jobs", timestamps: true }
-);
+    statusHistory: [
+        {
+          status: { type: String, enum: JOB_STATUSES, required: true },
+          changedAt: { type: Date, default: Date.now },
+        }
+      ],
+    },
+    { collection: "jobs", timestamps: true }
+  );
 
-export const JOB_STATUSES_LIST = JOB_STATUSES;
-export const Job = mongoose.model("Job", jobSchema);
+  export const JOB_STATUSES_LIST = JOB_STATUSES;
+  export const Job = mongoose.model("Job", jobSchema);

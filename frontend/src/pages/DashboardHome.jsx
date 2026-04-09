@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { jobsApi, JOB_STATUSES, STATUS_COLORS } from "../services/jobs-api.js";
 import JobCard from "../components/JobCard.jsx";
 import JobForm from "../components/JobForm.jsx";
+import JobDetailPanel from "../components/JobDetailPanel.jsx";
 import JobDetail from "../components/JobDetail.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import "./DashboardHome.css";
