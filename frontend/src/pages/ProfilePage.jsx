@@ -1,212 +1,124 @@
 import { useState, useEffect } from "react";
-import { getToken } from "../services/auth-service.js";
-import { getProfile, saveProfile } from "../services/profile-api.js";
-import "./AuthForms.css";
+import "./ProfilePage.css";
 
-// Fields that contribute to completion (email always counts as filled)
-const PROFILE_FIELDS = ["firstName", "lastName", "phone", "location", "headline", "summary"];
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-const EMPTY_PROFILE = {
-  firstName: "",
-  lastName: "",
-  phone: "",
-  location: "",
-  headline: "",
-  summary: "",
-};
+function getAuthHeaders() {
+  const token = localStorage.getItem("token");
+  return { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+}
 
-export default function ProfilePage({ user }) {
-  const [profile, setProfile] = useState({ ...EMPTY_PROFILE });
+async function apiFetch(method, path, body) {
+  const res = await fetch(`${API_URL}${path}`, { method, headers: getAuthHeaders(), ...(body ? { body: JSON.stringify(body) } : {}) });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || "Request failed");
+  return data;
+}
+
+function getInitials(displayName, email) {
+  if (displayName?.trim()) return displayName.trim().split(" ").slice(0,2).map(w => w[0].toUpperCase()).join("");
+  return (email || "?")[0].toUpperCase();
+}
+
+export default function ProfilePage({ user: userProp }) {
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ displayName: "", bio: "", location: "" });
+  const [formErrors, setFormErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const result = await getProfile(getToken());
-      if (result.success && result.data) {
-        setProfile({ ...EMPTY_PROFILE, ...result.data });
-      }
-      setLoading(false);
-    };
-    fetchProfile();
+    apiFetch("GET", "/profile")
+      .then(res => { setProfile(res.data); setForm({ displayName: res.data.displayName||"", bio: res.data.bio||"", location: res.data.location||"" }); })
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleChange = (field) => (e) => {
-    setSaveSuccess(false);
-    setSaveError("");
-    setProfile((p) => ({ ...p, [field]: e.target.value }));
-  };
-
-  // Email always counts as 1 filled field; check the rest against PROFILE_FIELDS
-  const filledCount = 1 + PROFILE_FIELDS.filter((f) => profile[f]?.trim()).length;
-  const totalFields = 1 + PROFILE_FIELDS.length; // 7 total
-  const completionPct = Math.round((filledCount / totalFields) * 100);
+  const set = (field) => (e) => { setForm(f => ({ ...f, [field]: e.target.value })); setFormErrors(errs => ({ ...errs, [field]: undefined })); setSaveSuccess(false); };
 
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
-    setSaveSuccess(false);
-    setSaveError("");
-
-    const result = await saveProfile(getToken(), profile);
-    setSaving(false);
-
-    if (!result.success) {
-      setSaveError(result.error?.message ?? "Failed to save profile");
-    } else {
-      setSaveSuccess(true);
-    }
+    try { const res = await apiFetch("PATCH", "/profile", form); setProfile(res.data); setSaveSuccess(true); setEditing(false); }
+    catch (err) { setFormErrors({ _general: err.message }); }
+    finally { setSaving(false); }
   };
 
-  if (loading) {
-    return (
-      <>
-        <div className="page-header">
-          <h2>Profile</h2>
-          <p>Your professional information used across applications.</p>
-        </div>
-        <div className="loading-container">
-          <div className="spinner-large" />
-          <p>Loading profile...</p>
-        </div>
-      </>
-    );
-  }
+  const handleCancel = () => { setForm({ displayName: profile?.displayName||"", bio: profile?.bio||"", location: profile?.location||"" }); setFormErrors({}); setEditing(false); };
+
+  if (loading) return (<><div className="page-header"><h2>Profile</h2><p>Manage your account information.</p></div><div className="prof-loading"><div className="prof-spinner" /><p>Loading…</p></div></>);
+  if (error) return (<><div className="page-header"><h2>Profile</h2><p>Manage your account information.</p></div><div className="prof-error">⚠️ {error}</div></>);
+
+  const email = profile?.email || userProp?.email || "";
+  const displayName = profile?.displayName || "";
+  const memberSince = profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString(undefined, { month: "long", year: "numeric" }) : null;
+  const pwChanged = profile?.passwordUpdatedAt ? new Date(profile.passwordUpdatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : null;
 
   return (
     <>
-      <div className="page-header">
-        <h2>Profile</h2>
-        <p>Your professional information used across applications.</p>
+      <div className="page-header"><h2>Profile</h2><p>Manage your account information.</p></div>
+
+      <div className="prof-identity-card">
+        <div className="prof-avatar">{getInitials(displayName, email)}</div>
+        <div className="prof-identity-info">
+          <p className="prof-display-name">{displayName || <span className="prof-placeholder">No display name set</span>}</p>
+          <p className="prof-email">{email}</p>
+          {memberSince && <p className="prof-member-since">Member since {memberSince}</p>}
+        </div>
+        {!editing && <button className="prof-edit-btn" onClick={() => setEditing(true)}>Edit Profile</button>}
       </div>
 
-      {/* ── Completion indicator ──────────────────────────────────────────── */}
-      <div className="profile-completion-card">
-        <div className="profile-completion-header">
-          <span className="profile-completion-label">Profile completeness</span>
-          <span className="profile-completion-pct">{completionPct}%</span>
-        </div>
-        <div className="profile-completion-track">
-          <div
-            className="profile-completion-bar"
-            style={{ width: `${completionPct}%` }}
-          />
-        </div>
-      </div>
+      {saveSuccess && <div className="prof-success-banner">✓ Profile updated successfully.</div>}
 
-      <form onSubmit={handleSave}>
-        {saveSuccess && (
-          <div className="alert alert-success" style={{ marginBottom: 20 }}>
-            <div className="alert-icon">✓</div>
-            <div className="alert-content"><p>Profile saved.</p></div>
-          </div>
-        )}
-
-        {saveError && (
-          <div className="alert alert-error" style={{ marginBottom: 20 }}>
-            <div className="alert-icon">✗</div>
-            <div className="alert-content"><p>{saveError}</p></div>
-          </div>
-        )}
-
-        {/* ── Identity & Contact ─────────────────────────────────────────── */}
-        <section className="settings-section">
-          <h3 className="settings-section-title">Identity &amp; Contact</h3>
-          <div className="settings-card">
-            <div className="profile-field-row">
-              <div className="form-group">
-                <label htmlFor="firstName">First name</label>
-                <input
-                  id="firstName"
-                  type="text"
-                  value={profile.firstName}
-                  onChange={handleChange("firstName")}
-                  placeholder="Jane"
-                />
+      {editing ? (
+        <section className="prof-section">
+          <h3 className="prof-section-title">Edit Profile</h3>
+          <div className="prof-card">
+            {formErrors._general && <div className="prof-error-banner">{formErrors._general}</div>}
+            <form onSubmit={handleSave} noValidate>
+              <div className="prof-form-group">
+                <label>Display Name</label>
+                <input type="text" value={form.displayName} onChange={set("displayName")} placeholder="How you'd like to be known" disabled={saving} maxLength={100} />
               </div>
-              <div className="form-group">
-                <label htmlFor="lastName">Last name</label>
-                <input
-                  id="lastName"
-                  type="text"
-                  value={profile.lastName}
-                  onChange={handleChange("lastName")}
-                  placeholder="Smith"
-                />
+              <div className="prof-form-group">
+                <label>Location</label>
+                <input type="text" value={form.location} onChange={set("location")} placeholder="e.g. New York, NY" disabled={saving} maxLength={100} />
               </div>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="email">Email address</label>
-              <input
-                id="email"
-                type="email"
-                value={user?.email ?? ""}
-                disabled
-                className="input-disabled"
-                aria-label="Email address (read only)"
-              />
-            </div>
-
-            <div className="profile-field-row">
-              <div className="form-group">
-                <label htmlFor="phone">Phone</label>
-                <input
-                  id="phone"
-                  type="tel"
-                  value={profile.phone}
-                  onChange={handleChange("phone")}
-                  placeholder="+1 (555) 000-0000"
-                />
+              <div className="prof-form-group">
+                <label>Bio <span className="prof-char-count">{form.bio.length}/500</span></label>
+                <textarea value={form.bio} onChange={set("bio")} placeholder="A short bio about yourself…" rows={4} disabled={saving} maxLength={500} />
               </div>
-              <div className="form-group">
-                <label htmlFor="location">Location</label>
-                <input
-                  id="location"
-                  type="text"
-                  value={profile.location}
-                  onChange={handleChange("location")}
-                  placeholder="City, State"
-                />
+              <div className="prof-form-actions">
+                <button type="button" className="prof-btn-cancel" onClick={handleCancel} disabled={saving}>Cancel</button>
+                <button type="submit" className="prof-btn-save" disabled={saving}>{saving ? "Saving…" : "Save Changes"}</button>
               </div>
-            </div>
+            </form>
           </div>
         </section>
-
-        {/* ── Professional Summary ───────────────────────────────────────── */}
-        <section className="settings-section">
-          <h3 className="settings-section-title">Professional Summary</h3>
-          <div className="settings-card">
-            <div className="form-group">
-              <label htmlFor="headline">Headline</label>
-              <input
-                id="headline"
-                type="text"
-                value={profile.headline}
-                onChange={handleChange("headline")}
-                placeholder="e.g. Full Stack Engineer · Open to work"
-              />
-            </div>
-
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label htmlFor="summary">Summary</label>
-              <textarea
-                id="summary"
-                value={profile.summary}
-                onChange={handleChange("summary")}
-                rows={5}
-                placeholder="A short paragraph about your experience, skills, and goals..."
-              />
-            </div>
+      ) : (
+        <section className="prof-section">
+          <h3 className="prof-section-title">About</h3>
+          <div className="prof-card prof-info-grid">
+            {[["Display Name", displayName], ["Email", email], ["Location", profile?.location], ["Bio", profile?.bio]].map(([label, val]) => (
+              <div key={label} className="prof-info-row">
+                <span className="prof-info-label">{label}</span>
+                <span className="prof-info-value prof-bio-value">{val || <span className="prof-placeholder">—</span>}</span>
+              </div>
+            ))}
           </div>
         </section>
+      )}
 
-        <button type="submit" className="btn btn-primary" disabled={saving}>
-          {saving ? <span className="spinner">Saving...</span> : "Save profile"}
-        </button>
-      </form>
+      <section className="prof-section">
+        <h3 className="prof-section-title">Account</h3>
+        <div className="prof-card prof-info-grid">
+          <div className="prof-info-row"><span className="prof-info-label">Member Since</span><span className="prof-info-value">{memberSince || "—"}</span></div>
+          <div className="prof-info-row"><span className="prof-info-label">Password Last Changed</span><span className="prof-info-value">{pwChanged || <span className="prof-placeholder">Never</span>}</span></div>
+        </div>
+      </section>
     </>
   );
 }
