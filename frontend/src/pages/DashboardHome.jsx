@@ -73,7 +73,6 @@ export default function DashboardHome() {
   const [filterDateTo, setFilterDateTo] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
-  const [selectedJob, setSelectedJob] = useState(null); // For JobDetailPanel
   const [formLoading, setFormLoading] = useState(false);
   const [sortBy, setSortBy] = useState("lastActivity");
   const [sortDirection, setSortDirection] = useState("desc");

@@ -56,16 +56,10 @@ function toDateInput(d) {
   const dt = new Date(d);
   return isNaN(dt) ? "" : dt.toISOString().split("T")[0];
 }
-<<<<<<< HEAD
-// Scrum 37: added onSelect to props
-export default function JobCard({ job, onEdit, onDelete, onSelect }) {
-  const colors = STATUS_COLORS[job.status] || STATUS_COLORS["Wishlist"];
-=======
 
 export default function JobCard({ job, onEdit, onDelete, onArchive, onRestore, isArchived, onStatusChange, onView }) {
   const outcomeColors = job.outcome ? OUTCOME_COLORS[job.outcome] : null;
   const colors = isArchived ? { bg: "#f5f5f5", text: "#888888", border: "#cccccc" } : STATUS_COLORS[job.status] || STATUS_COLORS["Wishlist"];
->>>>>>> origin/main
 
   const appliedDate = job.appliedAt ? new Date(job.appliedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : null;
   const createdDate = new Date(job.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
@@ -216,12 +210,6 @@ export default function JobCard({ job, onEdit, onDelete, onArchive, onRestore, i
       )}
 
       <div className="job-card-actions">
-<<<<<<< HEAD
-        {/* added a view button next to edit and delete, which opens the JobDetailPanel --- Scrum 37 */}
-        <button className="btn-card-view" onClick={() => onSelect(job)}>View</button>
-        <button className="btn-card-edit" onClick={() => onEdit(job)}>Edit</button>
-        <button className="btn-card-delete" onClick={() => onDelete(job._id)}>Delete</button>
-=======
         {!isArchived && (
           <>
             <button className="btn-card-edit" onClick={e => { e.stopPropagation(); onEdit(job); }}>Edit</button>
@@ -235,7 +223,6 @@ export default function JobCard({ job, onEdit, onDelete, onArchive, onRestore, i
             <button className="btn-card-delete" onClick={e => { e.stopPropagation(); onDelete(job._id); }}>Delete</button>
           </>
         )}
->>>>>>> origin/main
       </div>
     </div>
   );
