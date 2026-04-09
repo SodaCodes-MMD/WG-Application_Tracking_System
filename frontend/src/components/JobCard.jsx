@@ -10,8 +10,8 @@ function toDateInput(d) {
   const dt = new Date(d);
   return isNaN(dt) ? "" : dt.toISOString().split("T")[0];
 }
-
-export default function JobCard({ job, onEdit, onDelete }) {
+// Scrum 37: added onSelect to props
+export default function JobCard({ job, onEdit, onDelete, onSelect }) {
   const colors = STATUS_COLORS[job.status] || STATUS_COLORS["Wishlist"];
 
   const appliedDate = job.appliedAt ? new Date(job.appliedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : null;
@@ -170,6 +170,8 @@ export default function JobCard({ job, onEdit, onDelete }) {
       )}
 
       <div className="job-card-actions">
+        {/* added a view button next to edit and delete, which opens the JobDetailPanel --- Scrum 37 */}
+        <button className="btn-card-view" onClick={() => onSelect(job)}>View</button>
         <button className="btn-card-edit" onClick={() => onEdit(job)}>Edit</button>
         <button className="btn-card-delete" onClick={() => onDelete(job._id)}>Delete</button>
       </div>

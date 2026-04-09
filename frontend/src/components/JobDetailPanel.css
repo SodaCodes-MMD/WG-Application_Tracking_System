@@ -1,0 +1,65 @@
+.jdp-overlay {
+    position: fixed;
+    insert: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 100;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.jdp-panel{
+    background: #fff;
+    width: 480px;
+    max-width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+}
+
+.jdp-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 1;
+}
+
+.jdp-back {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #6b7280;
+    padding: 4px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.jdp-back:hover {
+    background: #f3f4f6;
+    color: #111827;
+}
+
+.jdp-title h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    color: #111827;
+}
+
+.jdp-title p {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 2px 0 0;
+}
+
+.jdp-body {
+    padding: 24px;
+    flex: 1;
+}

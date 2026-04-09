@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { jobsApi, JOB_STATUSES, STATUS_COLORS } from "../services/jobs-api.js";
 import JobCard from "../components/JobCard.jsx";
 import JobForm from "../components/JobForm.jsx";
+import JobDetailPanel from "../components/JobDetailPanel.jsx";
 import "./DashboardHome.css";
 
 const ALL = "All";
@@ -17,6 +18,7 @@ export default function DashboardHome() {
   const [filterDateTo, setFilterDateTo] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
+  const [selectedJob, setSelectedJob] = useState(null); // For JobDetailPanel
   const [formLoading, setFormLoading] = useState(false);
 
   const fetchJobs = useCallback(async () => {
@@ -152,11 +154,12 @@ export default function DashboardHome() {
         </div>
       ) : (
         <div className="dh-grid">
-          {filtered.map(job => <JobCard key={job._id} job={job} onEdit={openEdit} onDelete={handleDelete} />)}
+          {filtered.map(job => <JobCard key={job._id} job={job} onEdit={openEdit} onDelete={handleDelete} onSelect={setSelectedJob}/>)}
         </div>
       )}
 
       {showForm && <JobForm job={editingJob} onSave={handleSave} onClose={closeForm} loading={formLoading} />}
+      {selectedJob && <JobDetailPanel job={selectedJob} onClose={() => setSelectedJob(null)} />}
     </>
   );
 }
