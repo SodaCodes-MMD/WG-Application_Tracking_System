@@ -3,6 +3,8 @@ import { jobsApi, JOB_STATUSES, STATUS_COLORS } from "../services/jobs-api.js";
 import JobCard from "../components/JobCard.jsx";
 import JobForm from "../components/JobForm.jsx";
 import JobDetailPanel from "../components/JobDetailPanel.jsx";
+import JobDetail from "../components/JobDetail.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import "./DashboardHome.css";
 
 const ALL = "All";
@@ -75,6 +77,8 @@ export default function DashboardHome() {
   const [formLoading, setFormLoading] = useState(false);
   const [sortBy, setSortBy] = useState("lastActivity");
   const [sortDirection, setSortDirection] = useState("desc");
+  const [viewingJob, setViewingJob] = useState(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
   const fetchJobs = useCallback(async () => {
     try { const res = await jobsApi.list(); setJobs(res.data || []); setError(""); }
@@ -131,10 +135,24 @@ const filtered = [...jobs]
     finally { setFormLoading(false); }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this job application?")) return;
-    try { await jobsApi.remove(id); setJobs(prev => prev.filter(j => j._id !== id)); }
-    catch (err) { alert(err.message || "Failed to delete job"); }
+  const handleDelete = (id) => setPendingDeleteId(id);
+
+  const confirmDelete = async () => {
+    const id = pendingDeleteId;
+    setPendingDeleteId(null);
+    try {
+      await jobsApi.remove(id);
+      setJobs(prev => prev.filter(j => j._id !== id));
+      if (viewingJob?._id === id) setViewingJob(null);
+    } catch (err) { alert(err.message || "Failed to delete job"); }
+  };
+
+  const handleStatusChange = async (id, status) => {
+    try {
+      const res = await jobsApi.update(id, { status });
+      setJobs(prev => prev.map(j => j._id === id ? res.data : j));
+      if (viewingJob?._id === id) setViewingJob(res.data);
+    } catch (err) { alert(err.message || "Failed to update stage"); }
   };
 
   return (
@@ -240,12 +258,38 @@ const filtered = [...jobs]
         </div>
       ) : (
         <div className="dh-grid">
-          {filtered.map(job => <JobCard key={job._id} job={job} onEdit={openEdit} onDelete={handleDelete} onSelect={setSelectedJob}/>)}
+          {filtered.map(job => (
+            <JobCard
+              key={job._id}
+              job={job}
+              onEdit={openEdit}
+              onDelete={handleDelete}
+              onStatusChange={handleStatusChange}
+              onView={setViewingJob}
+            />
+          ))}
         </div>
       )}
 
       {showForm && <JobForm job={editingJob} onSave={handleSave} onClose={closeForm} loading={formLoading} />}
-      {selectedJob && <JobDetailPanel job={selectedJob} onClose={() => setSelectedJob(null)} />}
+      {viewingJob && (
+        <JobDetail
+          job={viewingJob}
+          onClose={() => setViewingJob(null)}
+          onEdit={openEdit}
+          onDelete={handleDelete}
+          onStatusChange={handleStatusChange}
+        />
+      )}
+      {pendingDeleteId && (
+        <ConfirmDialog
+          title="Delete job application?"
+          message="This will permanently remove the application. This action cannot be undone."
+          confirmLabel="Delete"
+          onConfirm={confirmDelete}
+          onCancel={() => setPendingDeleteId(null)}
+        />
+      )}
     </>
   );
 }
