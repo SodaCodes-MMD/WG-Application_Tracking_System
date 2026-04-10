@@ -78,9 +78,16 @@ export default function DashboardHome() {
   const [sortDirection, setSortDirection] = useState("desc");
   const [viewingJob, setViewingJob] = useState(null);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const [archivedJobs, setArchivedJobs] = useState([]);
+  const [showArchived, setShowArchived] = useState(false);
 
   const fetchJobs = useCallback(async () => {
-    try { const res = await jobsApi.list(); setJobs(res.data || []); setError(""); }
+    try {
+      const [active, archived] = await Promise.all([jobsApi.list(), jobsApi.listArchived()]);
+      setJobs(active.data || []);
+      setArchivedJobs(archived.data || []);
+      setError("");
+    }
     catch (err) { setError(err.message || "Failed to load jobs"); }
     finally { setLoading(false); }
   }, []);
@@ -142,8 +149,25 @@ const filtered = [...jobs]
     try {
       await jobsApi.remove(id);
       setJobs(prev => prev.filter(j => j._id !== id));
+      setArchivedJobs(prev => prev.filter(j => j._id !== id));
       if (viewingJob?._id === id) setViewingJob(null);
     } catch (err) { alert(err.message || "Failed to delete job"); }
+  };
+
+  const handleArchive = async (id) => {
+    try {
+      const res = await jobsApi.archive(id);
+      setJobs(prev => prev.filter(j => j._id !== id));
+      setArchivedJobs(prev => [res.data, ...prev]);
+    } catch (err) { alert(err.message || "Failed to archive job"); }
+  };
+
+  const handleRestore = async (id) => {
+    try {
+      const res = await jobsApi.restore(id);
+      setArchivedJobs(prev => prev.filter(j => j._id !== id));
+      setJobs(prev => [res.data, ...prev]);
+    } catch (err) { alert(err.message || "Failed to restore job"); }
   };
 
   const handleStatusChange = async (id, status) => {
@@ -263,10 +287,34 @@ const filtered = [...jobs]
               job={job}
               onEdit={openEdit}
               onDelete={handleDelete}
+              onArchive={handleArchive}
               onStatusChange={handleStatusChange}
               onView={setViewingJob}
+              isArchived={false}
             />
           ))}
+        </div>
+      )}
+
+      {archivedJobs.length > 0 && (
+        <div className="dh-archived-section">
+          <button className="dh-archived-toggle" onClick={() => setShowArchived(o => !o)}>
+            Archived Jobs ({archivedJobs.length}) {showArchived ? "▲" : "▼"}
+          </button>
+          {showArchived && (
+            <div className="dh-grid">
+              {archivedJobs.map(job => (
+                <JobCard
+                  key={job._id}
+                  job={job}
+                  onEdit={openEdit}
+                  onDelete={handleDelete}
+                  onRestore={handleRestore}
+                  isArchived={true}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
