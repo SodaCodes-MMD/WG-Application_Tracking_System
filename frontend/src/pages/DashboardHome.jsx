@@ -137,6 +137,11 @@ const filtered = [...jobs]
     catch (err) { alert(err.message || "Failed to delete job"); }
   };
 
+  const handleJobSaved = (updatedJob) => {
+    setJobs(prev => prev.map(j => j._id === updatedJob._id ? updatedJob : j));
+    setSelectedJob(updatedJob);
+  }
+
   return (
     <>
       <div className="page-header dh-page-header">
@@ -245,7 +250,7 @@ const filtered = [...jobs]
       )}
 
       {showForm && <JobForm job={editingJob} onSave={handleSave} onClose={closeForm} loading={formLoading} />}
-      {selectedJob && <JobDetailPanel job={selectedJob} onClose={() => setSelectedJob(null)} />}
+      {selectedJob && <JobDetailPanel job={selectedJob} onClose={() => setSelectedJob(null)} onSaved={handleJobSaved} />}
     </>
   );
 }
