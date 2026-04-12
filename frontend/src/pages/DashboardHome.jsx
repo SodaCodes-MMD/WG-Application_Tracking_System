@@ -3,6 +3,7 @@ import { jobsApi, JOB_STATUSES, STATUS_COLORS } from "../services/jobs-api.js";
 import JobCard from "../components/JobCard.jsx";
 import JobForm from "../components/JobForm.jsx";
 import JobDetailPanel from "../components/JobDetailPanel.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import "./DashboardHome.css";
 
 const ALL = "All";
@@ -71,13 +72,21 @@ export default function DashboardHome() {
   const [filterDateTo, setFilterDateTo] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
-  const [selectedJob, setSelectedJob] = useState(null); // For JobDetailPanel
   const [formLoading, setFormLoading] = useState(false);
   const [sortBy, setSortBy] = useState("lastActivity");
   const [sortDirection, setSortDirection] = useState("desc");
+  const [viewingJob, setViewingJob] = useState(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const [archivedJobs, setArchivedJobs] = useState([]);
+  const [showArchived, setShowArchived] = useState(false);
 
   const fetchJobs = useCallback(async () => {
-    try { const res = await jobsApi.list(); setJobs(res.data || []); setError(""); }
+    try {
+      const [active, archived] = await Promise.all([jobsApi.list(), jobsApi.listArchived()]);
+      setJobs(active.data || []);
+      setArchivedJobs(archived.data || []);
+      setError("");
+    }
     catch (err) { setError(err.message || "Failed to load jobs"); }
     finally { setLoading(false); }
   }, []);
@@ -131,15 +140,46 @@ const filtered = [...jobs]
     finally { setFormLoading(false); }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this job application?")) return;
-    try { await jobsApi.remove(id); setJobs(prev => prev.filter(j => j._id !== id)); }
-    catch (err) { alert(err.message || "Failed to delete job"); }
+  const handleDelete = (id) => setPendingDeleteId(id);
+
+  const confirmDelete = async () => {
+    const id = pendingDeleteId;
+    setPendingDeleteId(null);
+    try {
+      await jobsApi.remove(id);
+      setJobs(prev => prev.filter(j => j._id !== id));
+      setArchivedJobs(prev => prev.filter(j => j._id !== id));
+      if (viewingJob?._id === id) setViewingJob(null);
+    } catch (err) { alert(err.message || "Failed to delete job"); }
+  };
+
+  const handleArchive = async (id) => {
+    try {
+      const res = await jobsApi.archive(id);
+      setJobs(prev => prev.filter(j => j._id !== id));
+      setArchivedJobs(prev => [res.data, ...prev]);
+    } catch (err) { alert(err.message || "Failed to archive job"); }
+  };
+
+  const handleRestore = async (id) => {
+    try {
+      const res = await jobsApi.restore(id);
+      setArchivedJobs(prev => prev.filter(j => j._id !== id));
+      setJobs(prev => [res.data, ...prev]);
+    } catch (err) { alert(err.message || "Failed to restore job"); }
+  };
+
+  const handleStatusChange = async (id, status) => {
+    try {
+      const res = await jobsApi.update(id, { status });
+      setJobs(prev => prev.map(j => j._id === id ? res.data : j));
+      if (viewingJob?._id === id) setViewingJob(res.data);
+    } catch (err) { alert(err.message || "Failed to update stage"); }
   };
 
   const handleJobSaved = (updatedJob) => {
     setJobs(prev => prev.map(j => j._id === updatedJob._id ? updatedJob : j));
-    setSelectedJob(updatedJob);
+    setViewingJob(updatedJob);
   }
 
   return (
@@ -245,12 +285,60 @@ const filtered = [...jobs]
         </div>
       ) : (
         <div className="dh-grid">
-          {filtered.map(job => <JobCard key={job._id} job={job} onEdit={openEdit} onDelete={handleDelete} onSelect={setSelectedJob}/>)}
+          {filtered.map(job => (
+            <JobCard
+              key={job._id}
+              job={job}
+              onEdit={openEdit}
+              onDelete={handleDelete}
+              onArchive={handleArchive}
+              onStatusChange={handleStatusChange}
+              onView={setViewingJob}
+              isArchived={false}
+            />
+          ))}
+        </div>
+      )}
+
+      {archivedJobs.length > 0 && (
+        <div className="dh-archived-section">
+          <button className="dh-archived-toggle" onClick={() => setShowArchived(o => !o)}>
+            Archived Jobs ({archivedJobs.length}) {showArchived ? "▲" : "▼"}
+          </button>
+          {showArchived && (
+            <div className="dh-grid">
+              {archivedJobs.map(job => (
+                <JobCard
+                  key={job._id}
+                  job={job}
+                  onEdit={openEdit}
+                  onDelete={handleDelete}
+                  onRestore={handleRestore}
+                  isArchived={true}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       {showForm && <JobForm job={editingJob} onSave={handleSave} onClose={closeForm} loading={formLoading} />}
-      {selectedJob && <JobDetailPanel job={selectedJob} onClose={() => setSelectedJob(null)} onSaved={handleJobSaved} />}
+      {viewingJob && (
+        <JobDetailPanel
+          job={viewingJob}
+          onClose={() => setViewingJob(null)}
+          onSaved={handleJobSaved}
+        />
+      )}
+      {pendingDeleteId && (
+        <ConfirmDialog
+          title="Delete job application?"
+          message="This will permanently remove the application. This action cannot be undone."
+          confirmLabel="Delete"
+          onConfirm={confirmDelete}
+          onCancel={() => setPendingDeleteId(null)}
+        />
+      )}
     </>
   );
 }
