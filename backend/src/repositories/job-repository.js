@@ -60,3 +60,4 @@ export const removeInterview = (jobId, userId, interviewId) =>
     { $pull: { interviews: { _id: interviewId } } },
     { new: true }
   ).lean();
+  
