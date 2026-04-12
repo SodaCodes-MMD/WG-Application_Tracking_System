@@ -19,10 +19,7 @@ export const findJobByIdAndUserInclusive = (id, userId) =>
   Job.findOne({ _id: id, userId }).lean();
 
 export const createJob = (data) => Job.create(data);
-<<<<<<< HEAD
-=======
 
->>>>>>> origin/main
 //Updated - accepts optional history entry for status change
 export const updateJobByIdAndUser = (id, userId, updates, historyEntry = null) => {
   const mongoUpdate = { $set: updates };
