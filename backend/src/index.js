@@ -9,6 +9,7 @@ import { checkAndCreateDeadlineNotifications, sendDailyDeadlineDigest } from "./
 console.log("SERVER STARTING...");
 console.log("ENV CHECK - MONGO_URI:", process.env.MONGO_URI ? "loaded" : "MISSING");
 console.log("ENV CHECK - JWT_SECRET:", process.env.JWT_SECRET ? "loaded" : "MISSING");
+console.log("ENV CHECK - GEMINI_API_KEY:", process.env.GEMINI_API_KEY ? "loaded" : "MISSING");
 
 mongoose.connect(process.env.MONGO_URI)
 .then(() => {
