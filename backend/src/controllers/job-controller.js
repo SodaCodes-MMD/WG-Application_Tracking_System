@@ -1,6 +1,6 @@
 import { validationResult } from "express-validator";
 import {
-  findActiveJobsByUser, findArchivedJobsByUser, findJobById,
+  findActiveJobsByUser, findArchivedJobsByUser, findJobById, findJobByIdAndUser,
   createJob, updateJobByIdAndUser, archiveJobByIdAndUser, restoreJobByIdAndUser, deleteJobByIdAndUser,
   addInterview, updateInterview, removeInterview,
 } from "../repositories/job-repository.js";

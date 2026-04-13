@@ -58,6 +58,12 @@
 .job-outcome-badge { font-size: 0.72rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
 .job-outcome-notes { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin: 0; padding: 10px 12px; background: var(--bg-secondary); border-radius: 6px; border-left: 3px solid #f0c800; white-space: pre-wrap; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 
+.job-doc-actions { display: flex; flex-direction: column; gap: 6px; padding-top: 4px; }
+.btn-generate-cover { width: 100%; padding: 8px 12px; font-size: 0.82rem; font-weight: 600; background: #009b3a; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+.btn-generate-cover:hover:not(:disabled) { background: #007a2e; }
+.btn-generate-cover:disabled { opacity: 0.7; cursor: not-allowed; }
+.job-cover-error { margin: 0; font-size: 0.75rem; color: #cf222e; }
+
 /* Stage pipeline */
 .stage-pipeline { display: flex; align-items: center; width: 100%; padding: 2px 0; }
 .pipeline-segment { display: flex; align-items: center; flex: 1; min-width: 0; }
