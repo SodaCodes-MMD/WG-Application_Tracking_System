@@ -1,4 +1,4 @@
-cat > ~/Desktop/CS490/seed-jobs.mjs << 'EOF'
+
 /**
  * Seed sample jobs for testing.
  * Usage: node seed-jobs.mjs <email> <password>
