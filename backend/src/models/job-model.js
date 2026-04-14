@@ -26,6 +26,7 @@ const timelineEventSchema = new mongoose.Schema(
     title: { type: String, required: true, trim: true, maxlength: 200 },
     notes: { type: String, trim: true, maxlength: 5000, default: "" },
     eventDate: { type: Date, default: Date.now },
+    type: { type: String, enum: ["general", "follow-up"], default: "general" },
   },
   { timestamps: true }
 );
