@@ -1,7 +1,8 @@
 import * as docRepo from "../repositories/document-repository.js";
 import * as profileRepo from "../repositories/profile-repository.js";
 import * as jobRepo from "../repositories/job-repository.js";
-import { generateCoverLetterDraft } from "../services/ai-service.js";
+import HTMLtoDOCX from "html-to-docx";
+import { generateCoverLetterDraft, generateResumeDraft, rewriteDocumentContent } from "../services/ai-service.js";
 
 const handleError = (res, message) => {
   console.error(`[DocumentController] ${message}`);
@@ -84,6 +85,36 @@ export async function generateAiCoverLetter(req, res) {
   }
 }
 
+export async function generateAiResume(req, res) {
+  try {
+    const { jobId } = req.body;
+    if (!jobId) return res.status(400).json({ success: false, error: { message: "jobId is required" } });
+
+    const job = await jobRepo.findJobByIdAndUser(jobId, req.user.userId);
+    if (!job) return res.status(404).json({ success: false, error: { message: "Job not found" } });
+
+    const profile = await profileRepo.findProfileByUserId(req.user.userId);
+    if (!profile) return res.status(404).json({ success: false, error: { message: "Profile not found" } });
+
+    const generatedContent = await generateResumeDraft(profile, job);
+
+    const docName = `Resume - ${job.title} at ${job.company}`;
+    const doc = await docRepo.createDocument(req.user.userId, {
+      name: docName,
+      type: "Resume",
+      category: "General",
+      status: "Draft",
+      versions: [{ versionNumber: 1, content: generatedContent }],
+      linkedJobs: [jobId],
+    });
+
+    return res.status(201).json({ success: true, data: doc });
+  } catch (err) {
+    console.error("[DocumentController] AI resume generation failed:", err);
+    return handleError(res, "Failed to generate AI resume");
+  }
+}
+
 export async function linkDocumentToJob(req, res) {
   try {
     const { jobId } = req.body;
@@ -104,6 +135,48 @@ export async function unlinkDocumentFromJob(req, res) {
     if (!doc) return res.status(404).json({ success: false, error: { message: "Document not found" } });
     return res.json({ success: true, data: doc });
   } catch { return handleError(res, "Failed to unlink document from job"); }
+}
+
+export async function aiRewriteDocument(req, res) {
+  try {
+    const doc = await docRepo.findDocumentByIdAndUser(req.params.id, req.user.userId);
+    if (!doc) return res.status(404).json({ success: false, error: { message: "Document not found" } });
+
+    const latestVersion = doc.versions?.[doc.versions.length - 1];
+    if (!latestVersion?.content) return res.status(400).json({ success: false, error: { message: "No content to rewrite" } });
+
+    const { instruction } = req.body;
+    const rewritten = await rewriteDocumentContent(latestVersion.content, doc.type, instruction);
+
+    return res.json({ success: true, data: { rewritten } });
+  } catch (err) {
+    console.error("[DocumentController] AI rewrite failed:", err);
+    return handleError(res, "Failed to rewrite document");
+  }
+}
+
+export async function downloadDocx(req, res) {
+  try {
+    const doc = await docRepo.findDocumentByIdAndUser(req.params.id, req.user.userId);
+    if (!doc) return res.status(404).json({ success: false, error: { message: "Document not found" } });
+
+    const latestVersion = doc.versions?.[doc.versions.length - 1];
+    if (!latestVersion?.content) return res.status(404).json({ success: false, error: { message: "No content to download" } });
+
+    const docxBuffer = await HTMLtoDOCX(latestVersion.content, null, {
+      table: { row: { cantSplit: true } },
+      footer: false,
+      pageNumber: false,
+    });
+
+    const safeName = doc.name.replace(/[^a-z0-9]/gi, "_");
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+    res.setHeader("Content-Disposition", `attachment; filename="${safeName}.docx"`);
+    return res.send(docxBuffer);
+  } catch (err) {
+    console.error("[DocumentController] DOCX download failed:", err);
+    return handleError(res, "Failed to generate DOCX");
+  }
 }
 
 export async function getDocumentsByJob(req, res) {

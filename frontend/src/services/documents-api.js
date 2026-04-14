@@ -24,3 +24,24 @@ export const linkDocumentToJob = (token, id, jobId) => send(token, "POST", `/doc
 export const unlinkDocumentFromJob = (token, id, jobId) => send(token, "POST", `/documents/${id}/unlink-job`, { jobId });
 export const getDocumentsByJob = (token, jobId) => send(token, "GET", `/documents/job/${jobId}`);
 export const generateAiCoverLetter = (token, jobId) => send(token, "POST", "/documents/generate-cover-letter", { jobId });
+export const generateAiResume = (token, jobId) => send(token, "POST", "/documents/generate-resume", { jobId });
+export const aiRewriteDocument = (token, id, instruction) => send(token, "POST", `/documents/${id}/ai-rewrite`, { instruction });
+
+export async function downloadDocx(token, id) {
+  try {
+    const res = await fetch(`${API}/documents/${id}/download-docx`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return { success: false };
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = res.headers.get("Content-Disposition")?.match(/filename="(.+)"/)?.[1] || "resume.docx";
+    a.click();
+    URL.revokeObjectURL(url);
+    return { success: true };
+  } catch {
+    return { success: false };
+  }
+}

@@ -25,5 +25,8 @@ router.post("/documents/:id/link-job", docCtrl.linkDocumentToJob);
 router.post("/documents/:id/unlink-job", docCtrl.unlinkDocumentFromJob);
 router.get("/documents/job/:jobId", docCtrl.getDocumentsByJob);
 router.post("/documents/generate-cover-letter", docCtrl.generateAiCoverLetter);
+router.post("/documents/generate-resume", docCtrl.generateAiResume);
+router.get("/documents/:id/download-docx", docCtrl.downloadDocx);
+router.post("/documents/:id/ai-rewrite", docCtrl.aiRewriteDocument);
 
 export default router;

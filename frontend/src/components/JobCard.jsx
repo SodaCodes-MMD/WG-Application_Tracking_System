@@ -2,7 +2,7 @@ import { useState } from "react";
 import { STATUS_COLORS, OUTCOME_COLORS, jobsApi } from "../services/jobs-api.js";
 import { getToken } from "../services/auth-service.js";
 import { getProfile } from "../services/profile-api.js";
-import { generateAiCoverLetter } from "../services/documents-api.js";
+import { generateAiCoverLetter, generateAiResume } from "../services/documents-api.js";
 import "./JobCard.css";
 
 const INTERVIEW_ROUNDS = ["Phone Screen", "Technical", "Behavioral", "System Design", "Final Round", "Other"];
@@ -86,6 +86,8 @@ export default function JobCard({ job, onEdit, onDelete, onArchive, onRestore, i
   const [iError, setIError] = useState("");
   const [generatingCover, setGeneratingCover] = useState(false);
   const [coverError, setCoverError] = useState("");
+  const [generatingResume, setGeneratingResume] = useState(false);
+  const [resumeError, setResumeError] = useState("");
 
   const openAddInterview = () => { setEditingIv(null); setIForm(EMPTY_INTERVIEW); setIError(""); setShowIForm(true); };
   const openEditInterview = (iv) => { setEditingIv(iv); setIForm({ roundType: iv.roundType, date: toDateInput(iv.date), interviewer: iv.interviewer || "", notes: iv.notes || "" }); setIError(""); setShowIForm(true); };
@@ -115,6 +117,34 @@ export default function JobCard({ job, onEdit, onDelete, onArchive, onRestore, i
       setInterviews(result.data.interviews || []);
     } catch (err) { setIError(err.message || "Failed to delete interview"); }
     finally { setILoading(false); }
+  };
+
+  const handleGenerateResume = async (e) => {
+    e.stopPropagation();
+    setGeneratingResume(true);
+    setResumeError("");
+
+    const token = getToken();
+    if (!token) {
+      setResumeError("Please log in to generate a resume.");
+      setGeneratingResume(false);
+      return;
+    }
+
+    const profileResult = await getProfile(token);
+    if (!profileResult.success || !profileResult.data) {
+      setResumeError("Please complete your profile before generating a resume.");
+      setGeneratingResume(false);
+      return;
+    }
+
+    const result = await generateAiResume(token, job._id);
+    if (result.success) {
+      localStorage.setItem("document-generated", Date.now().toString());
+    } else {
+      setResumeError(result.error?.message || "Failed to generate resume");
+    }
+    setGeneratingResume(false);
   };
 
   const handleGenerateCoverLetter = async (e) => {
@@ -245,6 +275,10 @@ export default function JobCard({ job, onEdit, onDelete, onArchive, onRestore, i
 
       {!isArchived && (
         <div className="job-doc-actions" onClick={e => e.stopPropagation()}>
+          <button className="btn-generate-cover" onClick={handleGenerateResume} disabled={generatingResume}>
+            {generatingResume ? "Generating..." : "Generate AI Resume"}
+          </button>
+          {resumeError && <p className="job-cover-error">{resumeError}</p>}
           <button className="btn-generate-cover" onClick={handleGenerateCoverLetter} disabled={generatingCover}>
             {generatingCover ? "Generating..." : "Generate AI Cover Letter"}
           </button>

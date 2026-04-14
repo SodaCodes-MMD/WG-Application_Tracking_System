@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { jobsApi, JOB_STATUSES, STATUS_COLORS, OUTCOME_COLORS, JOB_OUTCOMES } from "../services/jobs-api.js";
 import { getToken } from "../services/auth-service.js";
 import { getProfile } from "../services/profile-api.js";
-import { getDocumentsByJob, generateAiCoverLetter, addDocumentVersion, deleteDocument } from "../services/documents-api.js";
+import { getDocumentsByJob, generateAiCoverLetter, generateAiResume, addDocumentVersion, deleteDocument } from "../services/documents-api.js";
 import "./JobDetail.css";
 
 function formatSalary(raw) {
@@ -80,6 +80,28 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleGenerateResume = async () => {
+    setSaving(true);
+    setDocError("");
+    setDocSuccess("");
+    const token = getToken();
+    const profile = await getProfile(token);
+    if (!profile.success || !profile.data) {
+      setDocError("Complete your profile before generating a resume.");
+      setSaving(false);
+      return;
+    }
+    const res = await generateAiResume(token, localJob._id);
+    if (res.success) {
+      await loadDocs();
+      setDocSuccess("Resume generated successfully.");
+      localStorage.setItem("document-generated", Date.now().toString());
+    } else {
+      setDocError(res.error?.message || "Failed to generate resume");
+    }
+    setSaving(false);
   };
 
   const handleGenerateCoverLetter = async () => {
@@ -297,6 +319,7 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
               <h3>Documents</h3>
               <button className="btn-jd-edit" onClick={loadDocs} disabled={docsLoading}>Refresh</button>
             </div>
+            <button className="btn-jd-edit" onClick={handleGenerateResume} disabled={saving}>Generate AI Resume</button>
             <button className="btn-jd-edit" onClick={handleGenerateCoverLetter} disabled={saving}>Generate AI Cover Letter</button>
             {docSuccess && <p className="jd-success">{docSuccess}</p>}
             {docError && <p className="jd-error">{docError}</p>}
