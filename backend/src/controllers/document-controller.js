@@ -57,20 +57,15 @@ export async function addVersion(req, res) {
 export async function generateAiCoverLetter(req, res) {
   try {
     const { jobId } = req.body;
-    console.log("[DocumentController] generateAiCoverLetter called with jobId:", jobId);
     if (!jobId) return res.status(400).json({ success: false, error: { message: "jobId is required" } });
 
     const job = await jobRepo.findJobByIdAndUser(jobId, req.user.userId);
-    console.log("[DocumentController] Job found:", job ? "yes" : "no");
     if (!job) return res.status(404).json({ success: false, error: { message: "Job not found" } });
 
     const profile = await profileRepo.findProfileByUserId(req.user.userId);
-    console.log("[DocumentController] Profile found:", profile ? "yes" : "no", profile ? "with data:" : "", profile ? JSON.stringify(profile).substring(0, 100) : "");
     if (!profile) return res.status(404).json({ success: false, error: { message: "Profile not found" } });
 
-    console.log("[DocumentController] Calling generateCoverLetterDraft...");
     const generatedContent = await generateCoverLetterDraft(profile, job);
-    console.log("[DocumentController] Generated content length:", generatedContent?.length);
 
     const docName = `Cover Letter - ${job.title} at ${job.company}`;
     const doc = await docRepo.createDocument(req.user.userId, {
@@ -82,11 +77,9 @@ export async function generateAiCoverLetter(req, res) {
       linkedJobs: [jobId],
     });
 
-    console.log("[DocumentController] Document created with ID:", doc._id);
     return res.status(201).json({ success: true, data: doc });
   } catch (err) {
     console.error("[DocumentController] AI cover letter generation failed:", err);
-    console.error("[DocumentController] Error stack:", err.stack);
     return handleError(res, "Failed to generate AI cover letter");
   }
 }

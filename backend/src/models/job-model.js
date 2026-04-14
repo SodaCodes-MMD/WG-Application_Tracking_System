@@ -5,6 +5,8 @@ const JOB_STATUSES = [
   "Offer", "Rejected", "Withdrawn",
 ];
 
+const JOB_OUTCOMES = ["Pending", "Accepted", "Rejected", "Withdrawn", "Ghosted"];
+
 const INTERVIEW_ROUND_TYPES = [
   "Phone Screen", "Technical", "Behavioral", "System Design", "Final Round", "Other",
 ];
@@ -15,6 +17,15 @@ const interviewSchema = new mongoose.Schema(
     date: { type: Date, default: null },
     interviewer: { type: String, trim: true, maxlength: 200, default: "" },
     notes: { type: String, trim: true, maxlength: 5000, default: "" },
+  },
+  { timestamps: true }
+);
+
+const timelineEventSchema = new mongoose.Schema(
+  {
+    title: { type: String, required: true, trim: true, maxlength: 200 },
+    notes: { type: String, trim: true, maxlength: 5000, default: "" },
+    eventDate: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );
@@ -33,7 +44,11 @@ const jobSchema = new mongoose.Schema(
     archivedAt: { type: Date, default: null, index: true },
     deadline: { type: Date, default: null },
     recruiterNotes: { type: String, trim: true, maxlength: 5000, default: "" },
+    outcome: { type: String, enum: JOB_OUTCOMES, default: null },
+    outcomeNotes: { type: String, trim: true, maxlength: 5000, default: "" },
+    respondedAt: { type: Date, default: null },
     interviews: { type: [interviewSchema], default: [] },
+    timelineEvents: { type: [timelineEventSchema], default: [] },
     statusHistory: [
         {
           status: { type: String, enum: JOB_STATUSES, required: true },
@@ -45,4 +60,5 @@ const jobSchema = new mongoose.Schema(
   );
 
   export const JOB_STATUSES_LIST = JOB_STATUSES;
+  export const JOB_OUTCOMES_LIST = JOB_OUTCOMES;
   export const Job = mongoose.model("Job", jobSchema);
