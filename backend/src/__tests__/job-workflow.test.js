@@ -29,7 +29,10 @@ describe("Job Workflow Status History (SCRUM-58)", () => {
 
   describe("POST /api/jobs", () => {
     it("seeds statusHistory with default Wishlist when status is omitted", async () => {
-      jobRepo.createJob.mockImplementation(async (payload) => ({ _id: jobId, ...payload }));
+      jobRepo.createJob.mockImplementation(async (payload) => ({
+        _id: jobId,
+        ...payload,
+      }));
 
       const res = await request(app)
         .post("/api/jobs")
@@ -54,7 +57,10 @@ describe("Job Workflow Status History (SCRUM-58)", () => {
     });
 
     it("seeds statusHistory with provided status", async () => {
-      jobRepo.createJob.mockImplementation(async (payload) => ({ _id: jobId, ...payload }));
+      jobRepo.createJob.mockImplementation(async (payload) => ({
+        _id: jobId,
+        ...payload,
+      }));
 
       const res = await request(app)
         .post("/api/jobs")
@@ -65,7 +71,12 @@ describe("Job Workflow Status History (SCRUM-58)", () => {
       expect(jobRepo.createJob).toHaveBeenCalledWith(
         expect.objectContaining({
           status: "Applied",
-          statusHistory: [expect.objectContaining({ status: "Applied", changedAt: expect.any(Date) })],
+          statusHistory: [
+            expect.objectContaining({
+              status: "Applied",
+              changedAt: expect.any(Date),
+            }),
+          ],
         })
       );
     });
@@ -83,7 +94,12 @@ describe("Job Workflow Status History (SCRUM-58)", () => {
       const res = await request(app)
         .post("/api/jobs")
         .set("Authorization", `Bearer ${token}`)
-        .send({ company: "Acme Corp", title: "Software Engineer", status: "Applied", deadline: "2026-05-01" });
+        .send({
+          company: "Acme Corp",
+          title: "Software Engineer",
+          status: "Applied",
+          deadline: "2026-05-01",
+        });
 
       expect(res.status).toBe(201);
       expect(deadlineChecker.triggerImmediateNotification).toHaveBeenCalledWith(
@@ -161,7 +177,12 @@ describe("Job Workflow Status History (SCRUM-58)", () => {
 
       expect(res.status).toBe(200);
       expect(jobRepo.findJobByIdAndUser).not.toHaveBeenCalled();
-      expect(jobRepo.updateJobByIdAndUser).toHaveBeenCalledWith(jobId, userId, { notes: "Updated notes" }, null);
+      expect(jobRepo.updateJobByIdAndUser).toHaveBeenCalledWith(
+        jobId,
+        userId,
+        { notes: "Updated notes" },
+        null
+      );
     });
   });
 });

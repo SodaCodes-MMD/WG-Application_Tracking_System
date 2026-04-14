@@ -1,13 +1,7 @@
 const BASIC_FIELDS = ["firstName", "lastName", "phone", "location", "headline", "summary"];
 const TOTAL_FIELDS = 11;
 
-export function calculateProfileCompletion({
-  profile = {},
-  experienceCount = 0,
-  educationCount = 0,
-  skillsCount = 0,
-  prefs = {},
-} = {}) {
+export function calculateProfileCompletion({ profile = {}, experienceCount = 0, educationCount = 0, skillsCount = 0, prefs = {} } = {}) {
   const filledBasic = BASIC_FIELDS.filter((field) => {
     const value = profile[field];
     return typeof value === "string" && value.trim().length > 0;

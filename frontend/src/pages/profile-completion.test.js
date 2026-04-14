@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { calculateProfileCompletion } from "./profile-completion.js";
 
 describe("calculateProfileCompletion", () => {
-  it("returns baseline completion for empty profile", () => {
+  it("returns 9% for empty profile baseline", () => {
     const result = calculateProfileCompletion({
       profile: {},
       experienceCount: 0,
@@ -14,7 +14,7 @@ describe("calculateProfileCompletion", () => {
     expect(result).toBe(9);
   });
 
-  it("counts only trimmed basic fields", () => {
+  it("trims basic fields before counting", () => {
     const result = calculateProfileCompletion({
       profile: {
         firstName: " Jane ",
@@ -33,7 +33,7 @@ describe("calculateProfileCompletion", () => {
     expect(result).toBe(36);
   });
 
-  it("returns 100 when all sections are completed", () => {
+  it("counts section completion and preferences", () => {
     const result = calculateProfileCompletion({
       profile: {
         firstName: "Jane",
@@ -52,7 +52,7 @@ describe("calculateProfileCompletion", () => {
     expect(result).toBe(100);
   });
 
-  it("does not count preferences when work mode is Any and tags are empty", () => {
+  it("does not count preferences when work mode is Any and no tags", () => {
     const result = calculateProfileCompletion({
       profile: {
         firstName: "Jane",
@@ -67,7 +67,7 @@ describe("calculateProfileCompletion", () => {
     expect(result).toBe(36);
   });
 
-  it("counts preferences when work mode is non-default", () => {
+  it("counts preferences when work mode is not Any", () => {
     const result = calculateProfileCompletion({
       profile: {
         firstName: "Jane",
