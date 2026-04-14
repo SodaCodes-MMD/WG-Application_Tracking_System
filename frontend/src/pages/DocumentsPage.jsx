@@ -267,7 +267,7 @@ export default function DocumentsPage() {
                 </select>
               </div>
               <div className="document-view-actions">
-                {selectedDoc.type === "Resume" && isHtmlContent(viewingContent) && !isEditing && !rewrittenContent && (
+                {isHtmlContent(viewingContent) && !isEditing && !rewrittenContent && (
                   <button className="btn-download-docx" onClick={handleDownloadDocx} disabled={downloadingDocx}>
                     {downloadingDocx ? "Downloading..." : "Download DOCX"}
                   </button>
