@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { jobsApi, JOB_STATUSES, STATUS_COLORS, OUTCOME_COLORS, JOB_OUTCOMES } from "../services/jobs-api.js";
 import { getToken } from "../services/auth-service.js";
 import { getProfile } from "../services/profile-api.js";
@@ -41,9 +41,19 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
     setLocalJob(job);
   }, [job]);
 
+  const loadDocs = useCallback(async () => {
+    setDocsLoading(true);
+    setDocError("");
+    const token = getToken();
+    const res = await getDocumentsByJob(token, job._id);
+    if (res.success) setDocs(res.data || []);
+    else setDocError(res.error?.message || "Failed to load documents");
+    setDocsLoading(false);
+  }, [job._id]);
+
   useEffect(() => {
     loadDocs();
-  }, [job._id]);
+  }, [loadDocs]);
 
   const colors = STATUS_COLORS[localJob.status] || STATUS_COLORS.Wishlist;
   const outcomeColors = localJob.outcome ? OUTCOME_COLORS[localJob.outcome] : null;
@@ -70,16 +80,6 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
     } finally {
       setSaving(false);
     }
-  };
-
-  const loadDocs = async () => {
-    setDocsLoading(true);
-    setDocError("");
-    const token = getToken();
-    const res = await getDocumentsByJob(token, localJob._id);
-    if (res.success) setDocs(res.data || []);
-    else setDocError(res.error?.message || "Failed to load documents");
-    setDocsLoading(false);
   };
 
   const handleGenerateCoverLetter = async () => {
