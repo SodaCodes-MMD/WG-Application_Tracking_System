@@ -1,11 +1,15 @@
+cat > ~/Desktop/CS490/seed-jobs.mjs << 'EOF'
 /**
  * Seed sample jobs for testing.
  * Usage: node seed-jobs.mjs <email> <password>
- * Example: node seed-jobs.mjs test@example.com mypassword
  */
-
 const API = "http://localhost:5000/api";
 const [email, password] = process.argv.slice(2);
+
+if (!email || !password) {
+  console.error("Usage: node seed-jobs.mjs <email> <password>");
+  process.exit(1);
+}
 
 function daysAgo(n) {
   const d = new Date();
@@ -17,11 +21,6 @@ function daysFromNow(n) {
   const d = new Date();
   d.setDate(d.getDate() + n);
   return d.toISOString();
-}
-
-if (!email || !password) {
-  console.error("Usage: node seed-jobs.mjs <email> <password>");
-  process.exit(1);
 }
 
 const JOBS = [
@@ -55,8 +54,6 @@ const JOBS = [
     salary: "155k-195k/yr",
     notes: "Offer received, evaluating compensation package.",
     appliedAt: daysAgo(20),
-    outcome: "Accepted",
-    outcomeNotes: "Strong offer, good team match.",
   },
   {
     company: "Netflix",
@@ -81,10 +78,8 @@ const JOBS = [
     status: "Rejected",
     location: "Remote",
     salary: "140k-180k/yr",
-    notes: "Got to final round. Feedback: needed more distributed systems experience.",
+    notes: "Got to final round. Needed more distributed systems experience.",
     appliedAt: daysAgo(30),
-    outcome: "Rejected",
-    outcomeNotes: "Focus on distributed systems prep for next time.",
   },
   {
     company: "Cloudflare",
@@ -94,8 +89,6 @@ const JOBS = [
     salary: "130k-160k/yr",
     notes: "Withdrew after receiving Amazon offer.",
     appliedAt: daysAgo(25),
-    outcome: "Withdrawn",
-    outcomeNotes: "Accepted another offer.",
   },
   {
     company: "Apple",
@@ -108,3 +101,47 @@ const JOBS = [
     deadline: daysFromNow(3),
   },
 ];
+
+async function main() {
+  console.log(`Logging in as ${email}...`);
+  const loginRes = await fetch(`${API}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  const loginData = await loginRes.json();
+  if (!loginRes.ok) {
+    console.error("Login failed:", loginData.error?.message || "Unknown error");
+    process.exit(1);
+  }
+  const token = loginData.data?.token;
+  console.log("Logged in.\n");
+
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+
+  let created = 0;
+  for (const job of JOBS) {
+    const res = await fetch(`${API}/jobs`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(job),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      console.log(`✓  ${job.company} — ${job.title} [${job.status}]`);
+      created++;
+    } else {
+      console.error(`✗  ${job.company}: ${data.error?.message || "Failed"}`);
+    }
+  }
+  console.log(`\nDone — ${created}/${JOBS.length} jobs created.`);
+}
+
+main().catch(err => {
+  console.error(err);
+  process.exit(1);
+});
+EOF
