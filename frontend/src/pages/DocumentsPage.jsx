@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { getToken } from "../services/auth-service.js";
-import { listDocuments, deleteDocument, getDocument, addDocumentVersion } from "../services/documents-api.js";
+import { listDocuments, deleteDocument, getDocument, addDocumentVersion, downloadDocx, aiRewriteDocument } from "../services/documents-api.js";
 
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState([]);
@@ -12,6 +12,11 @@ export default function DocumentsPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
   const [saving, setSaving] = useState(false);
+  const [downloadingDocx, setDownloadingDocx] = useState(false);
+  const [rewriting, setRewriting] = useState(false);
+  const [rewrittenContent, setRewrittenContent] = useState(null);
+  const [rewriteInstruction, setRewriteInstruction] = useState("");
+  const [showRewriteInput, setShowRewriteInput] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -100,6 +105,48 @@ export default function DocumentsPage() {
     setSaving(false);
   };
 
+  const handleDownloadDocx = async () => {
+    setDownloadingDocx(true);
+    const token = getToken();
+    await downloadDocx(token, selectedDoc._id);
+    setDownloadingDocx(false);
+  };
+
+  const isHtmlContent = (content) => content && content.trimStart().startsWith("<");
+
+  const handleAiRewrite = async () => {
+    setRewriting(true);
+    const token = getToken();
+    const result = await aiRewriteDocument(token, selectedDoc._id, rewriteInstruction);
+    if (result.success) {
+      setRewrittenContent(result.data.rewritten);
+      setShowRewriteInput(false);
+    }
+    setRewriting(false);
+  };
+
+  const handleAcceptRewrite = async () => {
+    setSaving(true);
+    const token = getToken();
+    const result = await addDocumentVersion(token, selectedDoc._id, rewrittenContent);
+    if (result.success) {
+      setSelectedDoc(result.data);
+      const newVersion = result.data.versions[result.data.versions.length - 1];
+      setSelectedVersion(newVersion);
+      setViewingContent(newVersion.content);
+      setDocuments(prev => prev.map(d => d._id === selectedDoc._id ? result.data : d));
+      setRewrittenContent(null);
+      setRewriteInstruction("");
+    }
+    setSaving(false);
+  };
+
+  const handleDiscardRewrite = () => {
+    setRewrittenContent(null);
+    setRewriteInstruction("");
+    setShowRewriteInput(false);
+  };
+
   const handleCancelEdit = () => {
     setIsEditing(false);
     setEditContent("");
@@ -111,6 +158,9 @@ export default function DocumentsPage() {
     setViewingContent("");
     setIsEditing(false);
     setEditContent("");
+    setRewrittenContent(null);
+    setRewriteInstruction("");
+    setShowRewriteInput(false);
   };
 
   const formatDate = (date) => {
@@ -143,7 +193,7 @@ export default function DocumentsPage() {
         <div className="empty-state">
           <div className="empty-state-icon">📄</div>
           <h3>No documents yet</h3>
-          <p>Generate AI cover letters from the Job Board to see them here.</p>
+          <p>Generate AI resumes and cover letters from the Job Board to see them here.</p>
         </div>
       ) : (
         <div className="documents-grid">
@@ -217,14 +267,24 @@ export default function DocumentsPage() {
                 </select>
               </div>
               <div className="document-view-actions">
-                {!isEditing ? (
+                {selectedDoc.type === "Resume" && isHtmlContent(viewingContent) && !isEditing && !rewrittenContent && (
+                  <button className="btn-download-docx" onClick={handleDownloadDocx} disabled={downloadingDocx}>
+                    {downloadingDocx ? "Downloading..." : "Download DOCX"}
+                  </button>
+                )}
+                {!isEditing && !rewrittenContent && (
+                  <button className="btn-ai-improve" onClick={() => setShowRewriteInput(v => !v)} disabled={rewriting}>
+                    AI Improve
+                  </button>
+                )}
+                {!isEditing && !rewrittenContent ? (
                   <button className="btn-edit-document" onClick={handleEdit}>
                     Edit / Save New Version
                   </button>
-                ) : (
+                ) : rewrittenContent ? null : (
                   <>
-                    <button 
-                      className="btn-save-document" 
+                    <button
+                      className="btn-save-document"
                       onClick={handleSaveEdit}
                       disabled={saving}
                     >
@@ -238,23 +298,80 @@ export default function DocumentsPage() {
               </div>
             </div>
 
-            <div className="document-view-content">
-              {isEditing ? (
-                <textarea
-                  className="document-edit-textarea"
-                  value={editContent}
-                  onChange={e => setEditContent(e.target.value)}
-                  placeholder="Edit your document content..."
-                  autoFocus
+            {showRewriteInput && !rewrittenContent && (
+              <div className="rewrite-input-bar">
+                <input
+                  className="rewrite-instruction-input"
+                  type="text"
+                  placeholder="Optional: give instructions (e.g. make it more concise, stronger action verbs...)"
+                  value={rewriteInstruction}
+                  onChange={e => setRewriteInstruction(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && !rewriting && handleAiRewrite()}
                 />
-              ) : (
-                <div className="document-content-display">
-                  {viewingContent.split('\n').map((line, i) => (
-                    <p key={i}>{line || <br />}</p>
-                  ))}
+                <button className="btn-run-rewrite" onClick={handleAiRewrite} disabled={rewriting}>
+                  {rewriting ? "Rewriting..." : "Run"}
+                </button>
+                <button className="btn-cancel-rewrite" onClick={() => setShowRewriteInput(false)}>Cancel</button>
+              </div>
+            )}
+
+            {rewrittenContent ? (
+              <div className="rewrite-compare-wrapper">
+                <div className="rewrite-compare-actions">
+                  <button className="btn-accept-rewrite" onClick={handleAcceptRewrite} disabled={saving}>
+                    {saving ? "Saving..." : "Save as New Version"}
+                  </button>
+                  <button className="btn-discard-rewrite" onClick={handleDiscardRewrite}>Discard</button>
                 </div>
-              )}
-            </div>
+                <div className="rewrite-compare-panes">
+                  <div className="rewrite-pane">
+                    <div className="rewrite-pane-label">Original</div>
+                    {isHtmlContent(viewingContent) ? (
+                      <iframe className="document-html-preview" srcDoc={viewingContent} title="Original" sandbox="allow-same-origin" />
+                    ) : (
+                      <div className="document-content-display">
+                        {viewingContent.split('\n').map((line, i) => <p key={i}>{line || <br />}</p>)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="rewrite-pane">
+                    <div className="rewrite-pane-label rewrite-pane-label--new">AI Rewrite</div>
+                    {isHtmlContent(rewrittenContent) ? (
+                      <iframe className="document-html-preview" srcDoc={rewrittenContent} title="AI Rewrite" sandbox="allow-same-origin" />
+                    ) : (
+                      <div className="document-content-display">
+                        {rewrittenContent.split('\n').map((line, i) => <p key={i}>{line || <br />}</p>)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="document-view-content">
+                {isEditing ? (
+                  <textarea
+                    className="document-edit-textarea"
+                    value={editContent}
+                    onChange={e => setEditContent(e.target.value)}
+                    placeholder="Edit your document content..."
+                    autoFocus
+                  />
+                ) : isHtmlContent(viewingContent) ? (
+                  <iframe
+                    className="document-html-preview"
+                    srcDoc={viewingContent}
+                    title="Resume Preview"
+                    sandbox="allow-same-origin"
+                  />
+                ) : (
+                  <div className="document-content-display">
+                    {viewingContent.split('\n').map((line, i) => (
+                      <p key={i}>{line || <br />}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { getToken } from "../services/auth-service.js";
 import { getProfile } from "../services/profile-api.js";
-import { getDocumentsByJob, generateAiCoverLetter, addDocumentVersion } from "../services/documents-api.js";
+import { getDocumentsByJob, generateAiCoverLetter, generateAiResume, addDocumentVersion } from "../services/documents-api.js";
 import "./JobDetailPanel.css";
 
 export default function JobDetailPanel({ job, onClose }) {
   const [documents, setDocuments] = useState([]);
   const [loadingDocs, setLoadingDocs] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [generatingResume, setGeneratingResume] = useState(false);
   const [error, setError] = useState(null);
   const [editingDoc, setEditingDoc] = useState(null);
   const [docContent, setDocContent] = useState("");
@@ -55,6 +56,34 @@ export default function JobDetailPanel({ job, onClose }) {
     setGenerating(false);
   };
 
+  const handleGenerateResume = async () => {
+    setGeneratingResume(true);
+    setError(null);
+
+    const token = getToken();
+    if (!token) {
+      setError("Please log in to generate a resume.");
+      setGeneratingResume(false);
+      return;
+    }
+
+    const profileResult = await getProfile(token);
+    if (!profileResult.success || !profileResult.data) {
+      setError("Please complete your profile before generating a resume.");
+      setGeneratingResume(false);
+      return;
+    }
+
+    const result = await generateAiResume(token, job._id);
+    if (result.success) {
+      setDocuments(prev => [result.data, ...prev]);
+      localStorage.setItem('document-generated', Date.now().toString());
+    } else {
+      setError(result.error?.message || "Failed to generate resume");
+    }
+    setGeneratingResume(false);
+  };
+
   const handleEditDocument = (doc) => {
     setEditingDoc(doc);
     setDocContent(doc.versions[doc.versions.length - 1]?.content || "");
@@ -92,7 +121,14 @@ export default function JobDetailPanel({ job, onClose }) {
             >
               {generating ? "Generating..." : "Generate AI Cover Letter"}
             </button>
-            
+            <button
+              className="jdp-generate-btn"
+              onClick={handleGenerateResume}
+              disabled={generatingResume}
+            >
+              {generatingResume ? "Generating..." : "Generate AI Resume"}
+            </button>
+
             {error && <p className="jdp-error">{error}</p>}
             
             {loadingDocs ? (
