@@ -55,37 +55,45 @@ export async function generateCoverLetterDraft(profile, job) {
 
 function buildCoverLetterPrompt(profile, job) {
   const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ") || "[Your Name]";
-  const headline = profile.headline || "";
+  const phone = profile.phone || "";
+  const location = profile.location || "";
   const summary = profile.summary || "";
-  
-  const experienceList = profile.experience?.map(exp => {
-    return `${exp.jobTitle} at ${exp.company}${exp.location ? ` (${exp.location})` : ""}${exp.description ? `\n${exp.description}` : ""}`;
-  }).join("\n\n") || "No experience listed";
 
-  const educationList = profile.education?.map(edu => {
-    return `${edu.degree} in ${edu.fieldOfStudy} from ${edu.institution}`;
-  }).join("\n\n") || "No education listed";
+  const experienceList = profile.experience?.map(exp =>
+    `${exp.jobTitle} at ${exp.company}${exp.location ? ` (${exp.location})` : ""}${exp.description ? `: ${exp.description}` : ""}`
+  ).join("\n") || "No experience listed";
 
   const skillsList = profile.skills?.map(s => s.name).join(", ") || "No skills listed";
 
-  return `Write a professional cover letter for a candidate applying for the position of ${job.title} at ${job.company}.
+  return `You are a professional cover letter writer and HTML/CSS expert. Generate a complete, self-contained HTML cover letter document.
 
-CANDIDATE PROFILE:
+TARGET ROLE: ${job.title} at ${job.company}
+
+CANDIDATE DATA:
 Name: ${fullName}
-Headline: ${headline}
+Phone: ${phone}
+Location: ${location}
 Summary: ${summary}
+Experience: ${experienceList}
+Skills: ${skillsList}
 
-EXPERIENCE:
-${experienceList}
+OUTPUT RULES:
+- Output ONLY a complete HTML document starting with <!DOCTYPE html> and ending with </html>.
+- No markdown, no code fences, no explanation — raw HTML only.
+- All styles must be inline or in a <style> tag in <head> (self-contained, no external CSS).
+- Use this exact visual design to match the resume style:
+  * White background (#fff), max-width 800px, margin: auto, padding: 40px, font-family: Georgia, serif
+  * Header: candidate name in large bold dark text (#1a1a2e), contact line below (phone | location) in small grey (#555), centered
+  * A thin horizontal rule (#2c3e7a) after the header
+  * Date, recipient block, and salutation in 13px #222, line-height 1.6
+  * Body paragraphs: 13px, line-height 1.8, color #222, margin between paragraphs
+  * Closing and signature in the same style
+  * Overall clean, professional, letter-style layout
+- Write 3 strong body paragraphs tailored to ${job.title} at ${job.company}.
+- Use the candidate's real name in the salutation close — not a placeholder.
+- CRITICAL: Complete the letter fully with a proper sign-off and the candidate's full name. Do not stop mid-sentence.
 
-EDUCATION:
-${educationList}
-
-SKILLS:
-${skillsList}
-
-Write a 3-paragraph cover letter that highlights relevant experience and skills. Use a professional tone.
-CRITICAL: Ensure the cover letter is fully completed. Do not stop mid-sentence or mid-paragraph. Always conclude with a professional sign-off and the candidate's name.`;
+Generate the complete HTML cover letter now.`;
 }
 
 export async function generateResumeDraft(profile, job) {

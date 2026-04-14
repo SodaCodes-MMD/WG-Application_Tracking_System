@@ -502,7 +502,7 @@ export default function ProfilePage({ user }) {
             onClick={handleSaveBasic}
             disabled={savingBasic}
           >
-            {savingBasic ? "Saving..." : dirtyBasic ? "Save Changes" : "Saved"}
+            {savingBasic ? "Saving..." : dirtyBasic ? "Save Changes" : "Save"}
           </SectionSaveButton>
         </div>
       </section>
@@ -872,7 +872,7 @@ export default function ProfilePage({ user }) {
             onClick={handleSavePrefs}
             disabled={savingPref}
           >
-            {savingPref ? "Saving..." : dirtyPref ? "Save Changes" : "Saved"}
+            {savingPref ? "Saving..." : dirtyPref ? "Save Changes" : "Save"}
           </SectionSaveButton>
         </div>
       </section>
