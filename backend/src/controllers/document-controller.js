@@ -1,115 +1,160 @@
-import * as docRepo from "../repositories/document-repository.js";
-import * as profileRepo from "../repositories/profile-repository.js";
-import * as jobRepo from "../repositories/job-repository.js";
+import { validationResult } from "express-validator";
+import {
+  findDocumentsByUser,
+  findDocumentsByUserAndJob,
+  createDocument,
+  deleteDocumentByIdAndUser,
+} from "../repositories/document-repository.js";
+import { findJobByIdAndUser } from "../repositories/job-repository.js";
+import { findProfileByUserId } from "../repositories/profile-repository.js";
 import { generateCoverLetterDraft } from "../services/ai-service.js";
 
-const handleError = (res, message) => {
-  console.error(`[DocumentController] ${message}`);
-  return res.status(500).json({ success: false, error: { message } });
+function sendValidationError(res, errors) {
+  return res.status(400).json({
+    success: false,
+    error: {
+      code: "VALIDATION_ERROR",
+      message: errors.array()[0].msg,
+    },
+  });
+}
+
+export const listDocumentsHandler = async (req, res) => {
+  try {
+    const { jobId } = req.query;
+
+    const docs = jobId
+      ? await findDocumentsByUserAndJob(req.user.userId, jobId)
+      : await findDocumentsByUser(req.user.userId);
+
+    return res.json({
+      success: true,
+      data: docs,
+    });
+  } catch (err) {
+    console.error("[DocumentController] listDocumentsHandler:", err);
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: "Failed to fetch documents",
+      },
+    });
+  }
 };
 
-export async function listDocuments(req, res) {
+export const createDocumentHandler = async (req, res) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return sendValidationError(res, errors);
+  }
+
   try {
-    const docs = await docRepo.findDocumentsByUser(req.user.userId);
-    return res.json({ success: true, data: docs });
-  } catch { return handleError(res, "Failed to fetch documents"); }
-}
+    const { jobId, title, type, content } = req.body;
 
-export async function getDocument(req, res) {
-  try {
-    const doc = await docRepo.findDocumentByIdAndUser(req.params.id, req.user.userId);
-    if (!doc) return res.status(404).json({ success: false, error: { message: "Document not found" } });
-    return res.json({ success: true, data: doc });
-  } catch { return handleError(res, "Failed to fetch document"); }
-}
-
-export async function createDocument(req, res) {
-  try {
-    const doc = await docRepo.createDocument(req.user.userId, req.body);
-    return res.status(201).json({ success: true, data: doc });
-  } catch { return handleError(res, "Failed to create document"); }
-}
-
-export async function updateDocument(req, res) {
-  try {
-    const doc = await docRepo.updateDocumentByIdAndUser(req.params.id, req.user.userId, req.body);
-    if (!doc) return res.status(404).json({ success: false, error: { message: "Document not found" } });
-    return res.json({ success: true, data: doc });
-  } catch { return handleError(res, "Failed to update document"); }
-}
-
-export async function deleteDocument(req, res) {
-  try {
-    const doc = await docRepo.deleteDocumentByIdAndUser(req.params.id, req.user.userId);
-    if (!doc) return res.status(404).json({ success: false, error: { message: "Document not found" } });
-    return res.json({ success: true, data: doc });
-  } catch { return handleError(res, "Failed to delete document"); }
-}
-
-export async function addVersion(req, res) {
-  try {
-    const doc = await docRepo.addDocumentVersion(req.params.id, req.user.userId, req.body.content);
-    if (!doc) return res.status(404).json({ success: false, error: { message: "Document not found" } });
-    return res.json({ success: true, data: doc });
-  } catch { return handleError(res, "Failed to add version"); }
-}
-
-export async function generateAiCoverLetter(req, res) {
-  try {
-    const { jobId } = req.body;
-    if (!jobId) return res.status(400).json({ success: false, error: { message: "jobId is required" } });
-
-    const job = await jobRepo.findJobByIdAndUser(jobId, req.user.userId);
-    if (!job) return res.status(404).json({ success: false, error: { message: "Job not found" } });
-
-    const profile = await profileRepo.findProfileByUserId(req.user.userId);
-    if (!profile) return res.status(404).json({ success: false, error: { message: "Profile not found" } });
-
-    const generatedContent = await generateCoverLetterDraft(profile, job);
-
-    const docName = `Cover Letter - ${job.title} at ${job.company}`;
-    const doc = await docRepo.createDocument(req.user.userId, {
-      name: docName,
-      type: "Cover Letter",
-      category: "General",
-      status: "Draft",
-      versions: [{ versionNumber: 1, content: generatedContent }],
-      linkedJobs: [jobId],
+    const doc = await createDocument({
+      userId: req.user.userId,
+      jobId,
+      title,
+      type: type || "Other",
+      content: content || "",
     });
 
-    return res.status(201).json({ success: true, data: doc });
+    return res.status(201).json({
+      success: true,
+      data: doc,
+    });
   } catch (err) {
-    console.error("[DocumentController] AI cover letter generation failed:", err);
-    return handleError(res, "Failed to generate AI cover letter");
+    console.error("[DocumentController] createDocumentHandler:", err);
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: "Failed to save document",
+      },
+    });
   }
-}
+};
 
-export async function linkDocumentToJob(req, res) {
+export const deleteDocumentHandler = async (req, res) => {
+  try {
+    const deleted = await deleteDocumentByIdAndUser(
+      req.params.id,
+      req.user.userId
+    );
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: "NOT_FOUND",
+          message: "Document not found",
+        },
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        message: "Document deleted",
+      },
+    });
+  } catch (err) {
+    console.error("[DocumentController] deleteDocumentHandler:", err);
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: "Failed to delete document",
+      },
+    });
+  }
+};
+
+export const generateCoverLetterHandler = async (req, res) => {
   try {
     const { jobId } = req.body;
-    if (!jobId) return res.status(400).json({ success: false, error: { message: "jobId is required" } });
 
-    const doc = await docRepo.linkDocumentToJob(req.params.id, req.user.userId, jobId);
-    if (!doc) return res.status(404).json({ success: false, error: { message: "Document not found" } });
-    return res.json({ success: true, data: doc });
-  } catch { return handleError(res, "Failed to link document to job"); }
-}
+    if (!jobId) {
+      return res.status(400).json({
+        success: false,
+        error: { message: "jobId is required" },
+      });
+    }
 
-export async function unlinkDocumentFromJob(req, res) {
-  try {
-    const { jobId } = req.body;
-    if (!jobId) return res.status(400).json({ success: false, error: { message: "jobId is required" } });
+    const job = await findJobByIdAndUser(jobId, req.user.userId);
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        error: { message: "Job not found" },
+      });
+    }
 
-    const doc = await docRepo.unlinkDocumentFromJob(req.params.id, req.user.userId, jobId);
-    if (!doc) return res.status(404).json({ success: false, error: { message: "Document not found" } });
-    return res.json({ success: true, data: doc });
-  } catch { return handleError(res, "Failed to unlink document from job"); }
-}
+    const profile = await findProfileByUserId(req.user.userId);
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          message:
+            "Profile not found. Please complete your profile before generating a cover letter.",
+        },
+      });
+    }
 
-export async function getDocumentsByJob(req, res) {
-  try {
-    const { jobId } = req.params;
-    const docs = await docRepo.findDocumentsByJob(req.user.userId, jobId);
-    return res.json({ success: true, data: docs });
-  } catch { return handleError(res, "Failed to fetch documents for job"); }
-}
+    const content = await generateCoverLetterDraft(profile, job);
+    const title = `Cover Letter - ${job.title} at ${job.company}`;
+
+    return res.json({
+      success: true,
+      data: { title, content },
+    });
+  } catch (err) {
+    console.error("[DocumentController] generateCoverLetterHandler:", err);
+
+    return res.status(500).json({
+      success: false,
+      error: { message: "Failed to generate cover letter" },
+    });
+  }
+};

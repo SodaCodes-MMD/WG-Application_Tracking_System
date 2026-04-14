@@ -1,180 +1,84 @@
-import { useState, useEffect } from "react";
-import { getToken } from "../services/auth-service.js";
-import { listDocuments, deleteDocument, getDocument, addDocumentVersion } from "../services/documents-api.js";
+import { useEffect, useState } from "react";
+import { documentsApi } from "../services/documents-api.js";
 
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedDoc, setSelectedDoc] = useState(null);
-  const [viewingContent, setViewingContent] = useState("");
-  const [selectedVersion, setSelectedVersion] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    (async () => {
+  const loadDocuments = async () => {
+    try {
       setLoading(true);
-      const token = getToken();
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-      const result = await listDocuments(token);
-      if (result.success) {
-        setDocuments(result.data);
-      } else {
-        setError(result.error?.message || "Failed to load documents");
-      }
+      const res = await documentsApi.list();
+      setDocuments(res.data || []);
+      setError("");
+    } catch (err) {
+      setError(err.message || "Failed to load documents");
+    } finally {
       setLoading(false);
-    })();
-  }, []);
+    }
+  };
 
   useEffect(() => {
-    const checkForNewDocuments = () => {
-      const timestamp = localStorage.getItem('document-generated');
-      if (timestamp) {
-        localStorage.removeItem('document-generated');
-        (async () => {
-          const token = getToken();
-          if (token) {
-            const result = await listDocuments(token);
-            if (result.success) {
-              setDocuments(result.data);
-            }
-          }
-        })();
-      }
-    };
-
-    const interval = setInterval(checkForNewDocuments, 1000);
-    return () => clearInterval(interval);
+    loadDocuments();
   }, []);
 
-  const handleDelete = async (docId) => {
-    if (!window.confirm("Delete this document?")) return;
-    const token = getToken();
-    const result = await deleteDocument(token, docId);
-    if (result.success) {
-      setDocuments(prev => prev.filter(d => d._id !== docId));
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this document?")) {
+      return;
     }
-  };
 
-  const handleView = async (doc) => {
-    setSelectedDoc(doc);
-    const token = getToken();
-    const result = await getDocument(token, doc._id);
-    if (result.success && result.data.versions?.length > 0) {
-      const latestVersion = result.data.versions[result.data.versions.length - 1];
-      setSelectedVersion(latestVersion);
-      setViewingContent(latestVersion.content);
-      setIsEditing(false);
+    try {
+      await documentsApi.remove(id);
+      setDocuments((prev) => prev.filter((doc) => doc._id !== id));
+    } catch (err) {
+      alert(err.message || "Failed to delete document");
     }
-  };
-
-  const handleVersionChange = (version) => {
-    setSelectedVersion(version);
-    setViewingContent(version.content);
-    setIsEditing(false);
-  };
-
-  const handleEdit = () => {
-    setEditContent(viewingContent);
-    setIsEditing(true);
-  };
-
-  const handleSaveEdit = async () => {
-    if (!selectedDoc || !editContent.trim()) return;
-    setSaving(true);
-    const token = getToken();
-    const result = await addDocumentVersion(token, selectedDoc._id, editContent);
-    if (result.success) {
-      setSelectedDoc(result.data);
-      const newVersion = result.data.versions[result.data.versions.length - 1];
-      setSelectedVersion(newVersion);
-      setViewingContent(newVersion.content);
-      setIsEditing(false);
-      setDocuments(prev => prev.map(d => d._id === selectedDoc._id ? result.data : d));
-    }
-    setSaving(false);
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    setEditContent("");
-  };
-
-  const handleCloseView = () => {
-    setSelectedDoc(null);
-    setSelectedVersion(null);
-    setViewingContent("");
-    setIsEditing(false);
-    setEditContent("");
-  };
-
-  const formatDate = (date) => {
-    if (!date) return "";
-    return new Date(date).toLocaleString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
   };
 
   return (
     <>
       <div className="page-header">
         <h2>Document Library</h2>
-        <p>Store and manage your resumes, cover letters, and other application materials.</p>
+        <p>Saved drafts linked to job applications.</p>
       </div>
 
       {loading ? (
-        <div className="loading-container">
-          <p>Loading documents...</p>
+        <div className="stub-page">
+          <h2>Loading documents...</h2>
         </div>
       ) : error ? (
-        <div className="error-container">
+        <div className="stub-page">
+          <h2>Could not load documents</h2>
           <p>{error}</p>
         </div>
       ) : documents.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">📄</div>
-          <h3>No documents yet</h3>
-          <p>Generate AI cover letters from the Job Board to see them here.</p>
+        <div className="stub-page">
+          <h2>No documents yet</h2>
+          <p>Open a job and use Save Document to create one.</p>
         </div>
       ) : (
-        <div className="documents-grid">
-          {documents.map(doc => (
-            <div key={doc._id} className="document-card">
-              <div className="document-card-header">
-                <span className={`document-type-badge ${doc.type.toLowerCase().replace(" ", "-")}`}>
-                  {doc.type}
-                </span>
-                <span className={`document-status-badge ${doc.status.toLowerCase()}`}>
-                  {doc.status}
-                </span>
+        <div className="dh-grid">
+          {documents.map((doc) => (
+            <div key={doc._id} className="job-card">
+              <div className="job-card-header">
+                <div className="job-card-info">
+                  <h3 className="job-title">{doc.title}</h3>
+                  <p className="job-company">{doc.type}</p>
+                </div>
               </div>
-              <h3 className="document-name">{doc.name}</h3>
-              <p className="document-category">{doc.category}</p>
-              <div className="document-meta">
-                <span>{formatDate(doc.createdAt)}</span>
-                <span>{doc.versions?.length || 0} version(s)</span>
-              </div>
-              {doc.linkedJobs?.length > 0 && (
-                <p className="document-linked">Linked to {doc.linkedJobs.length} job(s)</p>
-              )}
-              <div className="document-actions">
-                <button 
-                  className="btn-view-document"
-                  onClick={() => handleView(doc)}
-                >
-                  View
-                </button>
-                <button 
-                  className="btn-delete-document"
+
+              <p className="job-notes">
+                {doc.content || "No content"}
+              </p>
+
+              <p className="job-meta-item job-date">
+                Updated {new Date(doc.updatedAt).toLocaleDateString()}
+              </p>
+
+              <div className="jd-footer">
+                <button
+                  className="btn-jd-delete"
                   onClick={() => handleDelete(doc._id)}
                 >
                   Delete
@@ -182,80 +86,6 @@ export default function DocumentsPage() {
               </div>
             </div>
           ))}
-        </div>
-      )}
-
-      {selectedDoc && (
-        <div className="document-view-overlay" onClick={handleCloseView}>
-          <div className="document-view-modal" onClick={e => e.stopPropagation()}>
-            <div className="document-view-header">
-              <div className="document-view-title-section">
-                <h3>{selectedDoc.name}</h3>
-                <span className={`document-type-badge ${selectedDoc.type.toLowerCase().replace(" ", "-")}`}>
-                  {selectedDoc.type}
-                </span>
-              </div>
-              <button className="document-view-close" onClick={handleCloseView} aria-label="Close">✕</button>
-            </div>
-
-            <div className="document-view-controls">
-              <div className="version-selector">
-                <label htmlFor="version-select">Version:</label>
-                <select 
-                  id="version-select"
-                  value={selectedVersion?._id || ""}
-                  onChange={e => {
-                    const version = selectedDoc.versions.find(v => v._id === e.target.value);
-                    if (version) handleVersionChange(version);
-                  }}
-                >
-                  {selectedDoc.versions?.slice().reverse().map((v) => (
-                    <option key={v._id} value={v._id}>
-                      Version {v.versionNumber} - {formatDate(v.createdAt)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="document-view-actions">
-                {!isEditing ? (
-                  <button className="btn-edit-document" onClick={handleEdit}>
-                    Edit / Save New Version
-                  </button>
-                ) : (
-                  <>
-                    <button 
-                      className="btn-save-document" 
-                      onClick={handleSaveEdit}
-                      disabled={saving}
-                    >
-                      {saving ? "Saving..." : "Save New Version"}
-                    </button>
-                    <button className="btn-cancel-edit" onClick={handleCancelEdit}>
-                      Cancel
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className="document-view-content">
-              {isEditing ? (
-                <textarea
-                  className="document-edit-textarea"
-                  value={editContent}
-                  onChange={e => setEditContent(e.target.value)}
-                  placeholder="Edit your document content..."
-                  autoFocus
-                />
-              ) : (
-                <div className="document-content-display">
-                  {viewingContent.split('\n').map((line, i) => (
-                    <p key={i}>{line || <br />}</p>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       )}
     </>
