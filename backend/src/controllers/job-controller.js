@@ -167,7 +167,7 @@ export const deleteInterviewHandler = async (req, res) => {
 
 export const addTimelineEventHandler = async (req, res) => {
   try {
-    const { title, notes, eventDate } = req.body;
+    const { title, notes, eventDate, type } = req.body;
     if (!title || !title.toString().trim()) {
       return res.status(400).json({ success: false, error: { code: "VALIDATION_ERROR", message: "Title is required" } });
     }
@@ -175,6 +175,7 @@ export const addTimelineEventHandler = async (req, res) => {
       title: title.toString().trim(),
       notes: notes?.toString().trim() || "",
       eventDate: eventDate || new Date(),
+      type: type === "follow-up" ? "follow-up" : "general",
     });
     if (!job) return notFound(res);
     return res.status(201).json({ success: true, data: job });

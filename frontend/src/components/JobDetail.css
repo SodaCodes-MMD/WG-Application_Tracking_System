@@ -39,6 +39,20 @@
 .jd-error { margin: 0; color: #cf222e; font-size: 0.82rem; }
 .jd-success { margin: 0; color: #1f7a1f; font-size: 0.82rem; }
 
+/* S2-006: inline editing */
+.jd-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.jd-save-indicator { font-size: 0.72rem; color: var(--text-secondary); font-style: italic; }
+.jd-editable { cursor: pointer; border-radius: 3px; }
+.jd-editable:hover { background: var(--bg-secondary); outline: 1px dashed var(--border-color); }
+.jd-inline-input { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 4px; padding: 3px 6px; color: var(--text-primary); width: 100%; font-size: 0.875rem; }
+.jd-inline-title { font-size: 1.1rem; font-weight: 700; }
+.jd-inline-company { font-size: 0.9rem; font-weight: 500; }
+.jd-notes-display { display: block; white-space: pre-wrap; font-size: 0.85rem; line-height: 1.6; min-height: 1.4em; padding: 2px 4px; }
+.jd-empty-hint { color: var(--text-secondary); font-style: italic; font-weight: 400; }
+
+/* S2-012: follow-up form */
+.jd-followup-form { display: flex; flex-direction: column; gap: 8px; padding: 8px 0; border-top: 1px dashed var(--border-color); }
+
 .jd-footer { display: flex; gap: 8px; justify-content: flex-end; padding: 14px 20px; border-top: 1px solid var(--border-color); }
 .btn-jd-edit { padding: 6px 16px; font-size: 0.85rem; font-weight: 500; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; }
 .btn-jd-edit:hover { background: var(--border-color); }
