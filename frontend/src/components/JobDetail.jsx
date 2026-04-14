@@ -124,6 +124,7 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
       setDocError(res.error?.message || "Failed to generate resume");
     }
     setSaving(false);
+  };
 
   // S2-006: inline editing handlers
   const startInline = (field) => {
