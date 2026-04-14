@@ -37,6 +37,17 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
 
   const [saving, setSaving] = useState(false);
 
+  // S2-006: inline field editing
+  const [inlineField, setInlineField] = useState(null);
+  const [inlineDraft, setInlineDraft] = useState("");
+  const [inlineSaving, setInlineSaving] = useState(false);
+
+  // S2-012: follow-up tracking
+  const [showFollowUpForm, setShowFollowUpForm] = useState(false);
+  const [followUpDate, setFollowUpDate] = useState("");
+  const [followUpNote, setFollowUpNote] = useState("");
+  const [followUpError, setFollowUpError] = useState("");
+
   useEffect(() => {
     setLocalJob(job);
   }, [job]);
@@ -58,8 +69,18 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
   const colors = STATUS_COLORS[localJob.status] || STATUS_COLORS.Wishlist;
   const outcomeColors = localJob.outcome ? OUTCOME_COLORS[localJob.outcome] : null;
 
+  // General timeline events — follow-ups are handled separately
   const sortedTimeline = useMemo(() => {
-    return [...(localJob.timelineEvents || [])].sort((a, b) => new Date(b.eventDate) - new Date(a.eventDate));
+    return [...(localJob.timelineEvents || [])]
+      .filter((e) => e.type !== "follow-up")
+      .sort((a, b) => new Date(b.eventDate) - new Date(a.eventDate));
+  }, [localJob.timelineEvents]);
+
+  // Follow-up timeline events only
+  const followUps = useMemo(() => {
+    return [...(localJob.timelineEvents || [])]
+      .filter((e) => e.type === "follow-up")
+      .sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
   }, [localJob.timelineEvents]);
 
   const updateJobState = (nextJob) => {
@@ -79,6 +100,37 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
       updateJobState(res.data);
     } finally {
       setSaving(false);
+    }
+  };
+
+  // S2-006: inline editing handlers
+  const startInline = (field) => {
+    setInlineField(field);
+    setInlineDraft(localJob[field] || "");
+  };
+
+  const commitInline = async (field, value) => {
+    setInlineField(null);
+    const trimmed = value.trim();
+    const prev = (localJob[field] || "").trim();
+    if (trimmed === prev) return;
+    if ((field === "title" || field === "company") && !trimmed) return;
+    setInlineSaving(true);
+    try {
+      const res = await jobsApi.update(localJob._id, { [field]: trimmed });
+      updateJobState(res.data);
+    } finally {
+      setInlineSaving(false);
+    }
+  };
+
+  const handleInlineKey = (e, field) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      commitInline(field, inlineDraft);
+    } else if (e.key === "Escape") {
+      setInlineField(null);
+      setInlineDraft("");
     }
   };
 
@@ -202,6 +254,31 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
     setSaving(false);
   };
 
+  // S2-012: follow-up handlers
+  const addFollowUp = async () => {
+    if (!followUpDate) {
+      setFollowUpError("Date is required");
+      return;
+    }
+    setSaving(true);
+    setFollowUpError("");
+    const res = await jobsApi.addTimelineEvent(localJob._id, {
+      title: "Follow-up",
+      notes: followUpNote.trim(),
+      eventDate: followUpDate,
+      type: "follow-up",
+    });
+    if (res.success) {
+      updateJobState(res.data);
+      setFollowUpDate("");
+      setFollowUpNote("");
+      setShowFollowUpForm(false);
+    } else {
+      setFollowUpError(res.error?.message || "Failed to add follow-up");
+    }
+    setSaving(false);
+  };
+
   const archiveFromDetail = () => {
     if (!onArchive) return;
     onArchive(localJob._id);
@@ -213,10 +290,35 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
       <div className="jd-modal jd-modal-wide" onClick={(e) => e.stopPropagation()}>
         <div className="jd-header">
           <div className="jd-header-info">
-            <h2 className="jd-title">{localJob.title}</h2>
-            <p className="jd-company">{localJob.company}</p>
+            {inlineField === "title" ? (
+              <input
+                className="jd-inline-input jd-inline-title"
+                value={inlineDraft}
+                autoFocus
+                onChange={(e) => setInlineDraft(e.target.value)}
+                onBlur={() => commitInline("title", inlineDraft)}
+                onKeyDown={(e) => handleInlineKey(e, "title")}
+              />
+            ) : (
+              <h2 className="jd-title jd-editable" title="Click to edit" onClick={() => startInline("title")}>{localJob.title}</h2>
+            )}
+            {inlineField === "company" ? (
+              <input
+                className="jd-inline-input jd-inline-company"
+                value={inlineDraft}
+                autoFocus
+                onChange={(e) => setInlineDraft(e.target.value)}
+                onBlur={() => commitInline("company", inlineDraft)}
+                onKeyDown={(e) => handleInlineKey(e, "company")}
+              />
+            ) : (
+              <p className="jd-company jd-editable" title="Click to edit" onClick={() => startInline("company")}>{localJob.company}</p>
+            )}
           </div>
-          <button className="jd-close" onClick={onClose}>✕</button>
+          <div className="jd-header-right">
+            {inlineSaving && <span className="jd-save-indicator">Saving…</span>}
+            <button className="jd-close" onClick={onClose}>✕</button>
+          </div>
         </div>
 
         <div className="jd-stage-row">
@@ -233,13 +335,89 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
         </div>
 
         <div className="jd-body">
-          <div className="jd-field"><span className="jd-field-label">Location</span><span className="jd-field-value">{localJob.location || "-"}</span></div>
-          <div className="jd-field"><span className="jd-field-label">Salary</span><span className="jd-field-value">{formatSalary(localJob.salary) || "-"}</span></div>
+          <div className="jd-field">
+            <span className="jd-field-label">Location</span>
+            {inlineField === "location" ? (
+              <input
+                className="jd-inline-input"
+                value={inlineDraft}
+                autoFocus
+                onChange={(e) => setInlineDraft(e.target.value)}
+                onBlur={() => commitInline("location", inlineDraft)}
+                onKeyDown={(e) => handleInlineKey(e, "location")}
+              />
+            ) : (
+              <span className="jd-field-value jd-editable" title="Click to edit" onClick={() => startInline("location")}>{localJob.location || "-"}</span>
+            )}
+          </div>
+          <div className="jd-field">
+            <span className="jd-field-label">Salary</span>
+            {inlineField === "salary" ? (
+              <input
+                className="jd-inline-input"
+                value={inlineDraft}
+                autoFocus
+                onChange={(e) => setInlineDraft(e.target.value)}
+                onBlur={() => commitInline("salary", inlineDraft)}
+                onKeyDown={(e) => handleInlineKey(e, "salary")}
+              />
+            ) : (
+              <span className="jd-field-value jd-editable" title="Click to edit" onClick={() => startInline("salary")}>{formatSalary(localJob.salary) || "-"}</span>
+            )}
+          </div>
           <div className="jd-field"><span className="jd-field-label">Responded</span><input type="date" value={toDateInput(localJob.respondedAt)} onChange={(e) => handleOutcomePatch({ respondedAt: e.target.value || null })} /></div>
           <div className="jd-field jd-field-block">
             <span className="jd-field-label">Outcome notes</span>
             <textarea className="jd-note-input" rows={2} defaultValue={localJob.outcomeNotes || ""} onBlur={(e) => handleOutcomePatch({ outcomeNotes: e.target.value })} />
           </div>
+          <div className="jd-field jd-field-block">
+            <span className="jd-field-label">Notes</span>
+            {inlineField === "notes" ? (
+              <textarea
+                className="jd-note-input"
+                rows={3}
+                value={inlineDraft}
+                autoFocus
+                onChange={(e) => setInlineDraft(e.target.value)}
+                onBlur={() => commitInline("notes", inlineDraft)}
+              />
+            ) : (
+              <span className="jd-field-value jd-editable jd-notes-display" title="Click to edit" onClick={() => startInline("notes")}>
+                {localJob.notes || <em className="jd-empty-hint">Click to add notes…</em>}
+              </span>
+            )}
+          </div>
+
+          <section className="jd-section">
+            <div className="jd-section-head">
+              <h3>Follow-ups</h3>
+              <button className="btn-jd-edit" onClick={() => { setShowFollowUpForm((v) => !v); setFollowUpError(""); }}>
+                {showFollowUpForm ? "Cancel" : "Add Follow-up"}
+              </button>
+            </div>
+            {showFollowUpForm && (
+              <div className="jd-followup-form">
+                <div className="jd-grid-row">
+                  <input type="date" value={followUpDate} onChange={(e) => setFollowUpDate(e.target.value)} />
+                  <input value={followUpNote} onChange={(e) => setFollowUpNote(e.target.value)} placeholder="Note (optional)" />
+                </div>
+                <button className="btn-jd-edit" onClick={addFollowUp} disabled={saving}>Save Follow-up</button>
+                {followUpError && <p className="jd-error">{followUpError}</p>}
+              </div>
+            )}
+            <div className="jd-list">
+              {followUps.map((fu) => (
+                <div className="jd-list-item" key={fu._id}>
+                  <div>
+                    <strong>{fu.notes || "Follow-up"}</strong>
+                    <small>{new Date(fu.eventDate).toLocaleDateString()}</small>
+                  </div>
+                  <button className="btn-jd-delete" onClick={() => removeTimeline(fu._id)} disabled={saving}>Delete</button>
+                </div>
+              ))}
+              {followUps.length === 0 && !showFollowUpForm && <p className="jd-empty">No follow-ups scheduled.</p>}
+            </div>
+          </section>
 
           <section className="jd-section">
             <h3>Timeline</h3>
