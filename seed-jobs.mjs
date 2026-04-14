@@ -7,6 +7,18 @@
 const API = "http://localhost:5000/api";
 const [email, password] = process.argv.slice(2);
 
+function daysAgo(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString();
+}
+
+function daysFromNow(n) {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d.toISOString();
+}
+
 if (!email || !password) {
   console.error("Usage: node seed-jobs.mjs <email> <password>");
   process.exit(1);
