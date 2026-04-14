@@ -60,3 +60,24 @@ export const removeInterview = (jobId, userId, interviewId) =>
     { $pull: { interviews: { _id: interviewId } } },
     { new: true }
   ).lean();
+
+export const addTimelineEvent = (jobId, userId, data) =>
+  Job.findOneAndUpdate(
+    { _id: jobId, userId },
+    { $push: { timelineEvents: data } },
+    { new: true, runValidators: true }
+  ).lean();
+
+export const updateTimelineEvent = (jobId, userId, eventId, updates) =>
+  Job.findOneAndUpdate(
+    { _id: jobId, userId, "timelineEvents._id": eventId },
+    { $set: Object.fromEntries(Object.entries(updates).map(([k, v]) => [`timelineEvents.$.${k}`, v])) },
+    { new: true, runValidators: true }
+  ).lean();
+
+export const removeTimelineEvent = (jobId, userId, eventId) =>
+  Job.findOneAndUpdate(
+    { _id: jobId, userId },
+    { $pull: { timelineEvents: { _id: eventId } } },
+    { new: true }
+  ).lean();
