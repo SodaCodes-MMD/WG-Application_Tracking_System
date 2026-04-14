@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { jobsApi, JOB_STATUSES, STATUS_COLORS, OUTCOME_COLORS, JOB_OUTCOMES } from "../services/jobs-api.js";
 import { getToken } from "../services/auth-service.js";
 import { getProfile } from "../services/profile-api.js";
-import { getDocumentsByJob, generateAiCoverLetter, addDocumentVersion, deleteDocument } from "../services/documents-api.js";
+import { getDocumentsByJob, generateAiCoverLetter, addDocumentVersion, deleteDocument, documentsApi } from "../services/documents-api.js";
 import "./JobDetail.css";
 
 function formatSalary(raw) {
@@ -36,6 +36,12 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
   const [interviewError, setInterviewError] = useState("");
 
   const [saving, setSaving] = useState(false);
+
+  const [docTitle, setDocTitle] = useState(`${job.company} - ${job.title}`);
+  const [docType, setDocType] = useState("Cover Letter");
+  const [docContent, setDocContent] = useState("");
+  const [docGenerating, setDocGenerating] = useState(false);
+  const [docSaved, setDocSaved] = useState(false);
 
   useEffect(() => {
     setLocalJob(job);
@@ -208,6 +214,43 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
     onClose();
   };
 
+  const handleGenerateCoverLetterDraft = async () => {
+    try {
+      setDocGenerating(true);
+      setDocError("");
+      setDocSaved(false);
+      const res = await documentsApi.generateCoverLetter(localJob._id);
+      setDocTitle(res.data.title);
+      setDocType("Cover Letter");
+      setDocContent(res.data.content);
+    } catch (err) {
+      setDocError(err.message || "Failed to generate cover letter");
+    } finally {
+      setDocGenerating(false);
+    }
+  };
+
+  const handleSaveDocument = async () => {
+    setSaving(true);
+    setDocError("");
+    setDocSaved(false);
+    try {
+      await documentsApi.create({
+        jobId: localJob._id,
+        title: docTitle,
+        type: docType,
+        content: docContent,
+      });
+      setDocSaved(true);
+      setDocSuccess("Document saved successfully.");
+      await loadDocs();
+    } catch (err) {
+      setDocError(err.message || "Failed to save document");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="jd-overlay" onClick={onClose}>
       <div className="jd-modal jd-modal-wide" onClick={(e) => e.stopPropagation()}>
@@ -326,6 +369,48 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
                 {docs.length === 0 && <p className="jd-empty">No job-linked documents yet.</p>}
               </div>
             )}
+          </section>
+
+          <section className="jd-section">
+            <h3>Save Document Draft</h3>
+            <input
+              type="text"
+              value={docTitle}
+              onChange={(e) => setDocTitle(e.target.value)}
+              placeholder="Document title"
+            />
+            <select
+              className="jd-stage-select"
+              value={docType}
+              onChange={(e) => setDocType(e.target.value)}
+            >
+              <option value="Resume">Resume</option>
+              <option value="Cover Letter">Cover Letter</option>
+              <option value="Notes">Notes</option>
+              <option value="Other">Other</option>
+            </select>
+            <button
+              className="btn-jd-edit"
+              onClick={handleGenerateCoverLetterDraft}
+              disabled={docGenerating || saving}
+            >
+              {docGenerating ? "Generating..." : "Generate AI Cover Letter"}
+            </button>
+            <textarea
+              className="jd-note-input"
+              rows={6}
+              value={docContent}
+              onChange={(e) => setDocContent(e.target.value)}
+              placeholder="Paste or type document content here..."
+            />
+            <button
+              className="btn-jd-edit"
+              onClick={handleSaveDocument}
+              disabled={saving || docGenerating}
+            >
+              {saving ? "Saving..." : "Save Document"}
+            </button>
+            {docSaved && <p className="jd-success">Document saved.</p>}
           </section>
         </div>
 

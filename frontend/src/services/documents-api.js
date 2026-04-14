@@ -1,26 +1,60 @@
-const API = "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-async function send(token, method, path, body) {
-  try {
-    const opts = {
-      method,
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    };
-    if (body !== undefined) opts.body = JSON.stringify(body);
-    const res = await fetch(`${API}${path}`, opts);
-    return await res.json();
-  } catch {
-    return { success: false, error: { code: "NETWORK_ERROR", message: "Unable to connect to server" } };
-  }
+function getAuthHeaders() {
+  const token = localStorage.getItem("token");
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
 }
 
-export const listDocuments = (token) => send(token, "GET", "/documents");
-export const getDocument = (token, id) => send(token, "GET", `/documents/${id}`);
-export const createDocument = (token, data) => send(token, "POST", "/documents", data);
-export const updateDocument = (token, id, data) => send(token, "PATCH", `/documents/${id}`, data);
-export const deleteDocument = (token, id) => send(token, "DELETE", `/documents/${id}`);
-export const addDocumentVersion = (token, id, content) => send(token, "POST", `/documents/${id}/versions`, { content });
-export const linkDocumentToJob = (token, id, jobId) => send(token, "POST", `/documents/${id}/link-job`, { jobId });
-export const unlinkDocumentFromJob = (token, id, jobId) => send(token, "POST", `/documents/${id}/unlink-job`, { jobId });
-export const getDocumentsByJob = (token, jobId) => send(token, "GET", `/documents/job/${jobId}`);
-export const generateAiCoverLetter = (token, jobId) => send(token, "POST", "/documents/generate-cover-letter", { jobId });
+async function request(method, path, body) {
+  const options = {
+    method,
+    headers: getAuthHeaders(),
+  };
+
+  if (body) {
+    options.body = JSON.stringify(body);
+  }
+
+  const res = await fetch(`${API_URL}${path}`, options);
+  const data = await res.json();
+
+  if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/login";
+    }
+
+    const error = new Error(data.error?.message || "Request failed");
+    error.response = { status: res.status, data };
+    throw error;
+  }
+
+  return data;
+}
+
+export const documentsApi = {
+  list: (jobId) =>
+    request("GET", jobId ? `/documents?jobId=${jobId}` : "/documents"),
+
+  create: (payload) =>
+    request("POST", "/documents", payload),
+
+  remove: (id) =>
+    request("DELETE", `/documents/${id}`),
+
+  generateCoverLetter: (jobId) =>
+    request("POST", "/documents/generate-cover-letter", { jobId }),
+};
+
+export const generateAiCoverLetter = (_token, jobId) => documentsApi.generateCoverLetter(jobId);
+
+export const getDocumentsByJob = (_token, jobId) => documentsApi.list(jobId);
+
+export const deleteDocument = (_token, id) => documentsApi.remove(id);
+
+export const addDocumentVersion = (_token, id, content) =>
+  request("POST", `/documents/${id}/versions`, { content });
