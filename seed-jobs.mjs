@@ -14,115 +14,85 @@ if (!email || !password) {
 
 const JOBS = [
   {
-    company: "Stripe",
-    title: "Software Engineer, Payments",
-    status: "Applied",
-    location: "Remote",
-    url: "https://stripe.com/jobs",
-    salary: "140k–180k/yr",
-    notes: "Found via LinkedIn. Strong culture, good comp range.",
-    appliedAt: daysAgo(10),
+    company: "Google",
+    title: "Software Engineer",
+    status: "Interview",
+    location: "New York, NY",
+    url: "https://careers.google.com",
+    salary: "160k-200k/yr",
+    notes: "Referred by a friend on the team. Strong fit for the role.",
+    appliedAt: daysAgo(14),
+    deadline: daysFromNow(5),
+    recruiterNotes: "Spoke with Sarah Chen, very positive conversation",
   },
   {
-    company: "Vercel",
-    title: "Frontend Engineer",
-    status: "Phone Screen",
+    company: "Meta",
+    title: "Backend Developer",
+    status: "Applied",
     location: "Remote",
-    salary: "130k–160k/yr",
-    notes: "Recruiter reached out. 30-min intro call scheduled.",
+    url: "https://metacareers.com",
+    salary: "150k-190k/yr",
+    notes: "Applied via referral portal.",
     appliedAt: daysAgo(7),
   },
   {
-    company: "Linear",
+    company: "Amazon",
     title: "Full Stack Engineer",
-    status: "Interview",
-    location: "San Francisco, CA",
-    salary: "150k–190k/yr",
-    notes: "Two rounds done. Final loop with eng team next week.",
-    appliedAt: daysAgo(14),
-  },
-  {
-    company: "Notion",
-    title: "Product Engineer",
     status: "Offer",
-    location: "New York, NY",
-    salary: "160k–200k/yr",
-    notes: "Offer received! Deadline to respond is in 5 days.",
+    location: "Seattle, WA",
+    salary: "155k-195k/yr",
+    notes: "Offer received, evaluating compensation package.",
     appliedAt: daysAgo(20),
+    outcome: "Accepted",
+    outcomeNotes: "Strong offer, good team match.",
   },
   {
-    company: "Figma",
-    title: "Senior Frontend Engineer",
-    status: "Rejected",
-    location: "Remote",
-    salary: "170k–210k/yr",
-    notes: "Got to final round but no offer. Feedback: needed more systems design experience.",
-    appliedAt: daysAgo(30),
-    outcome: "Rejected",
-    outcomeNotes: "Rejected after final round. Focus on systems design prep.",
+    company: "Netflix",
+    title: "Frontend Developer",
+    status: "Applied",
+    location: "Los Angeles, CA",
+    salary: "170k-210k/yr",
+    notes: "Dream company. Tailored resume specifically for this role.",
+    appliedAt: daysAgo(5),
+    deadline: daysFromNow(3),
   },
   {
-    company: "Shopify",
-    title: "Backend Developer",
+    company: "Microsoft",
+    title: "Software Engineer",
     status: "Wishlist",
     location: "Remote",
-    notes: "Interesting role, need to tailor resume before applying.",
+    notes: "Need to update portfolio before applying.",
   },
   {
-    company: "PlanetScale",
-    title: "Developer Advocate",
+    company: "Stripe",
+    title: "Backend Engineer",
+    status: "Rejected",
+    location: "Remote",
+    salary: "140k-180k/yr",
+    notes: "Got to final round. Feedback: needed more distributed systems experience.",
+    appliedAt: daysAgo(30),
+    outcome: "Rejected",
+    outcomeNotes: "Focus on distributed systems prep for next time.",
+  },
+  {
+    company: "Cloudflare",
+    title: "DevOps Engineer",
     status: "Withdrawn",
     location: "Remote",
-    salary: "120k–140k/yr",
-    notes: "Withdrew after receiving Notion offer.",
-    appliedAt: daysAgo(18),
+    salary: "130k-160k/yr",
+    notes: "Withdrew after receiving Amazon offer.",
+    appliedAt: daysAgo(25),
     outcome: "Withdrawn",
     outcomeNotes: "Accepted another offer.",
   },
+  {
+    company: "Apple",
+    title: "Mobile Developer",
+    status: "Interview",
+    location: "Cupertino, CA",
+    salary: "165k-205k/yr",
+    notes: "Second round scheduled. Preparing for system design.",
+    appliedAt: daysAgo(10),
+    deadline: daysFromNow(3),
+  },
 ];
-
-function daysAgo(n) {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString();
-}
-
-async function main() {
-  // Login
-  console.log(`Logging in as ${email}...`);
-  const loginRes = await fetch(`${API}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
-  const loginData = await loginRes.json();
-  if (!loginRes.ok) {
-    console.error("Login failed:", loginData.error?.message || "Unknown error");
-    process.exit(1);
-  }
-  const token = loginData.data?.token;
-  console.log("Logged in.\n");
-
-  const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
-
-  // Create jobs
-  let created = 0;
-  for (const job of JOBS) {
-    const res = await fetch(`${API}/jobs`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(job),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      console.log(`✓  ${job.company} — ${job.title} [${job.status}]`);
-      created++;
-    } else {
-      console.error(`✗  ${job.company}: ${data.error?.message || "Failed"}`);
-    }
-  }
-
-  console.log(`\nDone — ${created}/${JOBS.length} jobs created.`);
-}
-
-main().catch(err => { console.error(err); process.exit(1); });
