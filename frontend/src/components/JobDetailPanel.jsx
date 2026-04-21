@@ -10,6 +10,7 @@ export default function JobDetailPanel({ job, onClose }) {
   const [generating, setGenerating] = useState(false);
   const [generatingResume, setGeneratingResume] = useState(false);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState("");
   const [editingDoc, setEditingDoc] = useState(null);
   const [docContent, setDocContent] = useState("");
 
@@ -31,14 +32,15 @@ export default function JobDetailPanel({ job, onClose }) {
   const handleGenerateCoverLetter = async () => {
     setGenerating(true);
     setError(null);
-    
+    setSuccess("");
+
     const token = getToken();
     if (!token) {
       setError("Please log in to generate a cover letter.");
       setGenerating(false);
       return;
     }
-    
+
     const profileResult = await getProfile(token);
     if (!profileResult.success || !profileResult.data) {
       setError("Please complete your profile before generating a cover letter.");
@@ -50,6 +52,7 @@ export default function JobDetailPanel({ job, onClose }) {
     if (result.success) {
       setDocuments(prev => [result.data, ...prev]);
       localStorage.setItem('document-generated', Date.now().toString());
+      setSuccess("AI cover letter generated successfully.");
     } else {
       setError(result.error?.message || "Failed to generate cover letter");
     }
@@ -59,6 +62,7 @@ export default function JobDetailPanel({ job, onClose }) {
   const handleGenerateResume = async () => {
     setGeneratingResume(true);
     setError(null);
+    setSuccess("");
 
     const token = getToken();
     if (!token) {
@@ -78,6 +82,7 @@ export default function JobDetailPanel({ job, onClose }) {
     if (result.success) {
       setDocuments(prev => [result.data, ...prev]);
       localStorage.setItem('document-generated', Date.now().toString());
+      setSuccess("AI resume generated successfully.");
     } else {
       setError(result.error?.message || "Failed to generate resume");
     }
@@ -130,6 +135,7 @@ export default function JobDetailPanel({ job, onClose }) {
             </button>
 
             {error && <p className="jdp-error">{error}</p>}
+            {success && <p className="jdp-success">{success}</p>}
             
             {loadingDocs ? (
               <p className="jdp-loading">Loading documents...</p>

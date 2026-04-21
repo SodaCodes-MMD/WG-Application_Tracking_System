@@ -160,18 +160,40 @@ export async function downloadDocx(req, res) {
     const doc = await docRepo.findDocumentByIdAndUser(req.params.id, req.user.userId);
     if (!doc) return res.status(404).json({ success: false, error: { message: "Document not found" } });
 
-    const latestVersion = doc.versions?.[doc.versions.length - 1];
-    if (!latestVersion?.content) return res.status(404).json({ success: false, error: { message: "No content to download" } });
+    const { versionId } = req.query;
+    const selectedVersion = versionId
+      ? doc.versions?.find((v) => String(v._id) === String(versionId))
+      : doc.versions?.[doc.versions.length - 1];
 
-    const docxBuffer = await HTMLtoDOCX(latestVersion.content, null, {
+    if (!selectedVersion?.content) {
+      return res.status(404).json({ success: false, error: { message: "No content to download for selected version" } });
+    }
+
+    const isHtml = selectedVersion.content.trimStart().startsWith("<");
+    const normalizedContent = isHtml
+      ? selectedVersion.content
+      : `<pre style="white-space: pre-wrap; font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.4; margin: 0;">${selectedVersion.content.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>`;
+
+    const htmlDoc = `<!doctype html><html><head><meta charset="utf-8" /></head><body>${normalizedContent}</body></html>`;
+
+    const docxBuffer = await HTMLtoDOCX(htmlDoc, null, {
       table: { row: { cantSplit: true } },
       footer: false,
       pageNumber: false,
     });
 
-    const safeName = doc.name.replace(/[^a-z0-9]/gi, "_");
+    const baseName = `${doc.type || "document"}_${doc.name || "file"}`;
+    const safeName = baseName
+      .toLowerCase()
+      .replace(/\s+/g, "_")
+      .replace(/[^a-z0-9_-]/g, "")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "") || "document";
+    const versionSuffix = selectedVersion.versionNumber ? `_v${selectedVersion.versionNumber}` : "";
+    const filename = `${safeName}${versionSuffix}.docx`;
+
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
-    res.setHeader("Content-Disposition", `attachment; filename="${safeName}.docx"`);
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`);
     return res.send(docxBuffer);
   } catch (err) {
     console.error("[DocumentController] DOCX download failed:", err);
