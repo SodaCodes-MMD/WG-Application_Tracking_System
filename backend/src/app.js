@@ -16,5 +16,4 @@ app.use("/api", jobRoutes);
 app.use("/api", profileRoutes);
 app.use("/api", notificationRoutes);
 app.use("/api", documentRoutes);
-
 export default app;

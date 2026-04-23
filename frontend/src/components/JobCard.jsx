@@ -297,7 +297,8 @@ export default function JobCard({ job, onEdit, onDelete, onArchive, onRestore, i
       <div className="job-card-actions">
         {!isArchived && (
           <>
-            <button className="btn-card-edit" onClick={e => { e.stopPropagation(); onEdit(job); }}>Edit</button>
+            {/* SCRUM-37: View button opens detail panel */}
+            <button className="btn-card-edit" onClick={e => { e.stopPropagation(); onEdit(job);}}>Edit</button>
             {onArchive && <button className="btn-card-archive" onClick={e => { e.stopPropagation(); onArchive(job._id); }}>Archive</button>}
             {!onArchive && <button className="btn-card-delete" onClick={e => { e.stopPropagation(); onDelete(job._id); }}>Delete</button>}
           </>
