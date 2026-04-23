@@ -214,7 +214,6 @@ describe("jobs-api", () => {
 
     it("handles 401 by clearing token and redirecting", async () => {
       localStorage.setItem("token", "test-token");
-      const mockNavigate = vi.fn();
       window.location = { href: '' };
       
       global.fetch = vi.fn().mockResolvedValue({

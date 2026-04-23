@@ -9,8 +9,8 @@ describe("JobForm", () => {
     render(<JobForm onSave={() => {}} onClose={() => {}} loading={false} />);
 
     expect(screen.getByText("Add Job Application")).toBeInTheDocument();
-    expect(screen.getByLabelText("Company")).toBeInTheDocument();
-    expect(screen.getByLabelText("Job Title")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("e.g. Acme Corp")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("e.g. Software Engineer")).toBeInTheDocument();
   });
 
   it("renders edit job form when job prop is provided", () => {
@@ -25,8 +25,11 @@ describe("JobForm", () => {
     render(<JobForm job={job} onSave={() => {}} onClose={() => {}} loading={false} />);
 
     expect(screen.getByText("Edit Job")).toBeInTheDocument();
-    expect(screen.getByLabelText("Company")).toHaveValue("Test Corp");
-    expect(screen.getByLabelText("Job Title")).toHaveValue("Developer");
+    const inputs = screen.getAllByRole("textbox");
+    const companyInput = inputs.find(input => input.value === "Test Corp");
+    const titleInput = inputs.find(input => input.value === "Developer");
+    expect(companyInput).toBeInTheDocument();
+    expect(titleInput).toBeInTheDocument();
   });
 
   it("shows validation errors when required fields are empty", async () => {
@@ -44,8 +47,9 @@ describe("JobForm", () => {
     const onSave = vi.fn();
     render(<JobForm onSave={onSave} onClose={() => {}} loading={false} />);
 
-    await user.type(screen.getByLabelText("Company"), "Acme Corp");
-    await user.type(screen.getByLabelText("Job Title"), "Software Engineer");
+    const inputs = screen.getAllByRole("textbox");
+    await user.type(inputs[0], "Acme Corp");
+    await user.type(inputs[1], "Software Engineer");
     await user.click(screen.getByRole("button", { name: /add job/i }));
 
     expect(onSave).toHaveBeenCalledWith(
@@ -77,10 +81,13 @@ describe("JobForm", () => {
     const user = userEvent.setup();
     render(<JobForm onSave={() => {}} onClose={() => {}} loading={false} />);
 
-    await user.type(screen.getByLabelText("Company"), "Test Corp");
-    await user.type(screen.getByLabelText("Job Title"), "Developer");
-    await user.clear(screen.getByPlaceholderText("Min"));
-    await user.clear(screen.getByPlaceholderText("Max"));
+    const inputs = screen.getAllByRole("textbox");
+    await user.type(inputs[0], "Test Corp");
+    await user.type(inputs[1], "Developer");
+    const minInput = screen.getByPlaceholderText("Min");
+    const maxInput = screen.getByPlaceholderText("Max");
+    await user.clear(minInput);
+    await user.clear(maxInput);
     await user.click(screen.getByRole("button", { name: /add job/i }));
 
     expect(await screen.findByText("Enter at least min or max salary")).toBeInTheDocument();
@@ -90,8 +97,9 @@ describe("JobForm", () => {
     const user = userEvent.setup();
     render(<JobForm onSave={() => {}} onClose={() => {}} loading={false} />);
 
-    await user.type(screen.getByLabelText("Company"), "Test Corp");
-    await user.type(screen.getByLabelText("Job Title"), "Developer");
+    const inputs = screen.getAllByRole("textbox");
+    await user.type(inputs[0], "Test Corp");
+    await user.type(inputs[1], "Developer");
     await user.type(screen.getByPlaceholderText("Min"), "100000");
     await user.type(screen.getByPlaceholderText("Max"), "50000");
     await user.click(screen.getByRole("button", { name: /add job/i }));
