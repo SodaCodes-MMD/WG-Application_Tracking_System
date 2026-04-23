@@ -4,6 +4,10 @@
 .dh-view-btn:hover { color: var(--text-primary); }
 .dh-view-btn--active { background: var(--card-bg); color: var(--text-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .dh-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; align-items: center; }
+.dh-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.dh-metric-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; }
+.dh-metric-label { display: block; font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+.dh-metric-value { display: block; font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-top: 4px; }
 .dh-stat-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 0.775rem; font-weight: 500; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-secondary); cursor: pointer; transition: background 0.15s; }
 .dh-stat-chip:hover { background: var(--bg-secondary); color: var(--text-primary); }
 .dh-stat-count { font-weight: 700; font-size: 0.75rem; }

@@ -29,9 +29,14 @@ export const jobsApi = {
   addInterview: (jobId, data) => request("POST", `/jobs/${jobId}/interviews`, data),
   updateInterview: (jobId, interviewId, data) => request("PATCH", `/jobs/${jobId}/interviews/${interviewId}`, data),
   removeInterview: (jobId, interviewId) => request("DELETE", `/jobs/${jobId}/interviews/${interviewId}`),
+  addTimelineEvent: (jobId, data) => request("POST", `/jobs/${jobId}/timeline`, data),
+  updateTimelineEvent: (jobId, eventId, data) => request("PATCH", `/jobs/${jobId}/timeline/${eventId}`, data),
+  removeTimelineEvent: (jobId, eventId) => request("DELETE", `/jobs/${jobId}/timeline/${eventId}`),
 };
 
 export const JOB_STATUSES = ["Wishlist", "Applied", "Phone Screen", "Interview", "Offer", "Rejected", "Withdrawn"];
+
+export const JOB_OUTCOMES = ["Pending", "Accepted", "Rejected", "Withdrawn", "Ghosted"];
 
 export const OUTCOME_COLORS = {
   Accepted:  { bg: "#f0fdf4", text: "#15803d", border: "#22c55e" },

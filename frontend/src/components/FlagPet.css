@@ -1,6 +1,6 @@
 .fp {
   position: fixed;
-  z-index: 9999;
+  z-index: 90;
   cursor: pointer;
   user-select: none;
   display: flex;

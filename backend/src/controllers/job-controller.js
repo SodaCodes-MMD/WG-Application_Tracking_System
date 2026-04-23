@@ -1,8 +1,9 @@
 import { validationResult } from "express-validator";
 import {
-  findActiveJobsByUser, findArchivedJobsByUser, findJobById,
+  findActiveJobsByUser, findArchivedJobsByUser, findJobById, findJobByIdAndUser,
   createJob, updateJobByIdAndUser, archiveJobByIdAndUser, restoreJobByIdAndUser, deleteJobByIdAndUser,
   addInterview, updateInterview, removeInterview,
+  addTimelineEvent, updateTimelineEvent, removeTimelineEvent,
 } from "../repositories/job-repository.js";
 import { triggerImmediateNotification, removeDeadlineNotifications } from "../services/deadline-checker.js";
 
@@ -52,7 +53,7 @@ export const createJobHandler = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return validationError(res, errors);
   try {
-    const { company, title, status, location, url, salary, notes, appliedAt, deadline, recruiterNotes } = req.body;
+    const { company, title, status, location, url, salary, notes, appliedAt, deadline, recruiterNotes, outcome, outcomeNotes, respondedAt } = req.body;
     const initialStatus = status || "Wishlist";
     const job = await createJob({
       userId: req.user.userId,
@@ -66,6 +67,9 @@ export const createJobHandler = async (req, res) => {
       appliedAt: appliedAt || null,
       deadline: deadline || null,
       recruiterNotes: recruiterNotes || "",
+      outcome: outcome || null,
+      outcomeNotes: outcomeNotes || "",
+      respondedAt: respondedAt || null,
       statusHistory: [{ status: initialStatus, changedAt: new Date() }],
     });
 
@@ -89,7 +93,7 @@ export const updateJobHandler = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return validationError(res, errors);
   try {
-    const allowed = ["company", "title", "status", "location", "url", "salary", "notes", "appliedAt", "deadline", "recruiterNotes"];
+    const allowed = ["company", "title", "status", "location", "url", "salary", "notes", "appliedAt", "deadline", "recruiterNotes", "outcome", "outcomeNotes", "respondedAt"];
     const updates = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
     //
     let historyEntry = null;
@@ -158,6 +162,57 @@ export const deleteInterviewHandler = async (req, res) => {
   } catch (err) {
     console.error("[JobController] deleteInterview:", err);
     return handleError(res, "Failed to delete interview");
+  }
+};
+
+export const addTimelineEventHandler = async (req, res) => {
+  try {
+    const { title, notes, eventDate, type } = req.body;
+    if (!title || !title.toString().trim()) {
+      return res.status(400).json({ success: false, error: { code: "VALIDATION_ERROR", message: "Title is required" } });
+    }
+    const job = await addTimelineEvent(req.params.id, req.user.userId, {
+      title: title.toString().trim(),
+      notes: notes?.toString().trim() || "",
+      eventDate: eventDate || new Date(),
+      type: type === "follow-up" ? "follow-up" : "general",
+    });
+    if (!job) return notFound(res);
+    return res.status(201).json({ success: true, data: job });
+  } catch (err) {
+    console.error("[JobController] addTimelineEvent:", err);
+    return handleError(res, "Failed to add timeline event");
+  }
+};
+
+export const updateTimelineEventHandler = async (req, res) => {
+  try {
+    const allowed = ["title", "notes", "eventDate"];
+    const updates = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
+    if (typeof updates.title === "string") {
+      updates.title = updates.title.trim();
+      if (!updates.title) {
+        return res.status(400).json({ success: false, error: { code: "VALIDATION_ERROR", message: "Title cannot be empty" } });
+      }
+    }
+    if (typeof updates.notes === "string") updates.notes = updates.notes.trim();
+    const job = await updateTimelineEvent(req.params.id, req.user.userId, req.params.eventId, updates);
+    if (!job) return notFound(res);
+    return res.json({ success: true, data: job });
+  } catch (err) {
+    console.error("[JobController] updateTimelineEvent:", err);
+    return handleError(res, "Failed to update timeline event");
+  }
+};
+
+export const deleteTimelineEventHandler = async (req, res) => {
+  try {
+    const job = await removeTimelineEvent(req.params.id, req.user.userId, req.params.eventId);
+    if (!job) return notFound(res);
+    return res.json({ success: true, data: job });
+  } catch (err) {
+    console.error("[JobController] deleteTimelineEvent:", err);
+    return handleError(res, "Failed to delete timeline event");
   }
 };
 

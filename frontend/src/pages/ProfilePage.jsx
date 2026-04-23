@@ -10,6 +10,7 @@ import {
 import { MiniFlag, SectionSaveButton } from "../components/MiniFlag.jsx";
 import "./AuthForms.css";
 import "./ProfilePage.css";
+import { calculateProfileCompletion } from "./profile-completion.js";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -129,12 +130,13 @@ export default function ProfilePage({ user }) {
     fetchAll();
   }, []);
 
-  const filledBasic = BASIC_FIELDS.filter((f) => profile[f]?.trim()).length;
-  const hasPrefs = prefs.targetRoles.length > 0 || prefs.targetLocations.length > 0 || prefs.workMode !== "Any";
-  const filledCount = 1 + filledBasic + (experience.length > 0 ? 1 : 0) + (education.length > 0 ? 1 : 0)
-    + (skills.length > 0 ? 1 : 0) + (hasPrefs ? 1 : 0);
-  const totalFields = 11;
-  const completionPct = Math.round((filledCount / totalFields) * 100);
+  const completionPct = calculateProfileCompletion({
+    profile,
+    experienceCount: experience.length,
+    educationCount: education.length,
+    skillsCount: skills.length,
+    prefs,
+  });
 
   const handleChange = (field) => (e) => {
     setSaveBasicError("");
@@ -500,7 +502,7 @@ export default function ProfilePage({ user }) {
             onClick={handleSaveBasic}
             disabled={savingBasic}
           >
-            {savingBasic ? "Saving..." : dirtyBasic ? "Save Changes" : "Saved"}
+            {savingBasic ? "Saving..." : dirtyBasic ? "Save Changes" : "Save"}
           </SectionSaveButton>
         </div>
       </section>
@@ -870,7 +872,7 @@ export default function ProfilePage({ user }) {
             onClick={handleSavePrefs}
             disabled={savingPref}
           >
-            {savingPref ? "Saving..." : dirtyPref ? "Save Changes" : "Saved"}
+            {savingPref ? "Saving..." : dirtyPref ? "Save Changes" : "Save"}
           </SectionSaveButton>
         </div>
       </section>

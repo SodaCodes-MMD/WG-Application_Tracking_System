@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { jobsApi, JOB_STATUSES, STATUS_COLORS } from "../services/jobs-api.js";
 import JobCard from "../components/JobCard.jsx";
 import JobForm from "../components/JobForm.jsx";
-import JobDetailPanel from "../components/JobDetailPanel.jsx";
+import JobDetail from "../components/JobDetail.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import "./DashboardHome.css";
 
@@ -122,6 +122,13 @@ const filtered = [...jobs]
   .sort((a, b) => compareValues(a, b, sortBy, sortDirection));
 
   const statusCounts = JOB_STATUSES.reduce((acc, s) => { acc[s] = jobs.filter(j => j.status === s).length; return acc; }, {});
+  const responseMetrics = {
+    responded: jobs.filter((j) => Boolean(j.outcome)).length,
+    accepted: jobs.filter((j) => j.outcome === "Accepted").length,
+    rejected: jobs.filter((j) => j.outcome === "Rejected").length,
+    withdrawn: jobs.filter((j) => j.outcome === "Withdrawn").length,
+    ghosted: jobs.filter((j) => j.outcome === "Ghosted").length,
+  };
   const hasActiveFilters = filterStatus !== ALL || filterLocation !== ALL || filterDateFrom || filterDateTo;
 
   const clearFilters = () => { setFilterStatus(ALL); setFilterLocation(ALL); setFilterDateFrom(""); setFilterDateTo(""); };
@@ -177,11 +184,6 @@ const filtered = [...jobs]
     } catch (err) { alert(err.message || "Failed to update stage"); }
   };
 
-  const handleJobSaved = (updatedJob) => {
-    setJobs(prev => prev.map(j => j._id === updatedJob._id ? updatedJob : j));
-    setViewingJob(updatedJob);
-  }
-
   return (
     <>
       <div className="page-header dh-page-header">
@@ -200,6 +202,14 @@ const filtered = [...jobs]
         {searchQuery && (
           <button className="dh-clear-filter" onClick={() => setSearchQuery("")}>✕ Clear</button>
         )}
+      </div>
+
+      <div className="dh-metrics">
+        <div className="dh-metric-card"><span className="dh-metric-label">Responded</span><span className="dh-metric-value">{responseMetrics.responded}</span></div>
+        <div className="dh-metric-card"><span className="dh-metric-label">Accepted</span><span className="dh-metric-value">{responseMetrics.accepted}</span></div>
+        <div className="dh-metric-card"><span className="dh-metric-label">Rejected</span><span className="dh-metric-value">{responseMetrics.rejected}</span></div>
+        <div className="dh-metric-card"><span className="dh-metric-label">Withdrawn</span><span className="dh-metric-value">{responseMetrics.withdrawn}</span></div>
+        <div className="dh-metric-card"><span className="dh-metric-label">Ghosted</span><span className="dh-metric-value">{responseMetrics.ghosted}</span></div>
       </div>
 
       <div className="dh-filters">
@@ -324,10 +334,17 @@ const filtered = [...jobs]
 
       {showForm && <JobForm job={editingJob} onSave={handleSave} onClose={closeForm} loading={formLoading} />}
       {viewingJob && (
-        <JobDetailPanel
+        <JobDetail
           job={viewingJob}
           onClose={() => setViewingJob(null)}
-          onSaved={handleJobSaved}
+          onEdit={openEdit}
+          onDelete={handleDelete}
+          onArchive={handleArchive}
+          onStatusChange={handleStatusChange}
+          onJobUpdated={(updatedJob) => {
+            setJobs((prev) => prev.map((j) => (j._id === updatedJob._id ? updatedJob : j)));
+            if (viewingJob?._id === updatedJob._id) setViewingJob(updatedJob);
+          }}
         />
       )}
       {pendingDeleteId && (
