@@ -1,16 +1,30 @@
-# React + Vite
+# Frontend Testing Guide
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This frontend uses Vitest with React Testing Library configured for browser-like component tests.
 
-Currently, two official plugins are available:
+## Commands
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- `npm test` runs the full test suite in CI mode.
+- `npm run test:watch` starts Vitest in watch mode for local development.
 
-## React Compiler
+## Test setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Shared test setup is loaded from `src/test/setup.js`, which provides:
 
-## Expanding the ESLint configuration
+- `@testing-library/jest-dom` matchers (for example, `toBeInTheDocument`).
+- automatic cleanup after each test.
+- isolated test state by clearing `localStorage` and restoring mocks between tests.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Best practices for frontend tests
+
+- Test user-facing behavior (what renders, what users can do) instead of implementation details.
+- Prefer Testing Library queries by accessibility: `getByRole`, `getByLabelText`, `getByText`.
+- Keep tests deterministic: avoid depending on network calls, time, or external state without mocks.
+- Use one behavior-focused assertion path per test and descriptive test names.
+- Use helpers from `src/test/test-utils.jsx` for consistent providers and routing setup.
+
+## Folder conventions
+
+- Place tests near source files: `Component.test.jsx` or `feature.spec.jsx`.
+- Put shared test helpers under `src/test`.
+- Use `*.test.js`, `*.test.jsx`, `*.spec.js`, or `*.spec.jsx` file names so Vitest picks them up.
