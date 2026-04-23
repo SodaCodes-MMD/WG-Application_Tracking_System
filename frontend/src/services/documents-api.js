@@ -27,18 +27,60 @@ export const generateAiCoverLetter = (token, jobId) => send(token, "POST", "/doc
 export const generateAiResume = (token, jobId) => send(token, "POST", "/documents/generate-resume", { jobId });
 export const aiRewriteDocument = (token, id, instruction) => send(token, "POST", `/documents/${id}/ai-rewrite`, { instruction });
 
-export async function downloadDocx(token, id) {
+function sanitizeFilenamePart(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_-]/g, "")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function buildFallbackFilename({ type, name, versionNumber }) {
+  const safeType = sanitizeFilenamePart(type || "document") || "document";
+  const safeName = sanitizeFilenamePart(name || "file") || "file";
+  const versionSuffix = versionNumber ? `_v${versionNumber}` : "";
+  return `${safeType}_${safeName}${versionSuffix}.docx`;
+}
+
+function parseFilenameFromDisposition(headerValue) {
+  if (!headerValue) return null;
+
+  const utf8Match = headerValue.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) {
+    try {
+      return decodeURIComponent(utf8Match[1]);
+    } catch {
+      // fall through to regular filename parsing
+    }
+  }
+
+  const quotedMatch = headerValue.match(/filename="([^"]+)"/i);
+  if (quotedMatch?.[1]) return quotedMatch[1];
+
+  const bareMatch = headerValue.match(/filename=([^;]+)/i);
+  return bareMatch?.[1]?.trim() || null;
+}
+
+export async function downloadDocx(token, id, versionId, fallbackMeta) {
   try {
-    const res = await fetch(`${API}/documents/${id}/download-docx`, {
+    const query = versionId ? `?versionId=${encodeURIComponent(versionId)}` : "";
+    const res = await fetch(`${API}/documents/${id}/download-docx${query}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) return { success: false };
+
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = res.headers.get("Content-Disposition")?.match(/filename="(.+)"/)?.[1] || "resume.docx";
+
+    const headerFilename = parseFilenameFromDisposition(res.headers.get("Content-Disposition"));
+    a.download = headerFilename || buildFallbackFilename(fallbackMeta || {});
+
+    document.body.appendChild(a);
     a.click();
+    a.remove();
     URL.revokeObjectURL(url);
     return { success: true };
   } catch {

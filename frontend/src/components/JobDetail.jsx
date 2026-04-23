@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { jobsApi, JOB_STATUSES, STATUS_COLORS, OUTCOME_COLORS, JOB_OUTCOMES } from "../services/jobs-api.js";
 import { getToken } from "../services/auth-service.js";
 import { getProfile } from "../services/profile-api.js";
-import { getDocumentsByJob, generateAiCoverLetter, generateAiResume, addDocumentVersion, deleteDocument } from "../services/documents-api.js";
+import { getDocumentsByJob, generateAiCoverLetter, generateAiResume, addDocumentVersion, deleteDocument, downloadDocx } from "../services/documents-api.js";
 import "./JobDetail.css";
 
 function formatSalary(raw) {
@@ -26,6 +26,7 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
   const [docSuccess, setDocSuccess] = useState("");
   const [editingDocId, setEditingDocId] = useState(null);
   const [docDraft, setDocDraft] = useState("");
+  const [downloadingDocId, setDownloadingDocId] = useState(null);
 
   const [timelineTitle, setTimelineTitle] = useState("");
   const [timelineNotes, setTimelineNotes] = useState("");
@@ -218,6 +219,22 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
       setDocError(res.error?.message || "Failed to delete document");
     }
     setSaving(false);
+  };
+
+  const handleDownloadDocument = async (doc) => {
+    setDownloadingDocId(doc._id);
+    setDocError("");
+    const latestVersion = doc.versions?.[doc.versions.length - 1];
+    const token = getToken();
+    const res = await downloadDocx(token, doc._id, latestVersion?._id, {
+      type: doc.type,
+      name: doc.name,
+      versionNumber: latestVersion?.versionNumber,
+    });
+    if (!res.success) {
+      setDocError("Failed to download document");
+    }
+    setDownloadingDocId(null);
   };
 
   const addTimeline = async () => {
@@ -511,6 +528,13 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
                       <small>{doc.type} - {doc.versions?.length || 0} versions</small>
                     </div>
                     <div className="jd-doc-actions">
+                      <button
+                        className="btn-jd-edit"
+                        onClick={() => handleDownloadDocument(doc)}
+                        disabled={downloadingDocId === doc._id}
+                      >
+                        {downloadingDocId === doc._id ? "Downloading..." : "Download"}
+                      </button>
                       <button className="btn-jd-edit" onClick={() => beginEditDoc(doc)}>Edit</button>
                       <button className="btn-jd-delete" onClick={() => handleDeleteDocument(doc._id)} disabled={saving}>Delete</button>
                     </div>

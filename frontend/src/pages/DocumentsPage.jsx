@@ -106,9 +106,14 @@ export default function DocumentsPage() {
   };
 
   const handleDownloadDocx = async () => {
+    if (!selectedDoc?._id) return;
     setDownloadingDocx(true);
     const token = getToken();
-    await downloadDocx(token, selectedDoc._id);
+    await downloadDocx(token, selectedDoc._id, selectedVersion?._id, {
+      type: selectedDoc.type,
+      name: selectedDoc.name,
+      versionNumber: selectedVersion?.versionNumber,
+    });
     setDownloadingDocx(false);
   };
 
