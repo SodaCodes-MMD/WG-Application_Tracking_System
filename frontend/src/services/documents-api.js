@@ -14,7 +14,18 @@ async function send(token, method, path, body) {
   }
 }
 
-export const listDocuments = (token) => send(token, "GET", "/documents");
+export const listDocuments = (token, filters = {}) => {
+  const params = new URLSearchParams();
+  if (filters.type) params.append("type", filters.type);
+  if (filters.status) params.append("status", filters.status);
+  if (filters.tag) params.append("tag", filters.tag);
+  if (filters.sortBy) params.append("sortBy", filters.sortBy);
+  if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
+  
+  const queryString = params.toString();
+  const path = queryString ? `/documents?${queryString}` : "/documents";
+  return send(token, "GET", path);
+};
 export const getDocument = (token, id) => send(token, "GET", `/documents/${id}`);
 export const createDocument = (token, data) => send(token, "POST", "/documents", data);
 export const updateDocument = (token, id, data) => send(token, "PATCH", `/documents/${id}`, data);

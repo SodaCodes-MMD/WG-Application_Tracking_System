@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import { getToken } from "../services/auth-service.js";
 import { listDocuments, deleteDocument, getDocument, addDocumentVersion, downloadDocx, aiRewriteDocument } from "../services/documents-api.js";
+import "./DocumentsPage.css";
+
+const ALL = "All";
+const DOCUMENT_TYPES_LIST = ["Resume", "Cover Letter"];
+const DOCUMENT_STATUSES_LIST = ["Draft", "Ready", "Archived"];
 
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState([]);
@@ -17,39 +22,53 @@ export default function DocumentsPage() {
   const [rewrittenContent, setRewrittenContent] = useState(null);
   const [rewriteInstruction, setRewriteInstruction] = useState("");
   const [showRewriteInput, setShowRewriteInput] = useState(false);
+  
+  const [filterType, setFilterType] = useState(ALL);
+  const [filterStatus, setFilterStatus] = useState(ALL);
+  const [filterTag, setFilterTag] = useState("");
+  const [sortBy, setSortBy] = useState("updatedAt");
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [availableTags, setAvailableTags] = useState([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const refreshDocuments = () => setRefreshTrigger(prev => prev + 1);
 
   useEffect(() => {
-    (async () => {
+    const loadDocuments = async () => {
       setLoading(true);
       const token = getToken();
       if (!token) {
         setLoading(false);
         return;
       }
-      const result = await listDocuments(token);
+      
+      const filters = {};
+      if (filterType !== ALL) filters.type = filterType;
+      if (filterStatus !== ALL) filters.status = filterStatus;
+      if (filterTag) filters.tag = filterTag;
+      if (sortBy) filters.sortBy = sortBy;
+      if (sortOrder) filters.sortOrder = sortOrder;
+      
+      const result = await listDocuments(token, filters);
       if (result.success) {
         setDocuments(result.data);
+        const tags = [...new Set(result.data.flatMap(d => d.tags || []))];
+        setAvailableTags(tags);
       } else {
         setError(result.error?.message || "Failed to load documents");
       }
       setLoading(false);
-    })();
-  }, []);
+    };
+    
+    loadDocuments();
+  }, [filterType, filterStatus, filterTag, sortBy, sortOrder, refreshTrigger]);
 
   useEffect(() => {
     const checkForNewDocuments = () => {
       const timestamp = localStorage.getItem('document-generated');
       if (timestamp) {
         localStorage.removeItem('document-generated');
-        (async () => {
-          const token = getToken();
-          if (token) {
-            const result = await listDocuments(token);
-            if (result.success) {
-              setDocuments(result.data);
-            }
-          }
-        })();
+        refreshDocuments();
       }
     };
 
@@ -62,9 +81,17 @@ export default function DocumentsPage() {
     const token = getToken();
     const result = await deleteDocument(token, docId);
     if (result.success) {
-      setDocuments(prev => prev.filter(d => d._id !== docId));
+      refreshDocuments();
     }
   };
+
+  const clearFilters = () => {
+    setFilterType(ALL);
+    setFilterStatus(ALL);
+    setFilterTag("");
+  };
+
+  const hasActiveFilters = filterType !== ALL || filterStatus !== ALL || filterTag;
 
   const handleView = async (doc) => {
     setSelectedDoc(doc);
@@ -100,7 +127,7 @@ export default function DocumentsPage() {
       setSelectedVersion(newVersion);
       setViewingContent(newVersion.content);
       setIsEditing(false);
-      setDocuments(prev => prev.map(d => d._id === selectedDoc._id ? result.data : d));
+      refreshDocuments();
     }
     setSaving(false);
   };
@@ -134,7 +161,7 @@ export default function DocumentsPage() {
       const newVersion = result.data.versions[result.data.versions.length - 1];
       setSelectedVersion(newVersion);
       setViewingContent(newVersion.content);
-      setDocuments(prev => prev.map(d => d._id === selectedDoc._id ? result.data : d));
+      refreshDocuments();
       setRewrittenContent(null);
       setRewriteInstruction("");
     }
@@ -181,6 +208,61 @@ export default function DocumentsPage() {
         <p>Store and manage your resumes, cover letters, and other application materials.</p>
       </div>
 
+      <div className="doc-filters">
+        <div className="doc-filter-group">
+          <label className="doc-filter-label">Type</label>
+          <select className="doc-filter-select" value={filterType} onChange={e => setFilterType(e.target.value)}>
+            <option value={ALL}>All types</option>
+            {DOCUMENT_TYPES_LIST.map(t => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="doc-filter-group">
+          <label className="doc-filter-label">Status</label>
+          <select className="doc-filter-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+            <option value={ALL}>All statuses</option>
+            {DOCUMENT_STATUSES_LIST.map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="doc-filter-group">
+          <label className="doc-filter-label">Tag</label>
+          <select className="doc-filter-select" value={filterTag} onChange={e => setFilterTag(e.target.value)} disabled={availableTags.length === 0}>
+            <option value="">All tags</option>
+            {availableTags.map(tag => (
+              <option key={tag} value={tag}>{tag}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="doc-filter-group">
+          <label className="doc-filter-label">Sort by</label>
+          <select className="doc-filter-select" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+            <option value="updatedAt">Last updated</option>
+            <option value="createdAt">Created date</option>
+            <option value="name">Name</option>
+            <option value="type">Type</option>
+            <option value="status">Status</option>
+          </select>
+        </div>
+
+        <div className="doc-filter-group">
+          <label className="doc-filter-label">Order</label>
+          <select className="doc-filter-select" value={sortOrder} onChange={e => setSortOrder(e.target.value)}>
+            <option value="desc">Descending</option>
+            <option value="asc">Ascending</option>
+          </select>
+        </div>
+
+        {hasActiveFilters && (
+          <button className="doc-clear-all" onClick={clearFilters}>✕ Clear filters</button>
+        )}
+      </div>
+
       {loading ? (
         <div className="loading-container">
           <p>Loading documents...</p>
@@ -209,6 +291,13 @@ export default function DocumentsPage() {
               </div>
               <h3 className="document-name">{doc.name}</h3>
               <p className="document-category">{doc.category}</p>
+              {doc.tags && doc.tags.length > 0 && (
+                <div className="document-tags">
+                  {doc.tags.map((tag, i) => (
+                    <span key={i} className="document-tag">{tag}</span>
+                  ))}
+                </div>
+              )}
               <div className="document-meta">
                 <span>{formatDate(doc.createdAt)}</span>
                 <span>{doc.versions?.length || 0} version(s)</span>

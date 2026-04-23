@@ -16,6 +16,7 @@ const documentSchema = new mongoose.Schema({
   type: { type: String, enum: DOCUMENT_TYPES, required: true },
   category: { type: String, enum: DOCUMENT_CATEGORIES, default: "General" },
   status: { type: String, enum: DOCUMENT_STATUSES, default: "Draft" },
+  tags: [{ type: String, trim: true }],
   versions: { type: [documentVersionSchema], default: [] },
   linkedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job" }],
   createdAt: { type: Date, default: Date.now },
