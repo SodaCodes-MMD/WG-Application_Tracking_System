@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import React, { useState, useContext } from "react";
 import { isStrongPassword, changePassword } from "../services/auth-service.js";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import "./AuthForms.css";
