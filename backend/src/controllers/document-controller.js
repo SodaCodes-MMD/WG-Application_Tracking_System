@@ -11,7 +11,30 @@ const handleError = (res, message) => {
 
 export async function listDocuments(req, res) {
   try {
-    const docs = await docRepo.findDocumentsByUser(req.user.userId);
+    const { type, status, tag, sortBy, sortOrder } = req.query;
+    
+    const filter = { userId: req.user.userId };
+    
+    if (type) filter.type = type;
+    if (status) filter.status = status;
+    if (tag) filter.tags = tag;
+    
+    const sortOptions = {};
+    if (sortBy === "name") {
+      sortOptions.name = sortOrder === "asc" ? 1 : -1;
+    } else if (sortBy === "type") {
+      sortOptions.type = sortOrder === "asc" ? 1 : -1;
+    } else if (sortBy === "status") {
+      sortOptions.status = sortOrder === "asc" ? 1 : -1;
+    } else if (sortBy === "createdAt") {
+      sortOptions.createdAt = sortOrder === "asc" ? 1 : -1;
+    } else if (sortBy === "updatedAt") {
+      sortOptions.updatedAt = sortOrder === "asc" ? 1 : -1;
+    } else {
+      sortOptions.updatedAt = -1;
+    }
+    
+    const docs = await docRepo.findDocumentsByUserWithFilter(req.user.userId, filter, sortOptions);
     return res.json({ success: true, data: docs });
   } catch { return handleError(res, "Failed to fetch documents"); }
 }

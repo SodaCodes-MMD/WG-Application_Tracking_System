@@ -17,6 +17,10 @@ export async function findDocumentsByUser(userId) {
   return await Document.find({ userId }).sort({ updatedAt: -1 });
 }
 
+export async function findDocumentsByUserWithFilter(userId, filter, sortOptions) {
+  return await Document.find(filter).sort(sortOptions);
+}
+
 export async function findDocumentById(docId) {
   return await Document.findById(docId);
 }
