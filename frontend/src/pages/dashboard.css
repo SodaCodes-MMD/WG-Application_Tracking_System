@@ -1023,6 +1023,77 @@
   background: #007a2e;
 }
 
+.btn-duplicate-document {
+  flex: 1;
+  padding: 6px 10px;
+  background: #6366f1;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.btn-duplicate-document:hover:not(:disabled) {
+  background: #4f46e5;
+}
+
+.btn-duplicate-document:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-rename-document {
+  flex: 1;
+  padding: 6px 10px;
+  background: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.btn-rename-document:hover {
+  background: #d97706;
+}
+
+.rename-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.rename-input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid #6366f1;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.btn-rename-confirm {
+  padding: 4px 10px;
+  background: #6366f1;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.btn-rename-cancel {
+  padding: 4px 8px;
+  background: #e5e7eb;
+  color: #374151;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
 /* ===========================
    Document View Modal - Enhanced
    =========================== */
