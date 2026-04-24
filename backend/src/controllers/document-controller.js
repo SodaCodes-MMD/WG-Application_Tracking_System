@@ -4,9 +4,7 @@ import * as jobRepo from "../repositories/job-repository.js";
 import HTMLtoDOCX from "html-to-docx";
 import { generateCoverLetterDraft, generateResumeDraft, rewriteDocumentContent } from "../services/ai-service.js";
 import mammoth from "mammoth";
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const pdfParse = require("pdf-parse");
+import pdfParse from "pdf-parse";
 
 const handleError = (res, message) => {
   console.error(`[DocumentController] ${message}`);
