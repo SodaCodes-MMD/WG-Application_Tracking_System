@@ -38,6 +38,25 @@ export const generateAiCoverLetter = (token, jobId) => send(token, "POST", "/doc
 export const generateAiResume = (token, jobId) => send(token, "POST", "/documents/generate-resume", { jobId });
 export const aiRewriteDocument = (token, id, instruction) => send(token, "POST", `/documents/${id}/ai-rewrite`, { instruction });
 
+export async function uploadDocument(token, file, metadata) {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("name", metadata.name || "");
+    formData.append("type", metadata.type);
+    formData.append("category", metadata.category || "General");
+    formData.append("status", metadata.status || "Draft");
+    const res = await fetch(`${API}/documents/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: { code: "NETWORK_ERROR", message: "Unable to connect to server" } };
+  }
+}
+
 function sanitizeFilenamePart(value) {
   return String(value || "")
     .toLowerCase()
