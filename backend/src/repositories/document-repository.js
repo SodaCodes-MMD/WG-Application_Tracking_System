@@ -18,7 +18,7 @@ export async function findDocumentsByUser(userId) {
 }
 
 export async function findDocumentsByUserWithFilter(userId, filter, sortOptions) {
-  return await Document.find(filter).sort(sortOptions);
+  return await Document.find(filter).populate("linkedJobs", "title company").sort(sortOptions);
 }
 
 export async function findDocumentById(docId) {

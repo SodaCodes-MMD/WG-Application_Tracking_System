@@ -50,6 +50,31 @@
 .jd-notes-display { display: block; white-space: pre-wrap; font-size: 0.85rem; line-height: 1.6; min-height: 1.4em; padding: 2px 4px; }
 .jd-empty-hint { color: var(--text-secondary); font-style: italic; font-weight: 400; }
 
+/* S3-010: document section controls */
+.jd-doc-section-actions { display: flex; gap: 6px; align-items: center; }
+.jd-doc-generate-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn-jd-link-doc { padding: 6px 12px; font-size: 0.8rem; font-weight: 500; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 6px; cursor: pointer; transition: background 0.15s; }
+.btn-jd-link-doc:hover:not(:disabled) { background: #dbeafe; }
+.btn-jd-link-doc:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-jd-unlink { padding: 6px 12px; font-size: 0.8rem; font-weight: 500; background: transparent; color: #b45309; border: 1px solid #d97706; border-radius: 6px; cursor: pointer; transition: background 0.15s, color 0.15s; }
+.btn-jd-unlink:hover:not(:disabled) { background: #fef3c7; }
+.btn-jd-unlink:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* S3-010: doc item info */
+.jd-doc-info { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.jd-doc-meta-row { display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.78rem; color: var(--text-secondary); }
+.jd-doc-type-label { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; padding: 1px 6px; font-size: 0.72rem; font-weight: 500; color: var(--text-secondary); }
+
+/* S3-010: link picker */
+.jd-link-picker { border: 1px solid #bfdbfe; border-radius: 8px; background: #f0f7ff; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.jd-link-picker-hint { margin: 0; font-size: 0.8rem; color: var(--text-secondary); }
+.jd-link-picker-list { display: flex; flex-direction: column; gap: 4px; max-height: 180px; overflow-y: auto; }
+.jd-link-picker-item { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; padding: 8px 10px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; text-align: left; transition: border-color 0.15s, background 0.15s; }
+.jd-link-picker-item:hover:not(:disabled) { border-color: #93c5fd; background: #eff6ff; }
+.jd-link-picker-item:disabled { opacity: 0.5; cursor: not-allowed; }
+.jd-link-picker-name { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); }
+.jd-link-picker-meta { font-size: 0.75rem; color: var(--text-secondary); }
+
 /* S2-012: follow-up form */
 .jd-followup-form { display: flex; flex-direction: column; gap: 8px; padding: 8px 0; border-top: 1px dashed var(--border-color); }
 

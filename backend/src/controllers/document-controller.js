@@ -11,13 +11,14 @@ const handleError = (res, message) => {
 
 export async function listDocuments(req, res) {
   try {
-    const { type, status, tag, sortBy, sortOrder } = req.query;
-    
+    const { type, status, tag, jobId, sortBy, sortOrder } = req.query;
+
     const filter = { userId: req.user.userId };
-    
+
     if (type) filter.type = type;
     if (status) filter.status = status;
     if (tag) filter.tags = tag;
+    if (jobId) filter.linkedJobs = jobId;
     
     const sortOptions = {};
     if (sortBy === "name") {

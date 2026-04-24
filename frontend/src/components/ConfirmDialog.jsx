@@ -1,3 +1,4 @@
+import React from "react";
 import "./ConfirmDialog.css";
 
 export default function ConfirmDialog({ title, message, confirmLabel = "Delete", onConfirm, onCancel }) {

@@ -870,6 +870,16 @@
   color: #15803d;
 }
 
+.document-type-badge.notes {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.document-type-badge.other {
+  background: #f3f4f6;
+  color: #374151;
+}
+
 .document-status-badge {
   padding: 4px 8px;
   border-radius: 4px;
@@ -917,6 +927,47 @@
   font-size: 12px;
   color: #6b7280;
   margin-bottom: 12px;
+}
+
+.document-linked-jobs {
+  font-size: 11px;
+  color: #0369a1;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 4px;
+  padding: 3px 8px;
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.document-card-clickable {
+  cursor: pointer;
+}
+
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.error-message {
+  font-size: 0.875rem;
+  color: #cf222e;
+  margin: 0;
+}
+
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
 }
 
 .document-actions {
