@@ -23,6 +23,8 @@ router.delete("/documents/:id", docCtrl.deleteDocument);
 router.post("/documents/:id/versions", docCtrl.addVersion);
 router.post("/documents/:id/link-job", docCtrl.linkDocumentToJob);
 router.post("/documents/:id/unlink-job", docCtrl.unlinkDocumentFromJob);
+router.patch("/documents/:id/link", docCtrl.linkDocumentToJob);
+router.patch("/documents/:id/unlink", docCtrl.unlinkDocumentFromJob);
 router.get("/documents/job/:jobId", docCtrl.getDocumentsByJob);
 router.post("/documents/generate-cover-letter", docCtrl.generateAiCoverLetter);
 router.post("/documents/generate-resume", docCtrl.generateAiResume);

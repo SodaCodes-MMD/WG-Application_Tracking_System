@@ -4,7 +4,7 @@ import { listDocuments, deleteDocument, getDocument, addDocumentVersion, downloa
 import "./DocumentsPage.css";
 
 const ALL = "All";
-const DOCUMENT_TYPES_LIST = ["Resume", "Cover Letter"];
+const DOCUMENT_TYPES_LIST = ["Resume", "Cover Letter", "Notes", "Other"];
 const DOCUMENT_STATUSES_LIST = ["Draft", "Ready", "Archived"];
 
 export default function DocumentsPage() {
@@ -22,7 +22,7 @@ export default function DocumentsPage() {
   const [rewrittenContent, setRewrittenContent] = useState(null);
   const [rewriteInstruction, setRewriteInstruction] = useState("");
   const [showRewriteInput, setShowRewriteInput] = useState(false);
-  
+
   const [filterType, setFilterType] = useState(ALL);
   const [filterStatus, setFilterStatus] = useState(ALL);
   const [filterTag, setFilterTag] = useState("");
@@ -39,19 +39,20 @@ export default function DocumentsPage() {
   useEffect(() => {
     const loadDocuments = async () => {
       setLoading(true);
+      setError(null);
       const token = getToken();
       if (!token) {
         setLoading(false);
         return;
       }
-      
+
       const filters = {};
       if (filterType !== ALL) filters.type = filterType;
       if (filterStatus !== ALL) filters.status = filterStatus;
       if (filterTag) filters.tag = filterTag;
       if (sortBy) filters.sortBy = sortBy;
       if (sortOrder) filters.sortOrder = sortOrder;
-      
+
       const result = await listDocuments(token, filters);
       if (result.success) {
         setDocuments(result.data);
@@ -62,20 +63,20 @@ export default function DocumentsPage() {
       }
       setLoading(false);
     };
-    
+
     loadDocuments();
   }, [filterType, filterStatus, filterTag, sortBy, sortOrder, refreshTrigger]);
 
   useEffect(() => {
-    const checkForNewDocuments = () => {
-      const timestamp = localStorage.getItem('document-generated');
-      if (timestamp) {
-        localStorage.removeItem('document-generated');
+    const checkForUpdates = () => {
+      const ts = localStorage.getItem("document-generated");
+      if (ts) {
+        localStorage.removeItem("document-generated");
         refreshDocuments();
       }
     };
 
-    const interval = setInterval(checkForNewDocuments, 1000);
+    const interval = setInterval(checkForUpdates, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -232,6 +233,16 @@ export default function DocumentsPage() {
     });
   };
 
+  const getLinkedJobNames = (linkedJobs) => {
+    if (!linkedJobs?.length) return null;
+    return linkedJobs
+      .filter(j => j && typeof j === "object" && j.title)
+      .map(j => j.title + (j.company ? ` at ${j.company}` : ""));
+  };
+
+  const getTypeBadgeClass = (type) =>
+    "document-type-badge " + (type || "").toLowerCase().replace(/\s+/g, "-");
+
   return (
     <>
       <div className="page-header">
@@ -300,70 +311,85 @@ export default function DocumentsPage() {
         </div>
       ) : error ? (
         <div className="error-container">
-          <p>{error}</p>
+          <p className="error-message">{error}</p>
+          <button className="btn-primary" onClick={refreshDocuments}>Try Again</button>
         </div>
       ) : documents.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">📄</div>
           <h3>No documents yet</h3>
-          <p>Generate AI resumes and cover letters from the Job Board to see them here.</p>
+          <p>Generate AI resumes and cover letters from the Job Board, or create one manually to see it here.</p>
         </div>
       ) : (
         <div className="documents-grid">
-          {documents.map(doc => (
-            <div key={doc._id} className="document-card">
-              <div className="document-card-header">
-                <span className={`document-type-badge ${doc.type.toLowerCase().replace(" ", "-")}`}>
-                  {doc.type}
-                </span>
-                <span className={`document-status-badge ${doc.status.toLowerCase()}`}>
-                  {doc.status}
-                </span>
-              </div>
-              {renamingDocId === doc._id ? (
-                <div className="rename-inline">
-                  <input
-                    className="rename-input"
-                    value={renameValue}
-                    onChange={e => setRenameValue(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === "Enter") handleRenameSubmit(doc._id);
-                      if (e.key === "Escape") setRenamingDocId(null);
-                    }}
-                    autoFocus
-                    maxLength={200}
-                  />
-                  <button className="btn-rename-confirm" onClick={() => handleRenameSubmit(doc._id)}>Save</button>
-                  <button className="btn-rename-cancel" onClick={() => setRenamingDocId(null)}>✕</button>
+          {documents.map(doc => {
+            const linkedNames = getLinkedJobNames(doc.linkedJobs);
+            const versionCount = doc.versions?.length || 0;
+            return (
+              <div
+                key={doc._id}
+                className="document-card document-card-clickable"
+                onClick={() => handleView(doc)}
+              >
+                <div className="document-card-header">
+                  <span className={getTypeBadgeClass(doc.type)}>
+                    {doc.type}
+                  </span>
+                  <span className={`document-status-badge ${doc.status.toLowerCase()}`}>
+                    {doc.status}
+                  </span>
                 </div>
-              ) : (
-                <h3 className="document-name" title="Click to rename" onClick={() => handleRenameStart(doc)} style={{ cursor: "pointer" }}>{doc.name}</h3>
-              )}
-              <p className="document-category">{doc.category}</p>
-              {doc.tags && doc.tags.length > 0 && (
-                <div className="document-tags">
-                  {doc.tags.map((tag, i) => (
-                    <span key={i} className="document-tag">{tag}</span>
-                  ))}
+                {renamingDocId === doc._id ? (
+                  <div className="rename-inline" onClick={e => e.stopPropagation()}>
+                    <input
+                      className="rename-input"
+                      value={renameValue}
+                      onChange={e => setRenameValue(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === "Enter") handleRenameSubmit(doc._id);
+                        if (e.key === "Escape") setRenamingDocId(null);
+                      }}
+                      autoFocus
+                      maxLength={200}
+                    />
+                    <button className="btn-rename-confirm" onClick={() => handleRenameSubmit(doc._id)}>Save</button>
+                    <button className="btn-rename-cancel" onClick={() => setRenamingDocId(null)}>✕</button>
+                  </div>
+                ) : (
+                  <h3 className="document-name" title="Click to rename" onClick={e => { e.stopPropagation(); handleRenameStart(doc); }}>{doc.name}</h3>
+                )}
+                {doc.category && doc.category !== "General" && (
+                  <p className="document-category">{doc.category}</p>
+                )}
+                {doc.tags && doc.tags.length > 0 && (
+                  <div className="document-tags">
+                    {doc.tags.map((tag, i) => (
+                      <span key={i} className="document-tag">{tag}</span>
+                    ))}
+                  </div>
+                )}
+                <div className="document-meta">
+                  <span>Updated {formatDate(doc.updatedAt)}</span>
+                  <span>{versionCount} version{versionCount !== 1 ? "s" : ""}</span>
                 </div>
-              )}
-              <div className="document-meta">
-                <span>{formatDate(doc.createdAt)}</span>
-                <span>{doc.versions?.length || 0} version(s)</span>
+                {linkedNames && linkedNames.length > 0 && (
+                  <p className="document-linked-jobs">
+                    {linkedNames.length === 1
+                      ? linkedNames[0]
+                      : `${linkedNames[0]} +${linkedNames.length - 1} more`}
+                  </p>
+                )}
+                <div className="document-actions" onClick={e => e.stopPropagation()}>
+                  <button className="btn-view-document" onClick={() => handleView(doc)}>View</button>
+                  <button className="btn-rename-document" onClick={() => handleRenameStart(doc)}>Rename</button>
+                  <button className="btn-duplicate-document" onClick={() => handleDuplicate(doc._id)} disabled={duplicating === doc._id}>
+                    {duplicating === doc._id ? "Copying..." : "Duplicate"}
+                  </button>
+                  <button className="btn-delete-document" onClick={() => handleDelete(doc._id)}>Delete</button>
+                </div>
               </div>
-              {doc.linkedJobs?.length > 0 && (
-                <p className="document-linked">Linked to {doc.linkedJobs.length} job(s)</p>
-              )}
-              <div className="document-actions">
-                <button className="btn-view-document" onClick={() => handleView(doc)}>View</button>
-                <button className="btn-rename-document" onClick={() => handleRenameStart(doc)}>Rename</button>
-                <button className="btn-duplicate-document" onClick={() => handleDuplicate(doc._id)} disabled={duplicating === doc._id}>
-                  {duplicating === doc._id ? "Copying..." : "Duplicate"}
-                </button>
-                <button className="btn-delete-document" onClick={() => handleDelete(doc._id)}>Delete</button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -373,7 +399,7 @@ export default function DocumentsPage() {
             <div className="document-view-header">
               <div className="document-view-title-section">
                 <h3>{selectedDoc.name}</h3>
-                <span className={`document-type-badge ${selectedDoc.type.toLowerCase().replace(" ", "-")}`}>
+                <span className={getTypeBadgeClass(selectedDoc.type)}>
                   {selectedDoc.type}
                 </span>
               </div>
@@ -383,7 +409,7 @@ export default function DocumentsPage() {
             <div className="document-view-controls">
               <div className="version-selector">
                 <label htmlFor="version-select">Version:</label>
-                <select 
+                <select
                   id="version-select"
                   value={selectedVersion?._id || ""}
                   onChange={e => {
