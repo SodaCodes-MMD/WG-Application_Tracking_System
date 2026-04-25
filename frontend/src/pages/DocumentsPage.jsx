@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { getToken } from "../services/auth-service.js";
-import { listDocuments, deleteDocument, getDocument, addDocumentVersion, downloadDocx, aiRewriteDocument } from "../services/documents-api.js";
+import { listDocuments, deleteDocument, getDocument, addDocumentVersion, downloadDocx, aiRewriteDocument, duplicateDocument, renameDocument } from "../services/documents-api.js";
 import "./DocumentsPage.css";
 
 const ALL = "All";
@@ -30,6 +30,9 @@ export default function DocumentsPage() {
   const [sortOrder, setSortOrder] = useState("desc");
   const [availableTags, setAvailableTags] = useState([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [renamingDocId, setRenamingDocId] = useState(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [duplicating, setDuplicating] = useState(null);
 
   const refreshDocuments = () => setRefreshTrigger(prev => prev + 1);
 
@@ -185,6 +188,29 @@ export default function DocumentsPage() {
     setEditContent("");
   };
 
+  const handleDuplicate = async (docId) => {
+    setDuplicating(docId);
+    const token = getToken();
+    const result = await duplicateDocument(token, docId);
+    if (result.success) refreshDocuments();
+    setDuplicating(null);
+  };
+
+  const handleRenameStart = (doc) => {
+    setRenamingDocId(doc._id);
+    setRenameValue(doc.name);
+  };
+
+  const handleRenameSubmit = async (docId) => {
+    if (!renameValue.trim()) { setRenamingDocId(null); return; }
+    const token = getToken();
+    const result = await renameDocument(token, docId, renameValue.trim());
+    if (result.success) {
+      setDocuments(prev => prev.map(d => d._id === docId ? { ...d, name: result.data.name } : d));
+    }
+    setRenamingDocId(null);
+  };
+
   const handleCloseView = () => {
     setSelectedDoc(null);
     setSelectedVersion(null);
@@ -313,7 +339,25 @@ export default function DocumentsPage() {
                     {doc.status}
                   </span>
                 </div>
-                <h3 className="document-name">{doc.name}</h3>
+                {renamingDocId === doc._id ? (
+                  <div className="rename-inline" onClick={e => e.stopPropagation()}>
+                    <input
+                      className="rename-input"
+                      value={renameValue}
+                      onChange={e => setRenameValue(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === "Enter") handleRenameSubmit(doc._id);
+                        if (e.key === "Escape") setRenamingDocId(null);
+                      }}
+                      autoFocus
+                      maxLength={200}
+                    />
+                    <button className="btn-rename-confirm" onClick={() => handleRenameSubmit(doc._id)}>Save</button>
+                    <button className="btn-rename-cancel" onClick={() => setRenamingDocId(null)}>✕</button>
+                  </div>
+                ) : (
+                  <h3 className="document-name" title="Click to rename" onClick={e => { e.stopPropagation(); handleRenameStart(doc); }}>{doc.name}</h3>
+                )}
                 {doc.category && doc.category !== "General" && (
                   <p className="document-category">{doc.category}</p>
                 )}
@@ -336,18 +380,12 @@ export default function DocumentsPage() {
                   </p>
                 )}
                 <div className="document-actions" onClick={e => e.stopPropagation()}>
-                  <button
-                    className="btn-view-document"
-                    onClick={() => handleView(doc)}
-                  >
-                    View
+                  <button className="btn-view-document" onClick={() => handleView(doc)}>View</button>
+                  <button className="btn-rename-document" onClick={() => handleRenameStart(doc)}>Rename</button>
+                  <button className="btn-duplicate-document" onClick={() => handleDuplicate(doc._id)} disabled={duplicating === doc._id}>
+                    {duplicating === doc._id ? "Copying..." : "Duplicate"}
                   </button>
-                  <button
-                    className="btn-delete-document"
-                    onClick={() => handleDelete(doc._id)}
-                  >
-                    Delete
-                  </button>
+                  <button className="btn-delete-document" onClick={() => handleDelete(doc._id)}>Delete</button>
                 </div>
               </div>
             );
