@@ -53,6 +53,12 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
   const [followUpNote, setFollowUpNote] = useState("");
   const [followUpError, setFollowUpError] = useState("");
 
+  // S3-011: company research
+  const [researchContext, setResearchContext] = useState("");
+  const [researchResult, setResearchResult] = useState(null);
+  const [researchLoading, setResearchLoading] = useState(false);
+  const [researchError, setResearchError] = useState("");
+
   useEffect(() => {
     setLocalJob(job);
   }, [job]);
@@ -369,6 +375,19 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
     setSaving(false);
   };
 
+  const handleCompanyResearch = async () => {
+    setResearchLoading(true);
+    setResearchError("");
+    setResearchResult(null);
+    try {
+      const res = await jobsApi.companyResearch(localJob._id, researchContext);
+      setResearchResult(res.data.research);
+    } catch (err) {
+      setResearchError(err.message || "Failed to generate research");
+    }
+    setResearchLoading(false);
+  };
+
   const archiveFromDetail = () => {
     if (!onArchive) return;
     onArchive(localJob._id);
@@ -558,6 +577,34 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
               ))}
               {(localJob.interviews || []).length === 0 && <p className="jd-empty">No interviews logged.</p>}
             </div>
+          </section>
+
+          <section className="jd-section">
+            <div className="jd-section-head">
+              <h3>Company Research</h3>
+            </div>
+            <p className="jd-research-hint">Add context to get more tailored insights (e.g. "I have 3 years of React experience" or "focusing on culture fit").</p>
+            <textarea
+              className="jd-note-input"
+              rows={3}
+              value={researchContext}
+              onChange={(e) => setResearchContext(e.target.value)}
+              placeholder="Optional: add context about yourself or what you want to know..."
+            />
+            <button className="btn-jd-edit btn-jd-research" onClick={handleCompanyResearch} disabled={researchLoading}>
+              {researchLoading ? "Researching..." : `Research ${localJob.company}`}
+            </button>
+            {researchError && <p className="jd-error">{researchError}</p>}
+            {researchResult && (
+              <div className="jd-research-result">
+                {researchResult.split('\n').map((line, i) => {
+                  if (line.startsWith('## ')) return <h4 key={i} className="jd-research-heading">{line.replace('## ', '')}</h4>;
+                  if (line.startsWith('- ') || line.startsWith('* ')) return <li key={i} className="jd-research-li">{line.replace(/^[-*] /, '')}</li>;
+                  if (line.trim() === '') return <br key={i} />;
+                  return <p key={i} className="jd-research-p">{line}</p>;
+                })}
+              </div>
+            )}
           </section>
 
           <section className="jd-section">

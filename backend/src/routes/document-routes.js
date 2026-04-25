@@ -30,5 +30,7 @@ router.post("/documents/generate-cover-letter", docCtrl.generateAiCoverLetter);
 router.post("/documents/generate-resume", docCtrl.generateAiResume);
 router.get("/documents/:id/download-docx", docCtrl.downloadDocx);
 router.post("/documents/:id/ai-rewrite", docCtrl.aiRewriteDocument);
+router.post("/documents/:id/duplicate", docCtrl.duplicateDocument);
+router.patch("/documents/:id/rename", docCtrl.renameDocument);
 
 export default router;
