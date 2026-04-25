@@ -60,3 +60,14 @@
 .btn-jd-archive:hover { background: #ffedd5; }
 .btn-jd-delete { padding: 6px 16px; font-size: 0.85rem; font-weight: 500; background: transparent; color: #cf222e; border: 1px solid #cf222e; border-radius: 6px; cursor: pointer; }
 .btn-jd-delete:hover { background: #cf222e; color: #fff; }
+
+/* S3-011: company research */
+.jd-research-hint { font-size: 0.8rem; color: var(--text-secondary); margin: 0 0 8px; }
+.btn-jd-research { background: #4f46e5; color: #fff; border-color: #4f46e5; margin-top: 8px; }
+.btn-jd-research:hover:not(:disabled) { background: #4338ca; border-color: #4338ca; }
+.btn-jd-research:disabled { opacity: 0.65; cursor: not-allowed; }
+.jd-research-result { margin-top: 14px; padding: 14px 16px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.85rem; line-height: 1.6; }
+.jd-research-heading { font-size: 0.85rem; font-weight: 700; color: #4f46e5; margin: 14px 0 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+.jd-research-heading:first-child { margin-top: 0; }
+.jd-research-p { margin: 4px 0; color: var(--text-primary); }
+.jd-research-li { margin: 2px 0 2px 16px; list-style: disc; color: var(--text-primary); }
