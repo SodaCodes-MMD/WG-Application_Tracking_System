@@ -37,6 +37,8 @@ export const getDocumentsByJob = (token, jobId) => send(token, "GET", `/document
 export const generateAiCoverLetter = (token, jobId) => send(token, "POST", "/documents/generate-cover-letter", { jobId });
 export const generateAiResume = (token, jobId) => send(token, "POST", "/documents/generate-resume", { jobId });
 export const aiRewriteDocument = (token, id, instruction) => send(token, "POST", `/documents/${id}/ai-rewrite`, { instruction });
+export const duplicateDocument = (token, id) => send(token, "POST", `/documents/${id}/duplicate`);
+export const renameDocument = (token, id, name) => send(token, "PATCH", `/documents/${id}/rename`, { name });
 
 export async function uploadDocument(token, file, metadata) {
   try {

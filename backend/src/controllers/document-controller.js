@@ -234,6 +234,7 @@ export async function getDocumentsByJob(req, res) {
   } catch { return handleError(res, "Failed to fetch documents for job"); }
 }
 
+
 const ALLOWED_MIME_TYPES = [
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -285,4 +286,22 @@ export async function uploadDocument(req, res) {
     console.error("[DocumentController] Upload failed:", err);
     return handleError(res, "Failed to upload document");
   }
+
+export async function duplicateDocument(req, res) {
+  try {
+    const copy = await docRepo.duplicateDocument(req.params.id, req.user.userId);
+    if (!copy) return res.status(404).json({ success: false, error: { message: "Document not found" } });
+    return res.status(201).json({ success: true, data: copy });
+  } catch { return handleError(res, "Failed to duplicate document"); }
+}
+
+export async function renameDocument(req, res) {
+  try {
+    const { name } = req.body;
+    if (!name?.trim()) return res.status(400).json({ success: false, error: { message: "Name is required" } });
+    const doc = await docRepo.renameDocument(req.params.id, req.user.userId, name.trim());
+    if (!doc) return res.status(404).json({ success: false, error: { message: "Document not found" } });
+    return res.json({ success: true, data: doc });
+  } catch { return handleError(res, "Failed to rename document"); }
+
 }

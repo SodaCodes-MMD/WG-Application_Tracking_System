@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { notificationsApi, NOTIFICATION_TYPE_LABELS } from "../services/notifications-api.js";
 import "./NotificationBell.css";
 

@@ -210,3 +210,35 @@ Job: ${jobDescription}
 Rewrite to be more impactful with action verbs and quantifiable achievements.`;
   return await callGemini(prompt);
 }
+
+export async function generateCompanyResearch(job, userContext) {
+  const contextSection = userContext?.trim()
+    ? `\nADDITIONAL CONTEXT FROM APPLICANT:\n${userContext.trim()}`
+    : "";
+
+  const prompt = `You are a career coach helping a job applicant research a company before an interview or application.
+
+COMPANY: ${job.company}
+ROLE: ${job.title}${job.location ? `\nLOCATION: ${job.location}` : ""}${contextSection}
+
+Provide a structured company research summary with the following sections. Use markdown formatting with ## headings:
+
+## Company Overview
+Brief summary of what the company does, its mission, and industry position.
+
+## Culture & Values
+Key cultural traits, stated values, and what it's like to work there based on general knowledge.
+
+## The Role
+What this type of role typically involves at this kind of company, key skills valued, and growth opportunities.
+
+## Interview Tips
+2-3 specific tips for interviewing for ${job.title} at ${job.company}, including likely question themes and how to stand out.
+
+## Questions to Ask
+3 thoughtful questions the applicant could ask the interviewer.
+
+Keep each section concise and actionable. If you don't have specific knowledge about this company, provide relevant general insights for this type of company and role.`;
+
+  return await callGemini(prompt);
+}
