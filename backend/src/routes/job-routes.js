@@ -1,7 +1,7 @@
 import express from "express";
 import { body } from "express-validator";
 import { authenticate } from "../middleware/auth-middleware.js";
-import { listJobs, listArchivedJobs, getJob, createJobHandler, updateJobHandler, archiveJobHandler, restoreJobHandler, deleteJobHandler, addInterviewHandler, updateInterviewHandler, deleteInterviewHandler, addTimelineEventHandler, updateTimelineEventHandler, deleteTimelineEventHandler } from "../controllers/job-controller.js";
+import { listJobs, listArchivedJobs, getJob, createJobHandler, updateJobHandler, archiveJobHandler, restoreJobHandler, deleteJobHandler, addInterviewHandler, updateInterviewHandler, deleteInterviewHandler, addTimelineEventHandler, updateTimelineEventHandler, deleteTimelineEventHandler, companyResearchHandler } from "../controllers/job-controller.js";
 import { JOB_STATUSES_LIST, JOB_OUTCOMES_LIST } from "../models/job-model.js";
 
 const router = express.Router();
@@ -53,6 +53,7 @@ router.post("/jobs/:id/interviews", addInterviewHandler);
 router.patch("/jobs/:id/interviews/:interviewId", updateInterviewHandler);
 router.delete("/jobs/:id/interviews/:interviewId", deleteInterviewHandler);
 
+router.post("/jobs/:id/company-research", companyResearchHandler);
 router.post("/jobs/:id/timeline", addTimelineEventHandler);
 router.patch("/jobs/:id/timeline/:eventId", updateTimelineEventHandler);
 router.delete("/jobs/:id/timeline/:eventId", deleteTimelineEventHandler);
