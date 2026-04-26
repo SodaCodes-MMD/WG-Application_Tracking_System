@@ -3,6 +3,8 @@ import * as profileRepo from "../repositories/profile-repository.js";
 import * as jobRepo from "../repositories/job-repository.js";
 import HTMLtoDOCX from "html-to-docx";
 import { generateCoverLetterDraft, generateResumeDraft, rewriteDocumentContent } from "../services/ai-service.js";
+import mammoth from "mammoth";
+import pdfParse from "pdf-parse";
 
 const handleError = (res, message) => {
   console.error(`[DocumentController] ${message}`);
@@ -233,6 +235,60 @@ export async function getDocumentsByJob(req, res) {
   } catch { return handleError(res, "Failed to fetch documents for job"); }
 }
 
+
+const ALLOWED_MIME_TYPES = [
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+
+export async function uploadDocument(req, res) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: { message: "No file uploaded" } });
+    }
+
+    const { mimetype, size, buffer, originalname } = req.file;
+
+    if (!ALLOWED_MIME_TYPES.includes(mimetype)) {
+      return res.status(400).json({ success: false, error: { message: "Unsupported file type. Only PDF and DOCX are allowed." } });
+    }
+
+    if (size > MAX_FILE_SIZE_BYTES) {
+      return res.status(400).json({ success: false, error: { message: "File exceeds maximum size of 5MB." } });
+    }
+
+    let content;
+    if (mimetype === "application/pdf") {
+      const parsed = await pdfParse(buffer);
+      content = parsed.text;
+    } else {
+      const result = await mammoth.convertToHtml({ buffer });
+      content = result.value;
+    }
+
+    const { name, type, category, status } = req.body;
+    const docName = name?.trim() || originalname.replace(/\.[^/.]+$/, "");
+
+    if (!type || !["Resume", "Cover Letter"].includes(type)) {
+      return res.status(400).json({ success: false, error: { message: "type must be 'Resume' or 'Cover Letter'" } });
+    }
+
+    const doc = await docRepo.createDocument(req.user.userId, {
+      name: docName,
+      type,
+      category: category || "General",
+      status: status || "Draft",
+      versions: [{ versionNumber: 1, content }],
+    });
+
+    return res.status(201).json({ success: true, data: doc });
+  } catch (err) {
+    console.error("[DocumentController] Upload failed:", err);
+    return handleError(res, "Failed to upload document");
+  }
+}
+
 export async function duplicateDocument(req, res) {
   try {
     const copy = await docRepo.duplicateDocument(req.params.id, req.user.userId);
@@ -249,4 +305,5 @@ export async function renameDocument(req, res) {
     if (!doc) return res.status(404).json({ success: false, error: { message: "Document not found" } });
     return res.json({ success: true, data: doc });
   } catch { return handleError(res, "Failed to rename document"); }
+
 }

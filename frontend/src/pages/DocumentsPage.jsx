@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { getToken } from "../services/auth-service.js";
-import { listDocuments, deleteDocument, getDocument, addDocumentVersion, downloadDocx, aiRewriteDocument, duplicateDocument, renameDocument } from "../services/documents-api.js";
+
+import { listDocuments, deleteDocument, getDocument, addDocumentVersion, downloadDocx, aiRewriteDocument, uploadDocument, duplicateDocument, renameDocument } from "../services/documents-api.js";
+
 import "./DocumentsPage.css";
 
 const ALL = "All";
@@ -30,9 +32,17 @@ export default function DocumentsPage() {
   const [sortOrder, setSortOrder] = useState("desc");
   const [availableTags, setAvailableTags] = useState([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const [showUploadForm, setShowUploadForm] = useState(false);
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadMeta, setUploadMeta] = useState({ name: "", type: "Resume", category: "General", status: "Draft" });
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+
   const [renamingDocId, setRenamingDocId] = useState(null);
   const [renameValue, setRenameValue] = useState("");
   const [duplicating, setDuplicating] = useState(null);
+
 
   const refreshDocuments = () => setRefreshTrigger(prev => prev + 1);
 
@@ -222,6 +232,43 @@ export default function DocumentsPage() {
     setShowRewriteInput(false);
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const allowed = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    if (!allowed.includes(file.type)) {
+      setUploadError("Only PDF and DOCX files are supported.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError("File must be 5MB or smaller.");
+      return;
+    }
+    setUploadError(null);
+    setUploadFile(file);
+    if (!uploadMeta.name) {
+      setUploadMeta(prev => ({ ...prev, name: file.name.replace(/\.[^/.]+$/, "") }));
+    }
+  };
+
+  const handleUploadSubmit = async (e) => {
+    e.preventDefault();
+    if (!uploadFile) { setUploadError("Please select a file."); return; }
+    setUploading(true);
+    setUploadError(null);
+    const token = getToken();
+    const result = await uploadDocument(token, uploadFile, uploadMeta);
+    if (result.success) {
+      setDocuments(prev => [result.data, ...prev]);
+      setShowUploadForm(false);
+      setUploadFile(null);
+      setUploadMeta({ name: "", type: "Resume", category: "General", status: "Draft" });
+    } else {
+      setUploadError(result.error?.message || "Upload failed.");
+    }
+    setUploading(false);
+  };
+
   const formatDate = (date) => {
     if (!date) return "";
     return new Date(date).toLocaleString(undefined, {
@@ -248,6 +295,9 @@ export default function DocumentsPage() {
       <div className="page-header">
         <h2>Document Library</h2>
         <p>Store and manage your resumes, cover letters, and other application materials.</p>
+        <button className="btn-upload-document" onClick={() => setShowUploadForm(v => !v)}>
+          {showUploadForm ? "Cancel Upload" : "Upload Document"}
+        </button>
       </div>
 
       <div className="doc-filters">
@@ -305,6 +355,47 @@ export default function DocumentsPage() {
         )}
       </div>
 
+      {showUploadForm && (
+        <form className="upload-document-form" onSubmit={handleUploadSubmit}>
+          <h3>Upload a Document</h3>
+          <div className="upload-form-row">
+            <label>File <span className="upload-hint">(PDF or DOCX, max 5MB)</span></label>
+            <input type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleFileChange} required />
+          </div>
+          <div className="upload-form-row">
+            <label>Name</label>
+            <input type="text" maxLength={200} value={uploadMeta.name} onChange={e => setUploadMeta(prev => ({ ...prev, name: e.target.value }))} placeholder="Document name" />
+          </div>
+          <div className="upload-form-row">
+            <label>Type</label>
+            <select value={uploadMeta.type} onChange={e => setUploadMeta(prev => ({ ...prev, type: e.target.value }))}>
+              <option value="Resume">Resume</option>
+              <option value="Cover Letter">Cover Letter</option>
+            </select>
+          </div>
+          <div className="upload-form-row">
+            <label>Category</label>
+            <select value={uploadMeta.category} onChange={e => setUploadMeta(prev => ({ ...prev, category: e.target.value }))}>
+              {["General", "Frontend", "Backend", "Data", "DevOps", "Full Stack", "Other"].map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+          <div className="upload-form-row">
+            <label>Status</label>
+            <select value={uploadMeta.status} onChange={e => setUploadMeta(prev => ({ ...prev, status: e.target.value }))}>
+              <option value="Draft">Draft</option>
+              <option value="Ready">Ready</option>
+              <option value="Archived">Archived</option>
+            </select>
+          </div>
+          {uploadError && <p className="upload-error">{uploadError}</p>}
+          <button type="submit" className="btn-submit-upload" disabled={uploading}>
+            {uploading ? "Uploading..." : "Upload"}
+          </button>
+        </form>
+      )}
+
       {loading ? (
         <div className="loading-container">
           <p>Loading documents...</p>
@@ -318,7 +409,7 @@ export default function DocumentsPage() {
         <div className="empty-state">
           <div className="empty-state-icon">📄</div>
           <h3>No documents yet</h3>
-          <p>Generate AI resumes and cover letters from the Job Board, or create one manually to see it here.</p>
+
         </div>
       ) : (
         <div className="documents-grid">

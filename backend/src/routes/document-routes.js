@@ -1,7 +1,10 @@
 import express from "express";
 import { body, param, validationResult } from "express-validator";
+import multer from "multer";
 import * as docCtrl from "../controllers/document-controller.js";
 import { authenticate } from "../middleware/auth-middleware.js";
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 const router = express.Router();
 
@@ -28,6 +31,7 @@ router.patch("/documents/:id/unlink", docCtrl.unlinkDocumentFromJob);
 router.get("/documents/job/:jobId", docCtrl.getDocumentsByJob);
 router.post("/documents/generate-cover-letter", docCtrl.generateAiCoverLetter);
 router.post("/documents/generate-resume", docCtrl.generateAiResume);
+router.post("/documents/upload", upload.single("file"), docCtrl.uploadDocument);
 router.get("/documents/:id/download-docx", docCtrl.downloadDocx);
 router.post("/documents/:id/ai-rewrite", docCtrl.aiRewriteDocument);
 router.post("/documents/:id/duplicate", docCtrl.duplicateDocument);
