@@ -498,6 +498,18 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
           </div>
 
           <section className="jd-section">
+            <h3>Interview Prep Notes</h3>
+            <p className="jd-prep-hint">Track questions to prepare, technical topics, STAR examples, and questions to ask.</p>
+            <textarea
+              className="jd-note-input jd-prep-textarea"
+              rows={8}
+              defaultValue={localJob.prepNotes || ""}
+              placeholder={"## Questions to Prepare\n\n## Technical Topics\n\n## STAR Examples\n\n## Questions to Ask"}
+              onBlur={(e) => handleOutcomePatch({ prepNotes: e.target.value })}
+            />
+          </section>
+
+          <section className="jd-section">
             <div className="jd-section-head">
               <h3>Follow-ups</h3>
               <button className="btn-jd-edit" onClick={() => { setShowFollowUpForm((v) => !v); setFollowUpError(""); }}>
