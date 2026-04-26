@@ -19,6 +19,7 @@ export const listDocuments = (token, filters = {}) => {
   if (filters.type) params.append("type", filters.type);
   if (filters.status) params.append("status", filters.status);
   if (filters.tag) params.append("tag", filters.tag);
+  if (filters.jobId) params.append("jobId", filters.jobId);
   if (filters.sortBy) params.append("sortBy", filters.sortBy);
   if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
   

@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const DOCUMENT_TYPES = ["Resume", "Cover Letter"];
+const DOCUMENT_TYPES = ["Resume", "Cover Letter", "Notes", "Other"];
 const DOCUMENT_CATEGORIES = ["General", "Frontend", "Backend", "Data", "DevOps", "Full Stack", "Other"];
 const DOCUMENT_STATUSES = ["Draft", "Ready", "Archived"];
 
