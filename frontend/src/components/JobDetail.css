@@ -96,3 +96,7 @@
 .jd-research-heading:first-child { margin-top: 0; }
 .jd-research-p { margin: 4px 0; color: var(--text-primary); }
 .jd-research-li { margin: 2px 0 2px 16px; list-style: disc; color: var(--text-primary); }
+
+/* S3-013: interview prep notes */
+.jd-prep-hint { font-size: 0.8rem; color: var(--text-secondary); margin: 0 0 8px; }
+.jd-prep-textarea { width: 100%; font-family: monospace; font-size: 0.82rem; line-height: 1.6; resize: vertical; }

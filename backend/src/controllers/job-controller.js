@@ -94,7 +94,7 @@ export const updateJobHandler = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return validationError(res, errors);
   try {
-    const allowed = ["company", "title", "status", "location", "url", "salary", "notes", "appliedAt", "deadline", "recruiterNotes", "outcome", "outcomeNotes", "respondedAt"];
+    const allowed = ["company", "title", "status", "location", "url", "salary", "notes", "appliedAt", "deadline", "recruiterNotes", "outcome", "outcomeNotes", "respondedAt", "prepNotes"];
     const updates = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
     //
     let historyEntry = null;
