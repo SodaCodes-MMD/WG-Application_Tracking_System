@@ -132,13 +132,18 @@ const filtered = [...jobs]
     ghosted: jobs.filter((j) => j.outcome === "Ghosted").length,
   };
   const analytics = useMemo(() => {
-    // Count how many jobs ever reached each funnel stage
+    // Count how many jobs ever reached each funnel stage.
+    // A job counts for all stages up to its highest reached stage so the
+    // funnel is monotonically decreasing (e.g. reaching Interview implies
+    // passing through Applied and Phone Screen).
     const stageReach = {};
     FUNNEL_STAGES.forEach(s => { stageReach[s] = 0; });
     jobs.forEach(job => {
-      const reached = new Set((job.statusHistory || []).map(h => h.status));
-      reached.add(job.status);
-      FUNNEL_STAGES.forEach(s => { if (reached.has(s)) stageReach[s]++; });
+      const allStatuses = new Set((job.statusHistory || []).map(h => h.status));
+      allStatuses.add(job.status);
+      let highestIdx = -1;
+      FUNNEL_STAGES.forEach((s, idx) => { if (allStatuses.has(s)) highestIdx = Math.max(highestIdx, idx); });
+      for (let i = 0; i <= highestIdx; i++) stageReach[FUNNEL_STAGES[i]]++;
     });
 
     // Conversion rate between consecutive funnel stages
