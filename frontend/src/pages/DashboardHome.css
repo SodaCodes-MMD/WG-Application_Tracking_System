@@ -32,3 +32,19 @@
 .dh-spinner { width: 32px; height: 32px; border: 3px solid var(--border-color); border-top-color: #f0c800; border-radius: 50%; animation: dh-spin 0.8s linear infinite; }
 @keyframes dh-spin { to { transform: rotate(360deg); } }
 .dh-error { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 60px 24px; text-align: center; color: var(--text-secondary); font-size: 0.875rem; }
+.dh-analytics-section { margin-bottom: 20px; }
+.dh-analytics-toggle { width: 100%; padding: 10px 16px; font-size: 0.85rem; font-weight: 600; text-align: left; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); cursor: pointer; transition: background 0.15s; }
+.dh-analytics-toggle:hover { background: var(--bg-secondary); }
+.dh-analytics-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
+@media (max-width: 700px) { .dh-analytics-panels { grid-template-columns: 1fr; } }
+.dh-analytics-panel { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; }
+.dh-analytics-heading { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 14px; }
+.dh-analytics-empty { font-size: 0.82rem; color: var(--text-secondary); margin: 0; }
+.dh-funnel-list { display: flex; flex-direction: column; gap: 12px; }
+.dh-funnel-item { display: flex; flex-direction: column; gap: 4px; }
+.dh-funnel-label { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-primary); }
+.dh-funnel-rate { font-weight: 700; color: var(--text-primary); }
+.dh-bar-track { height: 8px; background: var(--bg-secondary); border-radius: 4px; overflow: hidden; }
+.dh-bar-fill { height: 100%; background: #f0c800; border-radius: 4px; transition: width 0.4s ease; }
+.dh-bar-fill--time { background: #60a5fa; }
+.dh-funnel-counts { font-size: 0.72rem; color: var(--text-secondary); }

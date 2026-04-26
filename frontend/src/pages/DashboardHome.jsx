@@ -7,6 +7,7 @@ import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import "./DashboardHome.css";
 
 const ALL = "All";
+const FUNNEL_STAGES = ["Wishlist", "Applied", "Phone Screen", "Interview", "Offer"];
 
 
 function compareValues(a, b, sortBy, sortDirection) {
@@ -79,6 +80,7 @@ export default function DashboardHome() {
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const [archivedJobs, setArchivedJobs] = useState([]);
   const [showArchived, setShowArchived] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   const fetchJobs = useCallback(async () => {
     try {
@@ -129,6 +131,66 @@ const filtered = [...jobs]
     withdrawn: jobs.filter((j) => j.outcome === "Withdrawn").length,
     ghosted: jobs.filter((j) => j.outcome === "Ghosted").length,
   };
+  const analytics = useMemo(() => {
+    // Count how many jobs ever reached each funnel stage.
+    // A job counts for all stages up to its highest reached stage so the
+    // funnel is monotonically decreasing (e.g. reaching Interview implies
+    // passing through Applied and Phone Screen).
+    const stageReach = {};
+    FUNNEL_STAGES.forEach(s => { stageReach[s] = 0; });
+    jobs.forEach(job => {
+      const allStatuses = new Set((job.statusHistory || []).map(h => h.status));
+      allStatuses.add(job.status);
+      let highestIdx = -1;
+      FUNNEL_STAGES.forEach((s, idx) => { if (allStatuses.has(s)) highestIdx = Math.max(highestIdx, idx); });
+      for (let i = 0; i <= highestIdx; i++) stageReach[FUNNEL_STAGES[i]]++;
+    });
+
+    // Conversion rate between consecutive funnel stages
+    const conversions = [];
+    for (let i = 0; i < FUNNEL_STAGES.length - 1; i++) {
+      const from = FUNNEL_STAGES[i];
+      const to = FUNNEL_STAGES[i + 1];
+      const fromCount = stageReach[from];
+      const toCount = stageReach[to];
+      const rate = fromCount > 0 ? Math.round((toCount / fromCount) * 100) : null;
+      conversions.push({ from, to, fromCount, toCount, rate });
+    }
+
+    // Average time spent in each stage (days between consecutive history entries)
+    const stageTimes = {};
+    jobs.forEach(job => {
+      const history = [...(job.statusHistory || [])].sort(
+        (a, b) => new Date(a.changedAt) - new Date(b.changedAt)
+      );
+      for (let i = 0; i < history.length - 1; i++) {
+        const stage = history[i].status;
+        const days = (new Date(history[i + 1].changedAt) - new Date(history[i].changedAt)) / 86400000;
+        if (days >= 0) {
+          if (!stageTimes[stage]) stageTimes[stage] = [];
+          stageTimes[stage].push(days);
+        }
+      }
+      // Current stage: time since last transition until now
+      if (history.length > 0) {
+        const last = history[history.length - 1];
+        const days = (Date.now() - new Date(last.changedAt)) / 86400000;
+        if (!stageTimes[last.status]) stageTimes[last.status] = [];
+        stageTimes[last.status].push(days);
+      }
+    });
+
+    const avgTimeInStage = Object.entries(stageTimes)
+      .map(([stage, times]) => ({
+        stage,
+        avgDays: Math.round((times.reduce((s, d) => s + d, 0) / times.length) * 10) / 10,
+        sampleSize: times.length,
+      }))
+      .sort((a, b) => JOB_STATUSES.indexOf(a.stage) - JOB_STATUSES.indexOf(b.stage));
+
+    return { conversions, avgTimeInStage };
+  }, [jobs]);
+
   const hasActiveFilters = filterStatus !== ALL || filterLocation !== ALL || filterDateFrom || filterDateTo;
 
   const clearFilters = () => { setFilterStatus(ALL); setFilterLocation(ALL); setFilterDateFrom(""); setFilterDateTo(""); };
@@ -210,6 +272,68 @@ const filtered = [...jobs]
         <div className="dh-metric-card"><span className="dh-metric-label">Rejected</span><span className="dh-metric-value">{responseMetrics.rejected}</span></div>
         <div className="dh-metric-card"><span className="dh-metric-label">Withdrawn</span><span className="dh-metric-value">{responseMetrics.withdrawn}</span></div>
         <div className="dh-metric-card"><span className="dh-metric-label">Ghosted</span><span className="dh-metric-value">{responseMetrics.ghosted}</span></div>
+      </div>
+
+      <div className="dh-analytics-section">
+        <button className="dh-analytics-toggle" onClick={() => setShowAnalytics(o => !o)}>
+          Analytics {showAnalytics ? "▲" : "▼"}
+        </button>
+        {showAnalytics && (
+          <div className="dh-analytics-panels">
+            <div className="dh-analytics-panel">
+              <h4 className="dh-analytics-heading">Conversion Funnel</h4>
+              {analytics.conversions.every(c => c.rate === null) ? (
+                <p className="dh-analytics-empty">Not enough data yet.</p>
+              ) : (
+                <div className="dh-funnel-list">
+                  {analytics.conversions.map(c => (
+                    <div key={c.from + c.to} className="dh-funnel-item">
+                      <div className="dh-funnel-label">
+                        <span>{c.from} → {c.to}</span>
+                        <span className="dh-funnel-rate">{c.rate !== null ? `${c.rate}%` : "—"}</span>
+                      </div>
+                      <div className="dh-bar-track">
+                        <div
+                          className="dh-bar-fill"
+                          style={{ width: c.rate !== null ? `${c.rate}%` : "0%" }}
+                        />
+                      </div>
+                      <div className="dh-funnel-counts">{c.toCount} of {c.fromCount} jobs</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="dh-analytics-panel">
+              <h4 className="dh-analytics-heading">Avg. Time in Stage</h4>
+              {analytics.avgTimeInStage.length === 0 ? (
+                <p className="dh-analytics-empty">Not enough data yet.</p>
+              ) : (() => {
+                const maxDays = Math.max(...analytics.avgTimeInStage.map(s => s.avgDays), 1);
+                return (
+                  <div className="dh-funnel-list">
+                    {analytics.avgTimeInStage.map(s => (
+                      <div key={s.stage} className="dh-funnel-item">
+                        <div className="dh-funnel-label">
+                          <span>{s.stage}</span>
+                          <span className="dh-funnel-rate">{s.avgDays}d</span>
+                        </div>
+                        <div className="dh-bar-track">
+                          <div
+                            className="dh-bar-fill dh-bar-fill--time"
+                            style={{ width: `${Math.min((s.avgDays / maxDays) * 100, 100)}%` }}
+                          />
+                        </div>
+                        <div className="dh-funnel-counts">{s.sampleSize} sample{s.sampleSize !== 1 ? "s" : ""}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="dh-filters">
