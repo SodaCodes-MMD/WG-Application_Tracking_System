@@ -287,6 +287,7 @@ export async function uploadDocument(req, res) {
     console.error("[DocumentController] Upload failed:", err);
     return handleError(res, "Failed to upload document");
   }
+}
 
 export async function duplicateDocument(req, res) {
   try {

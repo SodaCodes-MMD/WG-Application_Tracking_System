@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { getToken } from "../services/auth-service.js";
 
-import { listDocuments, deleteDocument, getDocument, addDocumentVersion, downloadDocx, aiRewriteDocument, uploadDocument } from "../services/documents-api.js";
-
-import { listDocuments, deleteDocument, getDocument, addDocumentVersion, downloadDocx, aiRewriteDocument, duplicateDocument, renameDocument } from "../services/documents-api.js";
+import { listDocuments, deleteDocument, getDocument, addDocumentVersion, downloadDocx, aiRewriteDocument, uploadDocument, duplicateDocument, renameDocument } from "../services/documents-api.js";
 
 import "./DocumentsPage.css";
 
