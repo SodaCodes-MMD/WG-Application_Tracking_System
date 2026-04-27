@@ -5,16 +5,22 @@ function getAuthHeaders() {
   return { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) };
 }
 
+// S3-022: try/catch ensures network failures become proper Error instances, not raw TypeErrors
 async function request(method, path, body) {
-  const options = { method, headers: getAuthHeaders() };
-  if (body) options.body = JSON.stringify(body);
-  const res = await fetch(`${API_URL}${path}`, options);
-  const data = await res.json();
-  if (!res.ok) {
-    if (res.status === 401) { localStorage.removeItem("token"); localStorage.removeItem("user"); window.location.href = "/login"; }
-    const error = new Error(data.error?.message || "Request failed"); error.response = { status: res.status, data }; throw error;
+  try {
+    const options = { method, headers: getAuthHeaders() };
+    if (body) options.body = JSON.stringify(body);
+    const res = await fetch(`${API_URL}${path}`, options);
+    const data = await res.json();
+    if (!res.ok) {
+      if (res.status === 401) { localStorage.removeItem("token"); localStorage.removeItem("user"); window.location.href = "/login"; }
+      const error = new Error(data.error?.message || "Request failed"); error.response = { status: res.status, data }; throw error;
+    }
+    return data;
+  } catch (err) {
+    if (err.response) throw err;
+    throw new Error(err.message || "Unable to connect to server");
   }
-  return data;
 }
 
 export const jobsApi = {

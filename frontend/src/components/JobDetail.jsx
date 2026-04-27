@@ -1,4 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+/*
+ * S3-019: wrapped with React.memo to skip re-renders when props are unchanged;
+ * added aria-label on close button and role="alert"/"status" on error/success messages.
+ */
+import { useCallback, useEffect, useMemo, useState, memo } from "react";
 import { jobsApi, JOB_STATUSES, STATUS_COLORS, OUTCOME_COLORS, JOB_OUTCOMES } from "../services/jobs-api.js";
 import { getToken } from "../services/auth-service.js";
 import { getProfile } from "../services/profile-api.js";
@@ -18,7 +22,7 @@ function toDateInput(d) {
   return isNaN(dt) ? "" : dt.toISOString().split("T")[0];
 }
 
-export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, onStatusChange, onJobUpdated }) {
+function JobDetail({ job, onClose, onEdit, onDelete, onArchive, onStatusChange, onJobUpdated }) {
   const [localJob, setLocalJob] = useState(job);
   const [docs, setDocs] = useState([]);
   const [docsLoading, setDocsLoading] = useState(false);
@@ -393,7 +397,7 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
           </div>
           <div className="jd-header-right">
             {inlineSaving && <span className="jd-save-indicator">Saving…</span>}
-            <button className="jd-close" onClick={onClose}>✕</button>
+            <button className="jd-close" onClick={onClose} aria-label="Close">✕</button>
           </div>
         </div>
 
@@ -478,7 +482,7 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
                   <input value={followUpNote} onChange={(e) => setFollowUpNote(e.target.value)} placeholder="Note (optional)" />
                 </div>
                 <button className="btn-jd-edit" onClick={addFollowUp} disabled={saving}>Save Follow-up</button>
-                {followUpError && <p className="jd-error">{followUpError}</p>}
+                {followUpError && <p className="jd-error" role="alert">{followUpError}</p>}
               </div>
             )}
             <div className="jd-list">
@@ -503,7 +507,7 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
             </div>
             <textarea rows={2} value={timelineNotes} onChange={(e) => setTimelineNotes(e.target.value)} placeholder="Event notes" />
             <button className="btn-jd-edit" onClick={addTimeline} disabled={saving}>Add event</button>
-            {timelineError && <p className="jd-error">{timelineError}</p>}
+            {timelineError && <p className="jd-error" role="alert">{timelineError}</p>}
             <div className="jd-list">
               {sortedTimeline.map((event) => (
                 <div className="jd-list-item" key={event._id}>
@@ -530,7 +534,7 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
             <input value={interviewForm.interviewer} onChange={(e) => setInterviewForm((p) => ({ ...p, interviewer: e.target.value }))} placeholder="Interviewer" />
             <textarea rows={2} value={interviewForm.notes} onChange={(e) => setInterviewForm((p) => ({ ...p, notes: e.target.value }))} placeholder="Notes" />
             <button className="btn-jd-edit" onClick={addInterview} disabled={saving}>Add interview</button>
-            {interviewError && <p className="jd-error">{interviewError}</p>}
+            {interviewError && <p className="jd-error" role="alert">{interviewError}</p>}
             <div className="jd-list">
               {(localJob.interviews || []).map((iv) => (
                 <div className="jd-list-item" key={iv._id}>
@@ -558,8 +562,8 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
             </div>
             <button className="btn-jd-edit" onClick={handleGenerateResume} disabled={saving}>Generate AI Resume</button>
             <button className="btn-jd-edit" onClick={handleGenerateCoverLetter} disabled={saving}>Generate AI Cover Letter</button>
-            {docSuccess && <p className="jd-success">{docSuccess}</p>}
-            {docError && <p className="jd-error">{docError}</p>}
+            {docSuccess && <p className="jd-success" role="status">{docSuccess}</p>}
+            {docError && <p className="jd-error" role="alert">{docError}</p>}
 
             {/* S3-009: library picker panel — shows user's unlinked, non-archived docs */}
             {showLibrary && (
@@ -627,3 +631,5 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
     </div>
   );
 }
+
+export default memo(JobDetail);

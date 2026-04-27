@@ -1,4 +1,8 @@
-import { useState } from "react";
+/*
+ * S3-019: wrapped with React.memo to prevent re-renders when props haven't changed;
+ * added aria-labels to icon-only buttons and role="alert" to error messages.
+ */
+import { useState, memo } from "react";
 import { STATUS_COLORS, OUTCOME_COLORS, jobsApi } from "../services/jobs-api.js";
 import { getToken } from "../services/auth-service.js";
 import { getProfile } from "../services/profile-api.js";
@@ -60,7 +64,7 @@ function toDateInput(d) {
   return isNaN(dt) ? "" : dt.toISOString().split("T")[0];
 }
 
-export default function JobCard({ job, onEdit, onDelete, onArchive, onRestore, isArchived, onStatusChange, onView }) {
+function JobCard({ job, onEdit, onDelete, onArchive, onRestore, isArchived, onStatusChange, onView }) {
   const outcomeColors = job.outcome ? OUTCOME_COLORS[job.outcome] : null;
   const colors = isArchived ? { bg: "#f5f5f5", text: "#888888", border: "#cccccc" } : STATUS_COLORS[job.status] || STATUS_COLORS["Wishlist"];
 
@@ -244,7 +248,7 @@ export default function JobCard({ job, onEdit, onDelete, onArchive, onRestore, i
                     {iv.interviewer && <span className="job-interview-interviewer">with {iv.interviewer}</span>}
                     <div className="job-interview-actions">
                       <button className="btn-iv-edit" onClick={() => openEditInterview(iv)} disabled={iLoading}>Edit</button>
-                      <button className="btn-iv-delete" onClick={() => handleIDelete(iv._id)} disabled={iLoading}>×</button>
+                      <button className="btn-iv-delete" onClick={() => handleIDelete(iv._id)} disabled={iLoading} aria-label="Delete interview">×</button>
                     </div>
                   </div>
                   {iv.notes && <p className="job-interview-notes">{iv.notes}</p>}
@@ -260,7 +264,7 @@ export default function JobCard({ job, onEdit, onDelete, onArchive, onRestore, i
                   </div>
                   <input type="text" value={iForm.interviewer} onChange={setIF("interviewer")} placeholder="Interviewer name (optional)" disabled={iLoading} className="jif-text" />
                   <textarea value={iForm.notes} onChange={setIF("notes")} placeholder="Notes..." rows={2} disabled={iLoading} className="jif-textarea" />
-                  {iError && <p className="jif-error">{iError}</p>}
+                  {iError && <p className="jif-error" role="alert">{iError}</p>}
                   <div className="jif-actions">
                     <button type="button" className="btn-jif-cancel" onClick={cancelIForm} disabled={iLoading}>Cancel</button>
                     <button type="submit" className="btn-jif-save" disabled={iLoading}>{iLoading ? "Saving…" : editingIv ? "Update" : "Add"}</button>
@@ -269,7 +273,7 @@ export default function JobCard({ job, onEdit, onDelete, onArchive, onRestore, i
               ) : (
                 <button className="btn-add-interview" onClick={openAddInterview} disabled={iLoading}>+ Add Interview</button>
               )}
-              {iError && !showIForm && <p className="jif-error">{iError}</p>}
+              {iError && !showIForm && <p className="jif-error" role="alert">{iError}</p>}
             </div>
           )}
         </>
@@ -284,12 +288,12 @@ export default function JobCard({ job, onEdit, onDelete, onArchive, onRestore, i
           <button className="btn-generate-cover" onClick={handleGenerateResume} disabled={generatingResume}>
             {generatingResume ? "Generating..." : "Generate AI Resume"}
           </button>
-          {resumeError && <p className="job-cover-error">{resumeError}</p>}
+          {resumeError && <p className="job-cover-error" role="alert">{resumeError}</p>}
           {resumeSuccess && <p className="job-cover-success">{resumeSuccess}</p>}
           <button className="btn-generate-cover" onClick={handleGenerateCoverLetter} disabled={generatingCover}>
             {generatingCover ? "Generating..." : "Generate AI Cover Letter"}
           </button>
-          {coverError && <p className="job-cover-error">{coverError}</p>}
+          {coverError && <p className="job-cover-error" role="alert">{coverError}</p>}
           {coverSuccess && <p className="job-cover-success">{coverSuccess}</p>}
         </div>
       )}
@@ -313,3 +317,5 @@ export default function JobCard({ job, onEdit, onDelete, onArchive, onRestore, i
     </div>
   );
 }
+
+export default memo(JobCard);
