@@ -1,5 +1,6 @@
 import express from "express";
 import { body } from "express-validator";
+import rateLimit, { MemoryStore } from "express-rate-limit";
 import { register, login, logout, changePassword } from "../controllers/auth-controller.js";
 import { authenticate } from "../middleware/auth-middleware.js";
 import {
@@ -7,6 +8,17 @@ import {
   validateResetToken,
   resetPassword
 } from "../controllers/password-reset-controller.js";
+
+export const authLimiterStore = new MemoryStore();
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  store: authLimiterStore,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: { code: "TOO_MANY_REQUESTS", message: "Too many requests, please try again later" } },
+});
 
 const router = express.Router();
 
@@ -47,8 +59,8 @@ const changePasswordValidation = [
 
 // ─── Public routes ─────────────────────────────────────────────────────────────
 
-router.post("/auth/register", register);
-router.post("/auth/login", login);
+router.post("/auth/register", authLimiter, register);
+router.post("/auth/login", authLimiter, login);
 
 // Password reset flow
 router.post("/auth/forgot-password", forgotPasswordValidation, forgotPassword);
