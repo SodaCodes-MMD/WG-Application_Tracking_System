@@ -100,3 +100,7 @@
 /* S3-013: interview prep notes */
 .jd-prep-hint { font-size: 0.8rem; color: var(--text-secondary); margin: 0 0 8px; }
 .jd-prep-textarea { width: 100%; font-family: monospace; font-size: 0.82rem; line-height: 1.6; resize: vertical; }
+
+/* S3-012: company research */
+.jd-research-saved { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px; max-height: 300px; overflow-y: auto; }
+.jd-research-text { white-space: pre-wrap; font-size: 0.82rem; line-height: 1.6; margin: 0; font-family: inherit; color: var(--text-primary); }

@@ -46,6 +46,11 @@ function JobDetail({ job, onClose, onEdit, onDelete, onArchive, onStatusChange, 
 
   const [saving, setSaving] = useState(false);
 
+  // S3-012: company research
+  const [researchContext, setResearchContext] = useState("");
+  const [researchLoading, setResearchLoading] = useState(false);
+  const [researchError, setResearchError] = useState("");
+
   // S2-006: inline field editing
   const [inlineField, setInlineField] = useState(null);
   const [inlineDraft, setInlineDraft] = useState("");
@@ -359,6 +364,24 @@ function JobDetail({ job, onClose, onEdit, onDelete, onArchive, onStatusChange, 
     setSaving(false);
   };
 
+  // S3-012: generate and persist company research
+  const handleCompanyResearch = async () => {
+    setResearchLoading(true);
+    setResearchError("");
+    try {
+      const res = await jobsApi.companyResearch(localJob._id, researchContext);
+      if (res.success) {
+        updateJobState({ ...localJob, companyResearchNotes: res.data.research });
+        setResearchContext("");
+      } else {
+        setResearchError(res.error?.message || "Failed to generate research");
+      }
+    } catch {
+      setResearchError("Failed to generate research");
+    }
+    setResearchLoading(false);
+  };
+
   const archiveFromDetail = () => {
     if (!onArchive) return;
     onArchive(localJob._id);
@@ -467,6 +490,26 @@ function JobDetail({ job, onClose, onEdit, onDelete, onArchive, onStatusChange, 
               </span>
             )}
           </div>
+
+          <section className="jd-section">
+            <h3>Company Research</h3>
+            {localJob.companyResearchNotes && (
+              <div className="jd-research-saved">
+                <pre className="jd-research-text">{localJob.companyResearchNotes}</pre>
+              </div>
+            )}
+            <div className="jd-grid-row">
+              <input
+                value={researchContext}
+                onChange={e => setResearchContext(e.target.value)}
+                placeholder="Optional: add context (e.g. specific role concerns, recent news…)"
+              />
+              <button className="btn-jd-edit" onClick={handleCompanyResearch} disabled={researchLoading}>
+                {researchLoading ? "Researching…" : localJob.companyResearchNotes ? "Re-research" : "Research"}
+              </button>
+            </div>
+            {researchError && <p className="jd-error" role="alert">{researchError}</p>}
+          </section>
 
           <section className="jd-section">
             <div className="jd-section-head">
