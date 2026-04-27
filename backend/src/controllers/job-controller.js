@@ -94,7 +94,7 @@ export const updateJobHandler = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return validationError(res, errors);
   try {
-    const allowed = ["company", "title", "status", "location", "url", "salary", "notes", "appliedAt", "deadline", "recruiterNotes", "outcome", "outcomeNotes", "respondedAt", "prepNotes"];
+    const allowed = ["company", "title", "status", "location", "url", "salary", "notes", "appliedAt", "deadline", "recruiterNotes", "outcome", "outcomeNotes", "respondedAt", "prepNotes", "companyResearchNotes"];
     const updates = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
     //
     let historyEntry = null;
@@ -239,7 +239,8 @@ export const companyResearchHandler = async (req, res) => {
     if (!job) return notFound(res);
     const { context } = req.body;
     const result = await generateCompanyResearch(job, context);
-    return res.json({ success: true, data: { research: result } });
+    const updatedJob = await updateJobByIdAndUser(req.params.id, req.user.userId, { companyResearchNotes: result }, null);
+    return res.json({ success: true, data: { research: result, job: updatedJob } });
   } catch (err) {
     console.error("[JobController] companyResearch:", err);
     return handleError(res, "Failed to generate company research");

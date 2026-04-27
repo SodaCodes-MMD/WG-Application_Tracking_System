@@ -46,6 +46,7 @@ const jobSchema = new mongoose.Schema(
     deadline: { type: Date, default: null },
     recruiterNotes: { type: String, trim: true, maxlength: 5000, default: "" },
     prepNotes: { type: String, trim: true, maxlength: 10000, default: "" },
+    companyResearchNotes: { type: String, trim: true, maxlength: 10000, default: "" },
     outcome: { type: String, enum: JOB_OUTCOMES, default: null },
     outcomeNotes: { type: String, trim: true, maxlength: 5000, default: "" },
     respondedAt: { type: Date, default: null },
