@@ -98,3 +98,19 @@ export async function renameDocument(docId, userId, name) {
     { new: true }
   );
 }
+
+export async function archiveDocumentByIdAndUser(docId, userId) {
+  return await Document.findOneAndUpdate(
+    { _id: docId, userId },
+    { status: "Archived", updatedAt: new Date() },
+    { new: true }
+  );
+}
+
+export async function restoreDocumentByIdAndUser(docId, userId) {
+  return await Document.findOneAndUpdate(
+    { _id: docId, userId, status: "Archived" },
+    { status: "Draft", updatedAt: new Date() },
+    { new: true }
+  );
+}

@@ -305,5 +305,20 @@ export async function renameDocument(req, res) {
     if (!doc) return res.status(404).json({ success: false, error: { message: "Document not found" } });
     return res.json({ success: true, data: doc });
   } catch { return handleError(res, "Failed to rename document"); }
+}
 
+export async function archiveDocument(req, res) {
+  try {
+    const doc = await docRepo.archiveDocumentByIdAndUser(req.params.id, req.user.userId);
+    if (!doc) return res.status(404).json({ success: false, error: { message: "Document not found" } });
+    return res.json({ success: true, data: doc });
+  } catch { return handleError(res, "Failed to archive document"); }
+}
+
+export async function restoreDocument(req, res) {
+  try {
+    const doc = await docRepo.restoreDocumentByIdAndUser(req.params.id, req.user.userId);
+    if (!doc) return res.status(404).json({ success: false, error: { message: "Document not found" } });
+    return res.json({ success: true, data: doc });
+  } catch { return handleError(res, "Failed to restore document"); }
 }

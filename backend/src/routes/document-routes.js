@@ -36,5 +36,7 @@ router.get("/documents/:id/download-docx", docCtrl.downloadDocx);
 router.post("/documents/:id/ai-rewrite", docCtrl.aiRewriteDocument);
 router.post("/documents/:id/duplicate", docCtrl.duplicateDocument);
 router.patch("/documents/:id/rename", docCtrl.renameDocument);
+router.post("/documents/:id/archive", docCtrl.archiveDocument);
+router.post("/documents/:id/restore", docCtrl.restoreDocument);
 
 export default router;
