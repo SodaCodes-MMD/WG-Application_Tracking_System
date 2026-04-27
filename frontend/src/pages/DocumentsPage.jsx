@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { getToken } from "../services/auth-service.js";
 
-import { listDocuments, deleteDocument, getDocument, addDocumentVersion, downloadDocx, aiRewriteDocument, uploadDocument, duplicateDocument, renameDocument } from "../services/documents-api.js";
+import { listDocuments, deleteDocument, getDocument, addDocumentVersion, downloadDocx, aiRewriteDocument, uploadDocument, duplicateDocument, renameDocument, archiveDocument, restoreDocument } from "../services/documents-api.js";
 
 import "./DocumentsPage.css";
 
@@ -46,6 +46,7 @@ export default function DocumentsPage() {
   const [renamingDocId, setRenamingDocId] = useState(null);
   const [renameValue, setRenameValue] = useState("");
   const [duplicating, setDuplicating] = useState(null);
+  const [showArchivedDocs, setShowArchivedDocs] = useState(false);
 
 
   const availableTags = useMemo(
@@ -53,7 +54,9 @@ export default function DocumentsPage() {
     [documents]
   );
 
-  const displayedDocuments = useMemo(() => documents, [documents]);
+  const activeDocs = useMemo(() => documents.filter(d => d.status !== "Archived"), [documents]);
+  const archivedDocs = useMemo(() => documents.filter(d => d.status === "Archived"), [documents]);
+  const displayedDocuments = useMemo(() => activeDocs, [activeDocs]);
 
   const refreshDocuments = () => setRefreshTrigger(prev => prev + 1);
 
@@ -105,6 +108,22 @@ export default function DocumentsPage() {
     const result = await deleteDocument(token, docId);
     if (result.success) {
       refreshDocuments();
+    }
+  };
+
+  const handleArchive = async (docId) => {
+    const token = getToken();
+    const result = await archiveDocument(token, docId);
+    if (result.success) {
+      setDocuments(prev => prev.map(d => d._id === docId ? result.data : d));
+    }
+  };
+
+  const handleRestore = async (docId) => {
+    const token = getToken();
+    const result = await restoreDocument(token, docId);
+    if (result.success) {
+      setDocuments(prev => prev.map(d => d._id === docId ? result.data : d));
     }
   };
 
@@ -485,11 +504,43 @@ export default function DocumentsPage() {
                   <button className="btn-duplicate-document" onClick={() => handleDuplicate(doc._id)} disabled={duplicating === doc._id}>
                     {duplicating === doc._id ? "Copying..." : "Duplicate"}
                   </button>
+                  <button className="btn-archive-document" onClick={() => handleArchive(doc._id)}>Archive</button>
                   <button className="btn-delete-document" onClick={() => handleDelete(doc._id)}>Delete</button>
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {archivedDocs.length > 0 && (
+        <div className="doc-archived-section">
+          <button className="doc-archived-toggle" onClick={() => setShowArchivedDocs(o => !o)}>
+            Archived Documents ({archivedDocs.length}) {showArchivedDocs ? "▲" : "▼"}
+          </button>
+          {showArchivedDocs && (
+            <div className="documents-grid">
+              {archivedDocs.map(doc => (
+                <div key={doc._id} className="document-card document-card-archived">
+                  <div className="document-card-header">
+                    <span className={getTypeBadgeClass(doc.type)}>{doc.type}</span>
+                    <span className="document-status-badge archived">Archived</span>
+                  </div>
+                  <h3 className="document-name">{doc.name}</h3>
+                  {doc.category && doc.category !== "General" && (
+                    <p className="document-category">{doc.category}</p>
+                  )}
+                  <div className="document-meta">
+                    <span>Updated {formatDate(doc.updatedAt)}</span>
+                  </div>
+                  <div className="document-actions">
+                    <button className="btn-restore-document" onClick={() => handleRestore(doc._id)}>Restore</button>
+                    <button className="btn-delete-document" onClick={() => handleDelete(doc._id)}>Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

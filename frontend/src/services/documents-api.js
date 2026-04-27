@@ -120,3 +120,10 @@ export async function downloadDocx(token, id, versionId, fallbackMeta) {
     return { success: false };
   }
 }
+
+
+export const archiveDocument = (token, docId) =>
+  send(token, "POST", `/documents/${docId}/archive`);
+
+export const restoreDocument = (token, docId) =>
+  send(token, "POST", `/documents/${docId}/restore`);
