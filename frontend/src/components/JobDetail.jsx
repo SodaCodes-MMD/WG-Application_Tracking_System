@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { jobsApi, JOB_STATUSES, STATUS_COLORS, OUTCOME_COLORS, JOB_OUTCOMES } from "../services/jobs-api.js";
 import { getToken } from "../services/auth-service.js";
 import { getProfile } from "../services/profile-api.js";
-import { getDocumentsByJob, generateAiCoverLetter, generateAiResume, addDocumentVersion, deleteDocument } from "../services/documents-api.js";
+import { getDocumentsByJob, generateAiCoverLetter, generateAiResume, addDocumentVersion, deleteDocument, listDocuments, linkDocumentToJob, unlinkDocumentFromJob } from "../services/documents-api.js";
 import "./JobDetail.css";
 
 function formatSalary(raw) {
@@ -14,7 +14,7 @@ function formatSalary(raw) {
 
 function toDateInput(d) {
   if (!d) return "";
-  const dt = new Date(d);
+  const dt = new Date(d); 
   return isNaN(dt) ? "" : dt.toISOString().split("T")[0];
 }
 
@@ -26,6 +26,11 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
   const [docSuccess, setDocSuccess] = useState("");
   const [editingDocId, setEditingDocId] = useState(null);
   const [docDraft, setDocDraft] = useState("");
+
+  // S3-009: library picker state
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [libraryDocs, setLibraryDocs] = useState([]);
+  const [libraryLoading, setLibraryLoading] = useState(false);
 
   const [timelineTitle, setTimelineTitle] = useState("");
   const [timelineNotes, setTimelineNotes] = useState("");
@@ -216,6 +221,54 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
       setDocError("");
     } else {
       setDocError(res.error?.message || "Failed to delete document");
+    }
+    setSaving(false);
+  };
+
+  // S3-009: open library picker and load unlinked documents
+  const openLibraryPicker = async () => {
+    setShowLibrary(true);
+    setLibraryLoading(true);
+    setDocError("");
+    const token = getToken();
+    const res = await listDocuments(token);
+    if (res.success) {
+      const linkedIds = new Set(docs.map((d) => d._id));
+      setLibraryDocs((res.data || []).filter((d) => !linkedIds.has(d._id) && d.status !== "Archived"));
+    } else {
+      setDocError(res.error?.message || "Failed to load library");
+    }
+    setLibraryLoading(false);
+  };
+
+  // S3-009: link selected document to job
+  const handleLinkDocument = async (docId) => {
+    setSaving(true);
+    const token = getToken();
+    const res = await linkDocumentToJob(token, docId, localJob._id);
+    if (res.success) {
+      await loadDocs();
+      setLibraryDocs((prev) => prev.filter((d) => d._id !== docId));
+      setDocSuccess("Document linked.");
+      setDocError("");
+    } else {
+      setDocError(res.error?.message || "Failed to link document");
+    }
+    setSaving(false);
+  };
+
+  // S3-009: unlink document from job
+  const handleUnlinkDocument = async (docId) => {
+    if (!window.confirm("Unlink this document from the job? The document remains in your library.")) return;
+    setSaving(true);
+    const token = getToken();
+    const res = await unlinkDocumentFromJob(token, docId, localJob._id);
+    if (res.success) {
+      setDocs((prev) => prev.filter((d) => d._id !== docId));
+      setDocSuccess("Document unlinked.");
+      setDocError("");
+    } else {
+      setDocError(res.error?.message || "Failed to unlink document");
     }
     setSaving(false);
   };
@@ -496,12 +549,44 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
           <section className="jd-section">
             <div className="jd-section-head">
               <h3>Documents</h3>
-              <button className="btn-jd-edit" onClick={loadDocs} disabled={docsLoading}>Refresh</button>
+              {/* S3-009: wrap action buttons so "Link from Library" sits beside Refresh */}
+              <div>
+                {/* S3-009: new button — opens library picker */}
+                <button className="btn-jd-edit" onClick={openLibraryPicker} disabled={saving}>Link from Library</button>
+                <button className="btn-jd-edit" onClick={loadDocs} disabled={docsLoading}>Refresh</button>
+              </div>
             </div>
             <button className="btn-jd-edit" onClick={handleGenerateResume} disabled={saving}>Generate AI Resume</button>
             <button className="btn-jd-edit" onClick={handleGenerateCoverLetter} disabled={saving}>Generate AI Cover Letter</button>
             {docSuccess && <p className="jd-success">{docSuccess}</p>}
             {docError && <p className="jd-error">{docError}</p>}
+
+            {/* S3-009: library picker panel — shows user's unlinked, non-archived docs */}
+            {showLibrary && (
+              <div className="jd-library-picker">
+                <div className="jd-section-head">
+                  <strong>Your Library</strong>
+                  <button className="btn-jd-delete" onClick={() => setShowLibrary(false)}>Close</button>
+                </div>
+                {libraryLoading ? <p className="jd-empty">Loading...</p> : (
+                  <div className="jd-list">
+                    {libraryDocs.map((doc) => (
+                      <div className="jd-list-item" key={doc._id}>
+                        <div>
+                          <strong>{doc.name}</strong>
+                          <small>{doc.type}{doc.category ? ` · ${doc.category}` : ""} · {doc.status}</small>
+                        </div>
+                        {/* S3-009: link a library document to this job */}
+                        <button className="btn-jd-edit" onClick={() => handleLinkDocument(doc._id)} disabled={saving}>Link</button>
+                      </div>
+                    ))}
+                    {libraryDocs.length === 0 && <p className="jd-empty">No available library documents to link.</p>}
+                  </div>
+                )}
+              </div>
+            )}
+            {/* S3-009: end library picker panel */}
+
             {docsLoading ? <p className="jd-empty">Loading documents...</p> : (
               <div className="jd-list">
                 {docs.map((doc) => (
@@ -512,6 +597,8 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
                     </div>
                     <div className="jd-doc-actions">
                       <button className="btn-jd-edit" onClick={() => beginEditDoc(doc)}>Edit</button>
+                      {/* S3-009: unlink button — removes job association without deleting the document */}
+                      <button className="btn-jd-edit" onClick={() => handleUnlinkDocument(doc._id)} disabled={saving}>Unlink</button>
                       <button className="btn-jd-delete" onClick={() => handleDeleteDocument(doc._id)} disabled={saving}>Delete</button>
                     </div>
                     {editingDocId === doc._id && (
