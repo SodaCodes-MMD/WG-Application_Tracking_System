@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const DOCUMENT_TYPES = ["Resume", "Cover Letter"];
+const DOCUMENT_TYPES = ["Resume", "Cover Letter", "Notes", "Other"];
 const DOCUMENT_CATEGORIES = ["General", "Frontend", "Backend", "Data", "DevOps", "Full Stack", "Other"];
 const DOCUMENT_STATUSES = ["Draft", "Ready", "Archived"];
 
@@ -16,6 +16,7 @@ const documentSchema = new mongoose.Schema({
   type: { type: String, enum: DOCUMENT_TYPES, required: true },
   category: { type: String, enum: DOCUMENT_CATEGORIES, default: "General" },
   status: { type: String, enum: DOCUMENT_STATUSES, default: "Draft" },
+  tags: [{ type: String, trim: true }],
   versions: { type: [documentVersionSchema], default: [] },
   linkedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job" }],
   createdAt: { type: Date, default: Date.now },

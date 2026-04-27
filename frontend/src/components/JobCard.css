@@ -63,6 +63,7 @@
 .btn-generate-cover:hover:not(:disabled) { background: #007a2e; }
 .btn-generate-cover:disabled { opacity: 0.7; cursor: not-allowed; }
 .job-cover-error { margin: 0; font-size: 0.75rem; color: #cf222e; }
+.job-cover-success { margin: 0; font-size: 0.75rem; color: #0a7f38; }
 
 /* Stage pipeline */
 .stage-pipeline { display: flex; align-items: center; width: 100%; padding: 2px 0; }

@@ -17,6 +17,10 @@ export async function findDocumentsByUser(userId) {
   return await Document.find({ userId }).sort({ updatedAt: -1 });
 }
 
+export async function findDocumentsByUserWithFilter(userId, filter, sortOptions) {
+  return await Document.find(filter).populate("linkedJobs", "title company").sort(sortOptions);
+}
+
 export async function findDocumentById(docId) {
   return await Document.findById(docId);
 }
@@ -65,4 +69,32 @@ export async function unlinkDocumentFromJob(docId, userId, jobId) {
 
 export async function findDocumentsByJob(userId, jobId) {
   return await Document.find({ userId, linkedJobs: jobId });
+}
+
+export async function duplicateDocument(docId, userId) {
+  const original = await Document.findOne({ _id: docId, userId });
+  if (!original) return null;
+
+  const copy = new Document({
+    userId,
+    name: `${original.name} (Copy)`,
+    type: original.type,
+    category: original.category,
+    status: original.status,
+    tags: original.tags,
+    versions: original.versions.map((v, i) => ({
+      versionNumber: i + 1,
+      content: v.content,
+    })),
+    linkedJobs: [],
+  });
+  return await copy.save();
+}
+
+export async function renameDocument(docId, userId, name) {
+  return await Document.findOneAndUpdate(
+    { _id: docId, userId },
+    { name, updatedAt: new Date() },
+    { new: true }
+  );
 }

@@ -32,6 +32,7 @@ export const jobsApi = {
   addTimelineEvent: (jobId, data) => request("POST", `/jobs/${jobId}/timeline`, data),
   updateTimelineEvent: (jobId, eventId, data) => request("PATCH", `/jobs/${jobId}/timeline/${eventId}`, data),
   removeTimelineEvent: (jobId, eventId) => request("DELETE", `/jobs/${jobId}/timeline/${eventId}`),
+  companyResearch: (jobId, context) => request("POST", `/jobs/${jobId}/company-research`, { context }),
 };
 
 export const JOB_STATUSES = ["Wishlist", "Applied", "Phone Screen", "Interview", "Offer", "Rejected", "Withdrawn"];

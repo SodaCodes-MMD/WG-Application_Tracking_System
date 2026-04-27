@@ -1,0 +1,91 @@
+.doc-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.doc-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.doc-filter-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.doc-filter-select {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.doc-filter-select:focus {
+  outline: none;
+  border-color: #f0c800;
+}
+
+.doc-filter-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.doc-clear-all {
+  align-self: flex-end;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.doc-clear-all:hover {
+  background: var(--border-color);
+  color: var(--text-primary);
+}
+
+.document-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.document-tag {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 600px) {
+  .doc-filters {
+    gap: 10px;
+  }
+  
+  .doc-filter-select {
+    width: 100%;
+  }
+}

@@ -870,6 +870,16 @@
   color: #15803d;
 }
 
+.document-type-badge.notes {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.document-type-badge.other {
+  background: #f3f4f6;
+  color: #374151;
+}
+
 .document-status-badge {
   padding: 4px 8px;
   border-radius: 4px;
@@ -917,6 +927,47 @@
   font-size: 12px;
   color: #6b7280;
   margin-bottom: 12px;
+}
+
+.document-linked-jobs {
+  font-size: 11px;
+  color: #0369a1;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 4px;
+  padding: 3px 8px;
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.document-card-clickable {
+  cursor: pointer;
+}
+
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.error-message {
+  font-size: 0.875rem;
+  color: #cf222e;
+  margin: 0;
+}
+
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
 }
 
 .document-actions {
@@ -1021,6 +1072,161 @@
 
 .btn-view-document:hover {
   background: #007a2e;
+}
+
+
+.btn-upload-document {
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: #1a56db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.btn-upload-document:hover {
+  background: #1648c0;
+}
+
+.upload-document-form {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  max-width: 480px;
+}
+
+.upload-document-form h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 16px;
+}
+
+.upload-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.upload-form-row label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.upload-hint {
+  font-weight: 400;
+  color: #6b7280;
+}
+
+.upload-form-row input[type="text"],
+.upload-form-row select {
+  padding: 7px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.upload-error {
+  color: #dc2626;
+  font-size: 0.8125rem;
+  margin: 4px 0 8px;
+}
+
+.btn-submit-upload {
+  padding: 8px 20px;
+  background: #008f37;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.btn-submit-upload:hover:not(:disabled) {
+  background: #007a2e;
+}
+
+.btn-submit-upload:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-duplicate-document {
+  flex: 1;
+  padding: 6px 10px;
+  background: #6366f1;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.btn-duplicate-document:hover:not(:disabled) {
+  background: #4f46e5;
+}
+
+.btn-duplicate-document:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-rename-document {
+  flex: 1;
+  padding: 6px 10px;
+  background: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.btn-rename-document:hover {
+  background: #d97706;
+}
+
+.rename-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.rename-input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid #6366f1;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.btn-rename-confirm {
+  padding: 4px 10px;
+  background: #6366f1;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.btn-rename-cancel {
+  padding: 4px 8px;
+  background: #e5e7eb;
+  color: #374151;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+
 }
 
 /* ===========================

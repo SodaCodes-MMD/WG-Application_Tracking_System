@@ -86,8 +86,10 @@ export default function JobCard({ job, onEdit, onDelete, onArchive, onRestore, i
   const [iError, setIError] = useState("");
   const [generatingCover, setGeneratingCover] = useState(false);
   const [coverError, setCoverError] = useState("");
+  const [coverSuccess, setCoverSuccess] = useState("");
   const [generatingResume, setGeneratingResume] = useState(false);
   const [resumeError, setResumeError] = useState("");
+  const [resumeSuccess, setResumeSuccess] = useState("");
 
   const openAddInterview = () => { setEditingIv(null); setIForm(EMPTY_INTERVIEW); setIError(""); setShowIForm(true); };
   const openEditInterview = (iv) => { setEditingIv(iv); setIForm({ roundType: iv.roundType, date: toDateInput(iv.date), interviewer: iv.interviewer || "", notes: iv.notes || "" }); setIError(""); setShowIForm(true); };
@@ -123,6 +125,7 @@ export default function JobCard({ job, onEdit, onDelete, onArchive, onRestore, i
     e.stopPropagation();
     setGeneratingResume(true);
     setResumeError("");
+    setResumeSuccess("");
 
     const token = getToken();
     if (!token) {
@@ -141,6 +144,7 @@ export default function JobCard({ job, onEdit, onDelete, onArchive, onRestore, i
     const result = await generateAiResume(token, job._id);
     if (result.success) {
       localStorage.setItem("document-generated", Date.now().toString());
+      setResumeSuccess("AI resume generated successfully.");
     } else {
       setResumeError(result.error?.message || "Failed to generate resume");
     }
@@ -151,6 +155,7 @@ export default function JobCard({ job, onEdit, onDelete, onArchive, onRestore, i
     e.stopPropagation();
     setGeneratingCover(true);
     setCoverError("");
+    setCoverSuccess("");
 
     const token = getToken();
     if (!token) {
@@ -169,6 +174,7 @@ export default function JobCard({ job, onEdit, onDelete, onArchive, onRestore, i
     const result = await generateAiCoverLetter(token, job._id);
     if (result.success) {
       localStorage.setItem("document-generated", Date.now().toString());
+      setCoverSuccess("AI cover letter generated successfully.");
     } else {
       setCoverError(result.error?.message || "Failed to generate cover letter");
     }
@@ -279,10 +285,12 @@ export default function JobCard({ job, onEdit, onDelete, onArchive, onRestore, i
             {generatingResume ? "Generating..." : "Generate AI Resume"}
           </button>
           {resumeError && <p className="job-cover-error">{resumeError}</p>}
+          {resumeSuccess && <p className="job-cover-success">{resumeSuccess}</p>}
           <button className="btn-generate-cover" onClick={handleGenerateCoverLetter} disabled={generatingCover}>
             {generatingCover ? "Generating..." : "Generate AI Cover Letter"}
           </button>
           {coverError && <p className="job-cover-error">{coverError}</p>}
+          {coverSuccess && <p className="job-cover-success">{coverSuccess}</p>}
         </div>
       )}
 

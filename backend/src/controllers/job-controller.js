@@ -6,6 +6,7 @@ import {
   addTimelineEvent, updateTimelineEvent, removeTimelineEvent,
 } from "../repositories/job-repository.js";
 import { triggerImmediateNotification, removeDeadlineNotifications } from "../services/deadline-checker.js";
+import { generateCompanyResearch } from "../services/ai-service.js";
 
 const validationError = (res, errors) =>
   res.status(400).json({ success: false, error: { code: "VALIDATION_ERROR", message: errors.array()[0].msg } });
@@ -93,7 +94,7 @@ export const updateJobHandler = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return validationError(res, errors);
   try {
-    const allowed = ["company", "title", "status", "location", "url", "salary", "notes", "appliedAt", "deadline", "recruiterNotes", "outcome", "outcomeNotes", "respondedAt"];
+    const allowed = ["company", "title", "status", "location", "url", "salary", "notes", "appliedAt", "deadline", "recruiterNotes", "outcome", "outcomeNotes", "respondedAt", "prepNotes"];
     const updates = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
     //
     let historyEntry = null;
@@ -230,6 +231,19 @@ export const restoreJobHandler = async (req, res) => {
     if (!job) return notFound(res);
     return res.json({ success: true, data: job });
   } catch { return res.status(500).json({ success: false, error: { message: "Failed to restore job" } }); }
+};
+
+export const companyResearchHandler = async (req, res) => {
+  try {
+    const job = await findJobByIdAndUser(req.params.id, req.user.userId);
+    if (!job) return notFound(res);
+    const { context } = req.body;
+    const result = await generateCompanyResearch(job, context);
+    return res.json({ success: true, data: { research: result } });
+  } catch (err) {
+    console.error("[JobController] companyResearch:", err);
+    return handleError(res, "Failed to generate company research");
+  }
 };
 
 export const deleteJobHandler = async (req, res) => {
