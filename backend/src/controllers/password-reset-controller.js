@@ -108,7 +108,7 @@ export const forgotPassword = async (req, res) => {
     console.error('Forgot password error:', error);
     return res.status(500).json({
       success: false,
-      message: ERROR_MESSAGES.PROCESSING_ERROR
+      error: { code: "SERVER_ERROR", message: ERROR_MESSAGES.PROCESSING_ERROR }
     });
   }
 };
@@ -137,7 +137,7 @@ export const validateResetToken = async (req, res) => {
     console.error('Validate token error:', error);
     return res.status(500).json({
       success: false,
-      message: ERROR_MESSAGES.VALIDATION_ERROR
+      error: { code: "SERVER_ERROR", message: ERROR_MESSAGES.VALIDATION_ERROR }
     });
   }
 };
@@ -208,7 +208,7 @@ export const resetPassword = async (req, res) => {
     console.error('Reset password error:', error);
     return res.status(500).json({
       success: false,
-      message: ERROR_MESSAGES.RESET_ERROR
+      error: { code: "SERVER_ERROR", message: ERROR_MESSAGES.RESET_ERROR }
     });
   }
 };

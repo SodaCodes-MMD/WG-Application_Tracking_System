@@ -1,4 +1,8 @@
-import { useState, useEffect } from "react";
+/*
+ * S3-019: memoized displayedDocuments and availableTags with useMemo to avoid
+ * recomputation on unrelated state changes; added role="alert" on error messages.
+ */
+import { useState, useEffect, useMemo } from "react";
 import { getToken } from "../services/auth-service.js";
 
 import { listDocuments, deleteDocument, getDocument, addDocumentVersion, downloadDocx, aiRewriteDocument, uploadDocument, duplicateDocument, renameDocument } from "../services/documents-api.js";
@@ -30,7 +34,7 @@ export default function DocumentsPage() {
   const [filterTag, setFilterTag] = useState("");
   const [sortBy, setSortBy] = useState("updatedAt");
   const [sortOrder, setSortOrder] = useState("desc");
-  const [availableTags, setAvailableTags] = useState([]);
+  // availableTags is derived from documents — no separate state needed
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const [showUploadForm, setShowUploadForm] = useState(false);
@@ -43,6 +47,13 @@ export default function DocumentsPage() {
   const [renameValue, setRenameValue] = useState("");
   const [duplicating, setDuplicating] = useState(null);
 
+
+  const availableTags = useMemo(
+    () => [...new Set(documents.flatMap(d => d.tags || []))],
+    [documents]
+  );
+
+  const displayedDocuments = useMemo(() => documents, [documents]);
 
   const refreshDocuments = () => setRefreshTrigger(prev => prev + 1);
 
@@ -66,8 +77,6 @@ export default function DocumentsPage() {
       const result = await listDocuments(token, filters);
       if (result.success) {
         setDocuments(result.data);
-        const tags = [...new Set(result.data.flatMap(d => d.tags || []))];
-        setAvailableTags(tags);
       } else {
         setError(result.error?.message || "Failed to load documents");
       }
@@ -389,7 +398,7 @@ export default function DocumentsPage() {
               <option value="Archived">Archived</option>
             </select>
           </div>
-          {uploadError && <p className="upload-error">{uploadError}</p>}
+          {uploadError && <p className="upload-error" role="alert">{uploadError}</p>}
           <button type="submit" className="btn-submit-upload" disabled={uploading}>
             {uploading ? "Uploading..." : "Upload"}
           </button>
@@ -402,10 +411,10 @@ export default function DocumentsPage() {
         </div>
       ) : error ? (
         <div className="error-container">
-          <p className="error-message">{error}</p>
+          <p className="error-message" role="alert">{error}</p>
           <button className="btn-primary" onClick={refreshDocuments}>Try Again</button>
         </div>
-      ) : documents.length === 0 ? (
+      ) : displayedDocuments.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">📄</div>
           <h3>No documents yet</h3>
@@ -413,7 +422,7 @@ export default function DocumentsPage() {
         </div>
       ) : (
         <div className="documents-grid">
-          {documents.map(doc => {
+          {displayedDocuments.map(doc => {
             const linkedNames = getLinkedJobNames(doc.linkedJobs);
             const versionCount = doc.versions?.length || 0;
             return (

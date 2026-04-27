@@ -1,10 +1,15 @@
+/*
+ * S3-022: unknown authenticated routes now render NotFoundPage instead of silently
+ * redirecting to home; id="main-content" added for skip-link target.
+ */
 import { useState } from "react";
-import { NavLink, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { NavLink, Routes, Route, useNavigate } from "react-router-dom";
 import { logoutUser } from "../services/auth-service.js";
 import DashboardHome from "./DashboardHome.jsx";
 import DocumentsPage from "./DocumentsPage.jsx";
 import ProfilePage from "./ProfilePage.jsx";
 import SettingsPage from "./SettingsPage.jsx";
+import NotFoundPage from "./NotFoundPage.jsx";
 import FlagPet from "../components/FlagPet.jsx";
 import NotificationBell from "../components/NotificationBell.jsx";
 import "./dashboard.css";
@@ -99,13 +104,13 @@ export default function DashboardPage() {
         </header>
 
         {/* Routed content */}
-        <main className="dashboard-content">
+        <main id="main-content" className="dashboard-content">
           <Routes>
             <Route path="/"          element={<DashboardHome />} />
             <Route path="/documents" element={<DocumentsPage />} />
             <Route path="/profile"   element={<ProfilePage user={user} />} />
             <Route path="/settings"  element={<SettingsPage />} />
-            <Route path="*"          element={<Navigate to="/" replace />} />
+            <Route path="*"          element={<NotFoundPage />} />
           </Routes>
         </main>
 

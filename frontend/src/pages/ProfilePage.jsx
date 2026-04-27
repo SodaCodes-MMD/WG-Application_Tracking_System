@@ -1,3 +1,7 @@
+/*
+ * S3-019: added htmlFor/id associations to experience, education, and skills
+ * form inputs so screen readers can announce the correct label for each field.
+ */
 import { useState, useEffect } from "react";
 import { getToken } from "../services/auth-service.js";
 import {
@@ -554,27 +558,27 @@ export default function ProfilePage({ user }) {
             <h4 className="profile-entry-form-title">{editingExp ? "Edit Experience" : "Add Experience"}</h4>
             <div className="profile-field-row">
               <div className="form-group">
-                <label>Job Title *</label>
-                <input type="text" value={expForm.jobTitle} onChange={setEF("jobTitle")} placeholder="e.g. Software Engineer" disabled={savingExp} />
+                <label htmlFor="exp-jobTitle">Job Title *</label>
+                <input id="exp-jobTitle" type="text" value={expForm.jobTitle} onChange={setEF("jobTitle")} placeholder="e.g. Software Engineer" disabled={savingExp} />
               </div>
               <div className="form-group">
-                <label>Company *</label>
-                <input type="text" value={expForm.company} onChange={setEF("company")} placeholder="e.g. Acme Corp" disabled={savingExp} />
+                <label htmlFor="exp-company">Company *</label>
+                <input id="exp-company" type="text" value={expForm.company} onChange={setEF("company")} placeholder="e.g. Acme Corp" disabled={savingExp} />
               </div>
             </div>
             <div className="form-group">
-              <label>Location</label>
-              <input type="text" value={expForm.location} onChange={setEF("location")} placeholder="e.g. Remote" disabled={savingExp} />
+              <label htmlFor="exp-location">Location</label>
+              <input id="exp-location" type="text" value={expForm.location} onChange={setEF("location")} placeholder="e.g. Remote" disabled={savingExp} />
             </div>
             <div className="profile-field-row">
               <div className="form-group">
-                <label>Start Date *</label>
-                <input type="month" value={expForm.startDate} onChange={setEF("startDate")} disabled={savingExp} />
+                <label htmlFor="exp-startDate">Start Date *</label>
+                <input id="exp-startDate" type="month" value={expForm.startDate} onChange={setEF("startDate")} disabled={savingExp} />
               </div>
               {!expForm.isCurrent && (
                 <div className="form-group">
-                  <label>End Date</label>
-                  <input type="month" value={expForm.endDate} onChange={setEF("endDate")} disabled={savingExp} />
+                  <label htmlFor="exp-endDate">End Date</label>
+                  <input id="exp-endDate" type="month" value={expForm.endDate} onChange={setEF("endDate")} disabled={savingExp} />
                 </div>
               )}
             </div>
@@ -585,12 +589,12 @@ export default function ProfilePage({ user }) {
               </label>
             </div>
             <div className="form-group">
-              <label>Description</label>
-              <textarea value={expForm.description} onChange={setEF("description")} rows={3} placeholder="Brief description of your role..." disabled={savingExp} />
+              <label htmlFor="exp-description">Description</label>
+              <textarea id="exp-description" value={expForm.description} onChange={setEF("description")} rows={3} placeholder="Brief description of your role..." disabled={savingExp} />
             </div>
             <div className="form-group">
-              <label>Accomplishments <span className="profile-hint-text">(one per line)</span></label>
-              <textarea value={expForm.accomplishments} onChange={setEF("accomplishments")} rows={3} placeholder="Shipped feature X that increased conversions by 20%&#10;Led migration to React 19" disabled={savingExp} />
+              <label htmlFor="exp-accomplishments">Accomplishments <span className="profile-hint-text">(one per line)</span></label>
+              <textarea id="exp-accomplishments" value={expForm.accomplishments} onChange={setEF("accomplishments")} rows={3} placeholder="Shipped feature X that increased conversions by 20%&#10;Led migration to React 19" disabled={savingExp} />
             </div>
             {saveExpError && <p className="profile-section-error">{saveExpError}</p>}
             <div className="profile-form-actions">
@@ -641,37 +645,37 @@ export default function ProfilePage({ user }) {
           <form className="profile-entry-form" onSubmit={handleEduSave}>
             <h4 className="profile-entry-form-title">{editingEdu ? "Edit Education" : "Add Education"}</h4>
             <div className="form-group">
-              <label>Institution *</label>
-              <input type="text" value={eduForm.institution} onChange={setDF("institution")} placeholder="e.g. State University" disabled={savingEdu} />
+              <label htmlFor="edu-institution">Institution *</label>
+              <input id="edu-institution" type="text" value={eduForm.institution} onChange={setDF("institution")} placeholder="e.g. State University" disabled={savingEdu} />
             </div>
             <div className="profile-field-row">
               <div className="form-group">
-                <label>Degree *</label>
-                <input type="text" value={eduForm.degree} onChange={setDF("degree")} placeholder="e.g. Bachelor of Science" disabled={savingEdu} />
+                <label htmlFor="edu-degree">Degree *</label>
+                <input id="edu-degree" type="text" value={eduForm.degree} onChange={setDF("degree")} placeholder="e.g. Bachelor of Science" disabled={savingEdu} />
               </div>
               <div className="form-group">
-                <label>Field of Study *</label>
-                <input type="text" value={eduForm.fieldOfStudy} onChange={setDF("fieldOfStudy")} placeholder="e.g. Computer Science" disabled={savingEdu} />
-              </div>
-            </div>
-            <div className="profile-field-row">
-              <div className="form-group">
-                <label>Start Date *</label>
-                <input type="month" value={eduForm.startDate} onChange={setDF("startDate")} disabled={savingEdu} />
-              </div>
-              <div className="form-group">
-                <label>End Date</label>
-                <input type="month" value={eduForm.endDate} onChange={setDF("endDate")} disabled={savingEdu} />
+                <label htmlFor="edu-fieldOfStudy">Field of Study *</label>
+                <input id="edu-fieldOfStudy" type="text" value={eduForm.fieldOfStudy} onChange={setDF("fieldOfStudy")} placeholder="e.g. Computer Science" disabled={savingEdu} />
               </div>
             </div>
             <div className="profile-field-row">
               <div className="form-group">
-                <label>GPA</label>
-                <input type="text" value={eduForm.gpa} onChange={setDF("gpa")} placeholder="e.g. 3.8" disabled={savingEdu} />
+                <label htmlFor="edu-startDate">Start Date *</label>
+                <input id="edu-startDate" type="month" value={eduForm.startDate} onChange={setDF("startDate")} disabled={savingEdu} />
               </div>
               <div className="form-group">
-                <label>Honors</label>
-                <input type="text" value={eduForm.honors} onChange={setDF("honors")} placeholder="e.g. Cum Laude" disabled={savingEdu} />
+                <label htmlFor="edu-endDate">End Date</label>
+                <input id="edu-endDate" type="month" value={eduForm.endDate} onChange={setDF("endDate")} disabled={savingEdu} />
+              </div>
+            </div>
+            <div className="profile-field-row">
+              <div className="form-group">
+                <label htmlFor="edu-gpa">GPA</label>
+                <input id="edu-gpa" type="text" value={eduForm.gpa} onChange={setDF("gpa")} placeholder="e.g. 3.8" disabled={savingEdu} />
+              </div>
+              <div className="form-group">
+                <label htmlFor="edu-honors">Honors</label>
+                <input id="edu-honors" type="text" value={eduForm.honors} onChange={setDF("honors")} placeholder="e.g. Cum Laude" disabled={savingEdu} />
               </div>
             </div>
             {saveEduError && <p className="profile-section-error">{saveEduError}</p>}
@@ -700,6 +704,7 @@ export default function ProfilePage({ user }) {
           <div className="form-group" style={{ marginBottom: 12 }}>
             <input
               type="text"
+              aria-label="Quick add skill"
               value={quickSkillName}
               onChange={(e) => { setQuickSkillName(e.target.value); setSavedSkill(false); setSaveSkillError(""); }}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag("quickSkill", quickSkillName, setQuickSkillName); } }}
@@ -745,17 +750,17 @@ export default function ProfilePage({ user }) {
             <h4 className="profile-entry-form-title">{editingSkill ? "Edit Skill" : "Add Skill"}</h4>
             <div className="profile-field-row">
               <div className="form-group">
-                <label>Skill Name *</label>
-                <input type="text" value={skillForm.name} onChange={setSF("name")} placeholder="e.g. TypeScript" disabled={savingSkill} />
+                <label htmlFor="skill-name">Skill Name *</label>
+                <input id="skill-name" type="text" value={skillForm.name} onChange={setSF("name")} placeholder="e.g. TypeScript" disabled={savingSkill} />
               </div>
               <div className="form-group">
-                <label>Category</label>
-                <input type="text" value={skillForm.category} onChange={setSF("category")} placeholder="e.g. Frontend" disabled={savingSkill} />
+                <label htmlFor="skill-category">Category</label>
+                <input id="skill-category" type="text" value={skillForm.category} onChange={setSF("category")} placeholder="e.g. Frontend" disabled={savingSkill} />
               </div>
             </div>
             <div className="form-group">
-              <label>Proficiency</label>
-              <select value={skillForm.proficiency} onChange={setSF("proficiency")} disabled={savingSkill}>
+              <label htmlFor="skill-proficiency">Proficiency</label>
+              <select id="skill-proficiency" value={skillForm.proficiency} onChange={setSF("proficiency")} disabled={savingSkill}>
                 <option value="">— select —</option>
                 <option value="Beginner">Beginner</option>
                 <option value="Intermediate">Intermediate</option>
@@ -778,16 +783,17 @@ export default function ProfilePage({ user }) {
         <div className="settings-card">
           {/* Target Roles tag input */}
           <div className="form-group">
-            <label>Target Roles</label>
+            <label htmlFor="pref-role-input">Target Roles</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
               {prefs.targetRoles.map((r, i) => (
                 <span key={i} style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: 4, padding: "2px 8px", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: 4 }}>
                   {r}
-                  <button type="button" onClick={() => removeTag("targetRoles", i)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", lineHeight: 1, padding: 0 }}>×</button>
+                  <button type="button" onClick={() => removeTag("targetRoles", i)} aria-label={`Remove ${r}`} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", lineHeight: 1, padding: 0 }}>×</button>
                 </span>
               ))}
             </div>
             <input
+              id="pref-role-input"
               type="text"
               value={roleInput}
               onChange={(e) => setRoleInput(e.target.value)}
@@ -798,16 +804,17 @@ export default function ProfilePage({ user }) {
 
           {/* Target Locations tag input */}
           <div className="form-group">
-            <label>Target Locations</label>
+            <label htmlFor="pref-loc-input">Target Locations</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
               {prefs.targetLocations.map((l, i) => (
                 <span key={i} style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: 4, padding: "2px 8px", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: 4 }}>
                   {l}
-                  <button type="button" onClick={() => removeTag("targetLocations", i)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", lineHeight: 1, padding: 0 }}>×</button>
+                  <button type="button" onClick={() => removeTag("targetLocations", i)} aria-label={`Remove ${l}`} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", lineHeight: 1, padding: 0 }}>×</button>
                 </span>
               ))}
             </div>
             <input
+              id="pref-loc-input"
               type="text"
               value={locInput}
               onChange={(e) => setLocInput(e.target.value)}

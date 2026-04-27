@@ -1,3 +1,7 @@
+/*
+ * S3-019: memoized filtered/sorted job list with useMemo; added aria-labels on
+ * search and clear buttons; added role="alert" on the error container.
+ */
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { jobsApi, JOB_STATUSES, STATUS_COLORS } from "../services/jobs-api.js";
 import JobCard from "../components/JobCard.jsx";
@@ -100,7 +104,7 @@ export default function DashboardHome() {
     return [...new Set(locs)].sort();
   }, [jobs]);
 
-const filtered = [...jobs]
+const filtered = useMemo(() => [...jobs]
   .filter(j => filterStatus === ALL || j.status === filterStatus)
   .filter(j => filterLocation === ALL || j.location === filterLocation)
   .filter(j => {
@@ -121,7 +125,9 @@ const filtered = [...jobs]
       j.notes?.toLowerCase().includes(q)
     );
   })
-  .sort((a, b) => compareValues(a, b, sortBy, sortDirection));
+  .sort((a, b) => compareValues(a, b, sortBy, sortDirection)),
+  [jobs, filterStatus, filterLocation, filterDateFrom, filterDateTo, searchQuery, sortBy, sortDirection]
+);
 
   const statusCounts = JOB_STATUSES.reduce((acc, s) => { acc[s] = jobs.filter(j => j.status === s).length; return acc; }, {});
   const responseMetrics = {
@@ -260,9 +266,10 @@ const filtered = [...jobs]
           placeholder="Search by title, company, location or notes..."
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
+          aria-label="Search jobs"
         />
         {searchQuery && (
-          <button className="dh-clear-filter" onClick={() => setSearchQuery("")}>✕ Clear</button>
+          <button className="dh-clear-filter" onClick={() => setSearchQuery("")} aria-label="Clear search">✕ Clear</button>
         )}
       </div>
 
@@ -403,7 +410,7 @@ const filtered = [...jobs]
       {loading ? (
         <div className="dh-loading"><div className="dh-spinner" /><p>Loading jobs…</p></div>
       ) : error ? (
-        <div className="dh-error"><p>⚠️ {error}</p><button className="btn-primary" onClick={fetchJobs}>Retry</button></div>
+        <div className="dh-error" role="alert"><p>⚠️ {error}</p><button className="btn-primary" onClick={fetchJobs}>Retry</button></div>
       ) : filtered.length === 0 && jobs.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">📋</div>

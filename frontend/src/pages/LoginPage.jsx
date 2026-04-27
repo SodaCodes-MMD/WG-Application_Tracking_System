@@ -66,7 +66,7 @@ export default function LoginPage() {
 					</div>
 
 					{error && (
-						<div className="alert alert-error">
+						<div className="alert alert-error" role="alert">
 							<div className="alert-icon">✗</div>
 							<div className="alert-content">
 								<p>{error}</p>

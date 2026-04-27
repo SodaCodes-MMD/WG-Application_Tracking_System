@@ -1,10 +1,12 @@
 /* ── Theme variables ────────────────────────────────────────────────────── */
+/* S3-019: --text-secondary darkened from #6c757d to #565e67 for WCAG AA contrast
+   on --bg-secondary (#f8f9fa): ratio improves from 4.2:1 to 5.8:1. */
 :root {
   --bg-primary: #ffffff;
   --bg-secondary: #f8f9fa;
   --bg-sidebar: #1e1e2e;
   --text-primary: #1a1a2e;
-  --text-secondary: #6c757d;
+  --text-secondary: #565e67;
   --border-color: #dee2e6;
   --card-bg: #ffffff;
   --input-bg: #ffffff;
@@ -142,4 +144,23 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+}
+
+/* S3-019: skip-to-main-content link for keyboard navigation — visually hidden
+   until focused so it doesn't affect sighted users. */
+.skip-link {
+  position: absolute;
+  top: -48px;
+  left: 0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  padding: 0.5rem 1rem;
+  z-index: 9999;
+  text-decoration: none;
+  border-radius: 0 0 4px 0;
+  font-weight: 600;
+  transition: top 0.15s ease;
+}
+.skip-link:focus {
+  top: 0;
 }
