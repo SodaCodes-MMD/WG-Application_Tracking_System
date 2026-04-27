@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { jobsApi, JOB_STATUSES, STATUS_COLORS, OUTCOME_COLORS, JOB_OUTCOMES } from "../services/jobs-api.js";
 import { getToken } from "../services/auth-service.js";
 import { getProfile } from "../services/profile-api.js";
-import { getDocumentsByJob, listDocuments, linkDocumentToJob, unlinkDocumentFromJob, generateAiCoverLetter, generateAiResume, addDocumentVersion, deleteDocument, downloadDocx } from "../services/documents-api.js";
+import { getDocumentsByJob, generateAiCoverLetter, generateAiResume, addDocumentVersion, deleteDocument, listDocuments, linkDocumentToJob, unlinkDocumentFromJob } from "../services/documents-api.js";
 import "./JobDetail.css";
 
 function formatSalary(raw) {
@@ -14,7 +14,7 @@ function formatSalary(raw) {
 
 function toDateInput(d) {
   if (!d) return "";
-  const dt = new Date(d);
+  const dt = new Date(d); 
   return isNaN(dt) ? "" : dt.toISOString().split("T")[0];
 }
 
@@ -26,11 +26,11 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
   const [docSuccess, setDocSuccess] = useState("");
   const [editingDocId, setEditingDocId] = useState(null);
   const [docDraft, setDocDraft] = useState("");
-  const [downloadingDocId, setDownloadingDocId] = useState(null);
 
-  const [showLinkPicker, setShowLinkPicker] = useState(false);
-  const [pickerDocs, setPickerDocs] = useState([]);
-  const [pickerLoading, setPickerLoading] = useState(false);
+  // S3-009: library picker state
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [libraryDocs, setLibraryDocs] = useState([]);
+  const [libraryLoading, setLibraryLoading] = useState(false);
 
   const [timelineTitle, setTimelineTitle] = useState("");
   const [timelineNotes, setTimelineNotes] = useState("");
@@ -52,12 +52,6 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
   const [followUpDate, setFollowUpDate] = useState("");
   const [followUpNote, setFollowUpNote] = useState("");
   const [followUpError, setFollowUpError] = useState("");
-
-  // S3-011: company research
-  const [researchContext, setResearchContext] = useState("");
-  const [researchResult, setResearchResult] = useState(null);
-  const [researchLoading, setResearchLoading] = useState(false);
-  const [researchError, setResearchError] = useState("");
 
   useEffect(() => {
     setLocalJob(job);
@@ -231,66 +225,52 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
     setSaving(false);
   };
 
-  const handleOpenPicker = async () => {
-    const opening = !showLinkPicker;
-    setShowLinkPicker(opening);
-    if (!opening) return;
-    setPickerLoading(true);
+  // S3-009: open library picker and load unlinked documents
+  const openLibraryPicker = async () => {
+    setShowLibrary(true);
+    setLibraryLoading(true);
+    setDocError("");
     const token = getToken();
-    const res = await listDocuments(token, {});
+    const res = await listDocuments(token);
     if (res.success) {
-      const linkedIds = new Set(docs.map(d => String(d._id)));
-      setPickerDocs((res.data || []).filter(d => !linkedIds.has(String(d._id))));
+      const linkedIds = new Set(docs.map((d) => d._id));
+      setLibraryDocs((res.data || []).filter((d) => !linkedIds.has(d._id) && d.status !== "Archived"));
+    } else {
+      setDocError(res.error?.message || "Failed to load library");
     }
-    setPickerLoading(false);
+    setLibraryLoading(false);
   };
 
+  // S3-009: link selected document to job
   const handleLinkDocument = async (docId) => {
     setSaving(true);
     const token = getToken();
-    const res = await linkDocumentToJob(token, docId, job._id);
+    const res = await linkDocumentToJob(token, docId, localJob._id);
     if (res.success) {
-      setShowLinkPicker(false);
-      setPickerDocs([]);
       await loadDocs();
+      setLibraryDocs((prev) => prev.filter((d) => d._id !== docId));
       setDocSuccess("Document linked.");
       setDocError("");
-      localStorage.setItem("document-generated", Date.now().toString());
     } else {
       setDocError(res.error?.message || "Failed to link document");
     }
     setSaving(false);
   };
 
+  // S3-009: unlink document from job
   const handleUnlinkDocument = async (docId) => {
+    if (!window.confirm("Unlink this document from the job? The document remains in your library.")) return;
     setSaving(true);
     const token = getToken();
-    const res = await unlinkDocumentFromJob(token, docId, job._id);
+    const res = await unlinkDocumentFromJob(token, docId, localJob._id);
     if (res.success) {
-      setDocs(prev => prev.filter(d => d._id !== docId));
+      setDocs((prev) => prev.filter((d) => d._id !== docId));
       setDocSuccess("Document unlinked.");
       setDocError("");
-      localStorage.setItem("document-generated", Date.now().toString());
     } else {
       setDocError(res.error?.message || "Failed to unlink document");
     }
     setSaving(false);
-  };
-
-  const handleDownloadDocument = async (doc) => {
-    setDownloadingDocId(doc._id);
-    setDocError("");
-    const latestVersion = doc.versions?.[doc.versions.length - 1];
-    const token = getToken();
-    const res = await downloadDocx(token, doc._id, latestVersion?._id, {
-      type: doc.type,
-      name: doc.name,
-      versionNumber: latestVersion?.versionNumber,
-    });
-    if (!res.success) {
-      setDocError("Failed to download document");
-    }
-    setDownloadingDocId(null);
   };
 
   const addTimeline = async () => {
@@ -373,19 +353,6 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
       setFollowUpError(res.error?.message || "Failed to add follow-up");
     }
     setSaving(false);
-  };
-
-  const handleCompanyResearch = async () => {
-    setResearchLoading(true);
-    setResearchError("");
-    setResearchResult(null);
-    try {
-      const res = await jobsApi.companyResearch(localJob._id, researchContext);
-      setResearchResult(res.data.research);
-    } catch (err) {
-      setResearchError(err.message || "Failed to generate research");
-    }
-    setResearchLoading(false);
   };
 
   const archiveFromDetail = () => {
@@ -498,18 +465,6 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
           </div>
 
           <section className="jd-section">
-            <h3>Interview Prep Notes</h3>
-            <p className="jd-prep-hint">Track questions to prepare, technical topics, STAR examples, and questions to ask.</p>
-            <textarea
-              className="jd-note-input jd-prep-textarea"
-              rows={8}
-              defaultValue={localJob.prepNotes || ""}
-              placeholder={"## Questions to Prepare\n\n## Technical Topics\n\n## STAR Examples\n\n## Questions to Ask"}
-              onBlur={(e) => handleOutcomePatch({ prepNotes: e.target.value })}
-            />
-          </section>
-
-          <section className="jd-section">
             <div className="jd-section-head">
               <h3>Follow-ups</h3>
               <button className="btn-jd-edit" onClick={() => { setShowFollowUpForm((v) => !v); setFollowUpError(""); }}>
@@ -593,101 +548,57 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
 
           <section className="jd-section">
             <div className="jd-section-head">
-              <h3>Company Research</h3>
-            </div>
-            <p className="jd-research-hint">Add context to get more tailored insights (e.g. "I have 3 years of React experience" or "focusing on culture fit").</p>
-            <textarea
-              className="jd-note-input"
-              rows={3}
-              value={researchContext}
-              onChange={(e) => setResearchContext(e.target.value)}
-              placeholder="Optional: add context about yourself or what you want to know..."
-            />
-            <button className="btn-jd-edit btn-jd-research" onClick={handleCompanyResearch} disabled={researchLoading}>
-              {researchLoading ? "Researching..." : `Research ${localJob.company}`}
-            </button>
-            {researchError && <p className="jd-error">{researchError}</p>}
-            {researchResult && (
-              <div className="jd-research-result">
-                {researchResult.split('\n').map((line, i) => {
-                  if (line.startsWith('## ')) return <h4 key={i} className="jd-research-heading">{line.replace('## ', '')}</h4>;
-                  if (line.startsWith('- ') || line.startsWith('* ')) return <li key={i} className="jd-research-li">{line.replace(/^[-*] /, '')}</li>;
-                  if (line.trim() === '') return <br key={i} />;
-                  return <p key={i} className="jd-research-p">{line}</p>;
-                })}
-              </div>
-            )}
-          </section>
-
-          <section className="jd-section">
-            <div className="jd-section-head">
               <h3>Documents</h3>
-              <div className="jd-doc-section-actions">
+              {/* S3-009: wrap action buttons so "Link from Library" sits beside Refresh */}
+              <div>
+                {/* S3-009: new button — opens library picker */}
+                <button className="btn-jd-edit" onClick={openLibraryPicker} disabled={saving}>Link from Library</button>
                 <button className="btn-jd-edit" onClick={loadDocs} disabled={docsLoading}>Refresh</button>
-                <button className="btn-jd-link-doc" onClick={handleOpenPicker} disabled={saving || pickerLoading}>
-                  {showLinkPicker ? "Cancel" : "Link Existing"}
-                </button>
               </div>
             </div>
-            <div className="jd-doc-generate-row">
-              <button className="btn-jd-edit" onClick={handleGenerateResume} disabled={saving}>Generate AI Resume</button>
-              <button className="btn-jd-edit" onClick={handleGenerateCoverLetter} disabled={saving}>Generate AI Cover Letter</button>
-            </div>
+            <button className="btn-jd-edit" onClick={handleGenerateResume} disabled={saving}>Generate AI Resume</button>
+            <button className="btn-jd-edit" onClick={handleGenerateCoverLetter} disabled={saving}>Generate AI Cover Letter</button>
             {docSuccess && <p className="jd-success">{docSuccess}</p>}
             {docError && <p className="jd-error">{docError}</p>}
 
-            {showLinkPicker && (
-              <div className="jd-link-picker">
-                <p className="jd-link-picker-hint">Select a document from your library to link to this job:</p>
-                {pickerLoading ? (
-                  <p className="jd-empty">Loading library...</p>
-                ) : pickerDocs.length === 0 ? (
-                  <p className="jd-empty">No unlinked documents available.</p>
-                ) : (
-                  <div className="jd-link-picker-list">
-                    {pickerDocs.map(d => (
-                      <button
-                        key={d._id}
-                        className="jd-link-picker-item"
-                        onClick={() => handleLinkDocument(d._id)}
-                        disabled={saving}
-                      >
-                        <span className="jd-link-picker-name">{d.name}</span>
-                        <span className="jd-link-picker-meta">
-                          {d.type} · {d.versions?.length || 0} version{d.versions?.length !== 1 ? "s" : ""}
-                          {d.updatedAt ? ` · ${new Date(d.updatedAt).toLocaleDateString()}` : ""}
-                        </span>
-                      </button>
+            {/* S3-009: library picker panel — shows user's unlinked, non-archived docs */}
+            {showLibrary && (
+              <div className="jd-library-picker">
+                <div className="jd-section-head">
+                  <strong>Your Library</strong>
+                  <button className="btn-jd-delete" onClick={() => setShowLibrary(false)}>Close</button>
+                </div>
+                {libraryLoading ? <p className="jd-empty">Loading...</p> : (
+                  <div className="jd-list">
+                    {libraryDocs.map((doc) => (
+                      <div className="jd-list-item" key={doc._id}>
+                        <div>
+                          <strong>{doc.name}</strong>
+                          <small>{doc.type}{doc.category ? ` · ${doc.category}` : ""} · {doc.status}</small>
+                        </div>
+                        {/* S3-009: link a library document to this job */}
+                        <button className="btn-jd-edit" onClick={() => handleLinkDocument(doc._id)} disabled={saving}>Link</button>
+                      </div>
                     ))}
+                    {libraryDocs.length === 0 && <p className="jd-empty">No available library documents to link.</p>}
                   </div>
                 )}
               </div>
             )}
+            {/* S3-009: end library picker panel */}
 
             {docsLoading ? <p className="jd-empty">Loading documents...</p> : (
               <div className="jd-list">
                 {docs.map((doc) => (
                   <div className="jd-list-item jd-list-item-stack" key={doc._id}>
-                    <div className="jd-doc-info">
+                    <div>
                       <strong>{doc.name}</strong>
-                      <div className="jd-doc-meta-row">
-                        <span className="jd-doc-type-label">{doc.type}</span>
-                        <span>{doc.versions?.length || 0} version{doc.versions?.length !== 1 ? "s" : ""}</span>
-                        {doc.updatedAt && (
-                          <span>Updated {new Date(doc.updatedAt).toLocaleDateString()}</span>
-                        )}
-                      </div>
+                      <small>{doc.type} - {doc.versions?.length || 0} versions</small>
                     </div>
                     <div className="jd-doc-actions">
-                      <button
-                        className="btn-jd-edit"
-                        onClick={() => handleDownloadDocument(doc)}
-                        disabled={downloadingDocId === doc._id}
-                      >
-                        {downloadingDocId === doc._id ? "Downloading..." : "Download"}
-                      </button>
                       <button className="btn-jd-edit" onClick={() => beginEditDoc(doc)}>Edit</button>
-                      <button className="btn-jd-unlink" onClick={() => handleUnlinkDocument(doc._id)} disabled={saving}>Unlink</button>
+                      {/* S3-009: unlink button — removes job association without deleting the document */}
+                      <button className="btn-jd-edit" onClick={() => handleUnlinkDocument(doc._id)} disabled={saving}>Unlink</button>
                       <button className="btn-jd-delete" onClick={() => handleDeleteDocument(doc._id)} disabled={saving}>Delete</button>
                     </div>
                     {editingDocId === doc._id && (
@@ -701,9 +612,7 @@ export default function JobDetail({ job, onClose, onEdit, onDelete, onArchive, o
                     )}
                   </div>
                 ))}
-                {docs.length === 0 && !showLinkPicker && (
-                  <p className="jd-empty">No job-linked documents yet. Generate one above or link from your library.</p>
-                )}
+                {docs.length === 0 && <p className="jd-empty">No job-linked documents yet.</p>}
               </div>
             )}
           </section>
