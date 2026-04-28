@@ -1,3 +1,21 @@
+.document-editor-page {
+  background: white;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px;
+  font-family: Georgia, serif;
+  min-height: 500px;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  outline: none;
+  color: #222;
+}
+
+.document-editor-page:focus {
+  border-color: #009B3A;
+  box-shadow: 0 2px 12px rgba(0,155,58,0.15);
+}
+
 .doc-filters {
   display: flex;
   flex-wrap: wrap;
