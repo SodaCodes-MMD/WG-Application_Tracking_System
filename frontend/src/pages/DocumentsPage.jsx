@@ -2,7 +2,7 @@
  * S3-019: memoized displayedDocuments and availableTags with useMemo to avoid
  * recomputation on unrelated state changes; added role="alert" on error messages.
  */
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { getToken } from "../services/auth-service.js";
 
 import { listDocuments, deleteDocument, getDocument, addDocumentVersion, downloadDocx, aiRewriteDocument, uploadDocument, duplicateDocument, renameDocument, archiveDocument, restoreDocument } from "../services/documents-api.js";
@@ -21,8 +21,8 @@ export default function DocumentsPage() {
   const [viewingContent, setViewingContent] = useState("");
   const [selectedVersion, setSelectedVersion] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState("");
   const [saving, setSaving] = useState(false);
+  const editorRef = useRef(null);
   const [downloadingDocx, setDownloadingDocx] = useState(false);
   const [rewriting, setRewriting] = useState(false);
   const [rewrittenContent, setRewrittenContent] = useState(null);
@@ -102,6 +102,13 @@ export default function DocumentsPage() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.innerHTML = viewingContent || "";
+      if (isEditing) editorRef.current.focus();
+    }
+  }, [isEditing, viewingContent]);
+
   const handleDelete = async (docId) => {
     if (!window.confirm("Delete this document?")) return;
     const token = getToken();
@@ -154,15 +161,15 @@ export default function DocumentsPage() {
   };
 
   const handleEdit = () => {
-    setEditContent(viewingContent);
     setIsEditing(true);
   };
 
   const handleSaveEdit = async () => {
-    if (!selectedDoc || !editContent.trim()) return;
+    const content = editorRef.current?.innerHTML;
+    if (!selectedDoc || !content?.trim()) return;
     setSaving(true);
     const token = getToken();
-    const result = await addDocumentVersion(token, selectedDoc._id, editContent);
+    const result = await addDocumentVersion(token, selectedDoc._id, content);
     if (result.success) {
       setSelectedDoc(result.data);
       const newVersion = result.data.versions[result.data.versions.length - 1];
@@ -223,7 +230,6 @@ export default function DocumentsPage() {
 
   const handleCancelEdit = () => {
     setIsEditing(false);
-    setEditContent("");
   };
 
   const handleDuplicate = async (docId) => {
@@ -254,7 +260,6 @@ export default function DocumentsPage() {
     setSelectedVersion(null);
     setViewingContent("");
     setIsEditing(false);
-    setEditContent("");
     setRewrittenContent(null);
     setRewriteInstruction("");
     setShowRewriteInput(false);
@@ -657,28 +662,12 @@ export default function DocumentsPage() {
               </div>
             ) : (
               <div className="document-view-content">
-                {isEditing ? (
-                  <textarea
-                    className="document-edit-textarea"
-                    value={editContent}
-                    onChange={e => setEditContent(e.target.value)}
-                    placeholder="Edit your document content..."
-                    autoFocus
-                  />
-                ) : isHtmlContent(viewingContent) ? (
-                  <iframe
-                    className="document-html-preview"
-                    srcDoc={viewingContent}
-                    title="Resume Preview"
-                    sandbox="allow-same-origin"
-                  />
-                ) : (
-                  <div className="document-content-display">
-                    {viewingContent.split('\n').map((line, i) => (
-                      <p key={i}>{line || <br />}</p>
-                    ))}
-                  </div>
-                )}
+                <div
+                  ref={editorRef}
+                  className="document-editor-page"
+                  contentEditable={isEditing}
+                  suppressContentEditableWarning={true}
+                />
               </div>
             )}
           </div>
