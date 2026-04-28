@@ -2,18 +2,18 @@ import mongoose from "mongoose";
 import { Migration } from "../models/migration-model.js";
 import * as fs from "fs";
 import * as path from "path";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function loadMigrations() {
-  const migrationsDir = path.join(__dirname, "migrations");
-  const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith(".js"));
+  const migrationsDir = __dirname;
+  const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith(".js") && f !== "runner.js");
 
   const migrations = [];
   for (const file of files) {
-    const migrationModule = await import(path.join(migrationsDir, file));
+    const migrationModule = await import(pathToFileURL(path.join(migrationsDir, file)).href);
     migrations.push({
       file,
       version: migrationModule.version,
