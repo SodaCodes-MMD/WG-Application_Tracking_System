@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
@@ -6,24 +6,27 @@ on:
   pull_request:
     branches: [main, develop]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
+  NODE_VERSION: "20.x"
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  backend:
+  # ============================================================
+  # CI: Backend - Build and Test
+  # ============================================================
+  backend-test:
     name: Backend - Build and Test
     runs-on: ubuntu-latest
 
-    # Optional: Spin up a MongoDB container for integration tests
     services:
       mongodb:
         image: mongo:6.0
         ports:
           - 27017:27017
-
-    strategy:
-      matrix:
-        node-version: [20.x]
 
     defaults:
       run:
@@ -33,26 +36,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
           cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
       - name: Run backend tests
-        run: npm test
+        run: npm test -- --coverage
 
-  frontend:
-    name: Frontend - Build and Test
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: backend/coverage/
+          retention-days: 7
+
+  # ============================================================
+  # CI: Frontend - Lint, Test, Build
+  # ============================================================
+  frontend-test:
+    name: Frontend - Lint, Test, Build
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [20.x]
 
     defaults:
       run:
@@ -62,11 +72,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
@@ -81,61 +91,250 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist/
+          retention-days: 7
+
+  # ============================================================
+  # CI: Aggregate Status
+  # ============================================================
   ci-status:
     name: CI Status Check
     runs-on: ubuntu-latest
-    needs: [backend, frontend]
+    needs: [backend-test, frontend-test]
     if: always()
 
     steps:
       - name: Check CI Status
         run: |
-          if [[ "${{ needs.backend.result }}" == "success" && "${{ needs.frontend.result }}" == "success" ]]; then
+          if [[ "${{ needs.backend-test.result }}" == "success" && "${{ needs.frontend-test.result }}" == "success" ]]; then
             echo "All CI checks passed!"
             exit 0
           else
-            echo "CI checks failed!"
+            echo "CI checks failed! Backend: ${{ needs.backend-test.result }}, Frontend: ${{ needs.frontend-test.result }}"
             exit 1
           fi
 
-  # Deployment jobs are commented out until infrastructure is provisioned
-  # deploy-backend:
-  #   name: Deploy Backend to AWS
-  #   runs-on: ubuntu-latest
-  #   needs: [ci-status]
-  #   if: github.ref == 'refs/heads/main'
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Configure AWS credentials
-  #       uses: aws-actions/configure-aws-credentials@v4
-  #       with:
-  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #         aws-region: us-east-1
-  #     # Add specific AWS deployment steps here (e.g., EB, ECS, App Runner)
+  # ============================================================
+  # DEPLOY: Backend to Render (only on merge to main)
+  # ============================================================
+  deploy-backend:
+    name: Deploy Backend to Render
+    runs-on: ubuntu-latest
+    needs: [ci-status]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
-  # deploy-frontend:
-  #   name: Deploy Frontend to Cloudflare Pages
-  #   runs-on: ubuntu-latest
-  #   needs: [ci-status]
-  #   if: github.ref == 'refs/heads/main'
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Setup Node
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 20.x
-  #     - name: Install dependencies
-  #       run: npm install
-  #       working-directory: frontend
-  #     - name: Build frontend
-  #       run: npm run build
-  #       working-directory: frontend
-  #     - name: Deploy to Cloudflare Pages
-  #       uses: cloudflare/pages-action@v1
-  #       with:
-  #         apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-  #         accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-  #         projectName: ats-frontend
-  #         directory: frontend/dist
-  #         gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Trigger Render Deployment
+        id: deploy
+        run: |
+          echo "Triggering Render deployment..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "Response HTTP Code: $HTTP_CODE"
+          echo "Response Body: $BODY"
+
+          if [[ "$HTTP_CODE" -ge 200 && "$HTTP_CODE" -lt 300 ]]; then
+            echo "Deployment triggered successfully"
+            echo "deploy_id=$(echo "$BODY" | jq -r '.id // "unknown"')" >> $GITHUB_OUTPUT
+          else
+            echo "Failed to trigger deployment"
+            exit 1
+          fi
+
+      - name: Wait for deployment to start
+        run: |
+          echo "Waiting 30 seconds for Render to start the deployment..."
+          sleep 30
+
+  # ============================================================
+  # DEPLOY: Backend Health Check
+  # ============================================================
+  backend-health-check:
+    name: Backend Health Check
+    runs-on: ubuntu-latest
+    needs: [deploy-backend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Wait for deployment to propagate
+        run: |
+          echo "Waiting for Render deployment to complete..."
+          sleep 60
+
+      - name: Backend Health Check
+        run: |
+          echo "Running health checks against backend..."
+          MAX_RETRIES=12
+          RETRY_INTERVAL=15
+          SUCCESS=false
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "Attempt $i/$MAX_RETRIES..."
+
+            RESPONSE=$(curl -s -w "\n%{http_code}" "${{ secrets.BACKEND_URL }}/api/health" 2>&1 || true)
+            HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+            BODY=$(echo "$RESPONSE" | sed '$d')
+
+            echo "HTTP Status: $HTTP_CODE"
+            echo "Response: $BODY"
+
+            if [[ "$HTTP_CODE" == "200" ]]; then
+              STATUS=$(echo "$BODY" | jq -r '.status // "unknown"')
+              if [[ "$STATUS" == "ok" ]]; then
+                echo "Health check passed! Backend is healthy."
+                SUCCESS=true
+                break
+              else
+                echo "Health endpoint returned status: $STATUS"
+              fi
+            else
+              echo "Health check failed with HTTP $HTTP_CODE"
+            fi
+
+            if [[ $i -lt $MAX_RETRIES ]]; then
+              echo "Retrying in ${RETRY_INTERVAL}s..."
+              sleep $RETRY_INTERVAL
+            fi
+          done
+
+          if [[ "$SUCCESS" != "true" ]]; then
+            echo "ERROR: Backend health check failed after $MAX_RETRIES attempts"
+            exit 1
+          fi
+
+  # ============================================================
+  # DEPLOY: Frontend to Vercel (only on merge to main)
+  # ============================================================
+  deploy-frontend:
+    name: Deploy Frontend to Vercel
+    runs-on: ubuntu-latest
+    needs: [ci-status]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel project configuration
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build and deploy to Vercel
+        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+  # ============================================================
+  # DEPLOY: Frontend Health Check
+  # ============================================================
+  frontend-health-check:
+    name: Frontend Health Check
+    runs-on: ubuntu-latest
+    needs: [deploy-frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Wait for Vercel deployment to propagate
+        run: |
+          echo "Waiting for Vercel deployment to propagate..."
+          sleep 30
+
+      - name: Frontend Health Check
+        run: |
+          echo "Running health checks against frontend..."
+          MAX_RETRIES=10
+          RETRY_INTERVAL=15
+          SUCCESS=false
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "Attempt $i/$MAX_RETRIES..."
+
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.FRONTEND_URL }}" 2>&1 || true)
+
+            echo "HTTP Status: $HTTP_CODE"
+
+            if [[ "$HTTP_CODE" == "200" ]]; then
+              echo "Frontend is serving requests successfully"
+              SUCCESS=true
+              break
+            else
+              echo "Frontend returned HTTP $HTTP_CODE"
+            fi
+
+            if [[ $i -lt $MAX_RETRIES ]]; then
+              echo "Retrying in ${RETRY_INTERVAL}s..."
+              sleep $RETRY_INTERVAL
+            fi
+          done
+
+          if [[ "$SUCCESS" != "true" ]]; then
+            echo "ERROR: Frontend health check failed after $MAX_RETRIES attempts"
+            exit 1
+          fi
+
+  # ============================================================
+  # DEPLOY: Aggregate Deployment Status
+  # ============================================================
+  deploy-status:
+    name: Deployment Status
+    runs-on: ubuntu-latest
+    needs: [backend-health-check, frontend-health-check]
+    if: always() && github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Check Deployment Status
+        run: |
+          BACKEND_STATUS="${{ needs.backend-health-check.result }}"
+          FRONTEND_STATUS="${{ needs.frontend-health-check.result }}"
+
+          echo "Backend Deployment: $BACKEND_STATUS"
+          echo "Frontend Deployment: $FRONTEND_STATUS"
+
+          if [[ "$BACKEND_STATUS" == "success" && "$FRONTEND_STATUS" == "success" ]]; then
+            echo "Production deployment completed successfully!"
+            exit 0
+          else
+            echo "Production deployment failed!"
+            echo "Backend: $BACKEND_STATUS"
+            echo "Frontend: $FRONTEND_STATUS"
+            exit 1
+          fi
+
+      - name: Notify on Failure
+        if: failure()
+        run: |
+          echo "::warning::Production deployment failed. Check logs for details."
+          echo "Backend Status: ${{ needs.backend-health-check.result }}"
+          echo "Frontend Status: ${{ needs.frontend-health-check.result }}"
