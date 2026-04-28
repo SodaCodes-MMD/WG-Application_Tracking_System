@@ -3,6 +3,7 @@
  * added aria-label on close button and role="alert"/"status" on error/success messages.
  */
 import { useCallback, useEffect, useMemo, useState, memo } from "react";
+import { useNavigate } from "react-router-dom";
 import { jobsApi, JOB_STATUSES, STATUS_COLORS, OUTCOME_COLORS, JOB_OUTCOMES } from "../services/jobs-api.js";
 import { getToken } from "../services/auth-service.js";
 import { getProfile } from "../services/profile-api.js";
@@ -23,6 +24,7 @@ function toDateInput(d) {
 }
 
 function JobDetail({ job, onClose, onEdit, onDelete, onArchive, onStatusChange, onJobUpdated }) {
+  const navigate = useNavigate();
   const [localJob, setLocalJob] = useState(job);
   const [docs, setDocs] = useState([]);
   const [docsLoading, setDocsLoading] = useState(false);
@@ -195,12 +197,6 @@ function JobDetail({ job, onClose, onEdit, onDelete, onArchive, onStatusChange, 
       setDocError(res.error?.message || "Failed to generate cover letter");
     }
     setSaving(false);
-  };
-
-  const beginEditDoc = (doc) => {
-    const latest = doc.versions?.[doc.versions.length - 1];
-    setEditingDocId(doc._id);
-    setDocDraft(latest?.content || "");
   };
 
   const saveDocVersion = async () => {
@@ -662,11 +658,11 @@ function JobDetail({ job, onClose, onEdit, onDelete, onArchive, onStatusChange, 
                   <div className="jd-list-item jd-list-item-stack" key={doc._id}>
                     <div>
                       <strong>{doc.name}</strong>
-                      <small>{doc.type} - {doc.versions?.length || 0} versions</small>
+                      <p><small>{doc.type} - {doc.versions?.length || 0} versions</small></p>
                     </div>
                     <div className="jd-doc-actions">
-                      <button className="btn-jd-edit" onClick={() => beginEditDoc(doc)}>Edit</button>
-                      {/* S3-009: unlink button — removes job association without deleting the document */}
+                      <button className="btn-jd-edit" onClick={() => navigate("/documents", { state: { openDocId: doc._id, readOnly: true } })}>View</button>
+                      <button className="btn-jd-edit" onClick={() => navigate("/documents", { state: { openDocId: doc._id } })}>Edit</button>
                       <button className="btn-jd-edit" onClick={() => handleUnlinkDocument(doc._id)} disabled={saving}>Unlink</button>
                       <button className="btn-jd-delete" onClick={() => handleDeleteDocument(doc._id)} disabled={saving}>Delete</button>
                     </div>
