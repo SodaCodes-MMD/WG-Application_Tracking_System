@@ -25,7 +25,7 @@ jest.mock("../services/ai-service", () => ({
   rewriteDocumentContent: jest.fn(),
 }));
 
-const aiService = require("../services/ai-service");
+const { generateCoverLetterDraft, generateResumeDraft, rewriteDocumentContent } = require("../services/ai-service");
 
 describe("Document Logic Expanded Tests (SCRUM-192)", () => {
   const userId = "aaaa00000000000000000001";
@@ -830,7 +830,7 @@ describe("Document Logic Expanded Tests (SCRUM-192)", () => {
         ],
       };
       docRepo.findDocumentByIdAndUser.mockResolvedValue(mockDoc);
-      aiService.rewriteDocumentContent.mockResolvedValue(
+      rewriteDocumentContent.mockResolvedValue(
         "<p>Rewritten content</p>"
       );
 
@@ -842,7 +842,7 @@ describe("Document Logic Expanded Tests (SCRUM-192)", () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data.rewritten).toBe("<p>Rewritten content</p>");
-      expect(aiService.rewriteDocumentContent).toHaveBeenCalledWith(
+      expect(rewriteDocumentContent).toHaveBeenCalledWith(
         "<p>Updated content</p>",
         "Resume",
         "Make it more professional"
@@ -861,14 +861,14 @@ describe("Document Logic Expanded Tests (SCRUM-192)", () => {
         ],
       };
       docRepo.findDocumentByIdAndUser.mockResolvedValue(mockDoc);
-      aiService.rewriteDocumentContent.mockResolvedValue("<p>Rewritten</p>");
+      rewriteDocumentContent.mockResolvedValue("<p>Rewritten</p>");
 
       await request(app)
         .post(`/api/documents/${docId}/ai-rewrite`)
         .set("Authorization", `Bearer ${token}`)
         .send({ instruction: "Improve" });
 
-      expect(aiService.rewriteDocumentContent).toHaveBeenCalledWith(
+      expect(rewriteDocumentContent).toHaveBeenCalledWith(
         "<p>Latest content</p>",
         "Resume",
         "Improve"
@@ -1301,7 +1301,7 @@ describe("Document Logic Expanded Tests (SCRUM-192)", () => {
 
       jobRepo.findJobByIdAndUser.mockResolvedValue(mockJob);
       profileRepo.findProfileByUserId.mockResolvedValue(mockProfile);
-      aiService.generateCoverLetterDraft.mockResolvedValue("Generated content");
+      generateCoverLetterDraft.mockResolvedValue("Generated content");
       docRepo.createDocument.mockResolvedValue(mockDoc);
 
       const res = await request(app)
@@ -1385,7 +1385,7 @@ describe("Document Logic Expanded Tests (SCRUM-192)", () => {
 
       jobRepo.findJobByIdAndUser.mockResolvedValue(mockJob);
       profileRepo.findProfileByUserId.mockResolvedValue(mockProfile);
-      aiService.generateResumeDraft.mockResolvedValue("Generated content");
+      generateResumeDraft.mockResolvedValue("Generated content");
       docRepo.createDocument.mockResolvedValue(mockDoc);
 
       const res = await request(app)
