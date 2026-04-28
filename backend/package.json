@@ -6,7 +6,10 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "jest --config jest.config.cjs"
+    "test": "jest --config jest.config.cjs",
+    "db:migrate": "node src/db/migrate.js",
+    "db:rollback": "node src/db/rollback.js",
+    "db:rollback:to": "node src/db/rollback.js"
   },
   "keywords": [],
   "author": "",
