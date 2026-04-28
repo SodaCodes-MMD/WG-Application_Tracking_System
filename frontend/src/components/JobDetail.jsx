@@ -56,6 +56,9 @@ function JobDetail({ job, onClose, onEdit, onDelete, onArchive, onStatusChange, 
   const [inlineDraft, setInlineDraft] = useState("");
   const [inlineSaving, setInlineSaving] = useState(false);
 
+  // S3-013: interview prep notes collapsible
+  const [showPrepNotes, setShowPrepNotes] = useState(false);
+
   // S2-012: follow-up tracking
   const [showFollowUpForm, setShowFollowUpForm] = useState(false);
   const [followUpDate, setFollowUpDate] = useState("");
@@ -592,6 +595,24 @@ function JobDetail({ job, onClose, onEdit, onDelete, onArchive, onStatusChange, 
               ))}
               {(localJob.interviews || []).length === 0 && <p className="jd-empty">No interviews logged.</p>}
             </div>
+          </section>
+
+          <section className="jd-section">
+            <div className="jd-section-head">
+              <h3>Interview Prep Notes</h3>
+              <button className="btn-jd-edit" onClick={() => setShowPrepNotes(v => !v)}>
+                {showPrepNotes ? "Hide" : "Show"}
+              </button>
+            </div>
+            {showPrepNotes && (
+              <textarea
+                className="jd-note-input jd-prep-textarea"
+                rows={8}
+                defaultValue={localJob.prepNotes || ""}
+                placeholder="Add preparation notes, questions to ask, talking points..."
+                onBlur={(e) => handleOutcomePatch({ prepNotes: e.target.value })}
+              />
+            )}
           </section>
 
           <section className="jd-section">
