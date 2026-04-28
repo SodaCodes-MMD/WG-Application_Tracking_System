@@ -5,6 +5,7 @@ services:
     rootDir: backend
     buildCommand: npm install
     startCommand: npm start
+    preDeployCommand: npm run db:migrate
     envVars:
       - key: NODE_ENV
         value: production
@@ -16,3 +17,9 @@ services:
         sync: false
       - key: ALLOWED_ORIGIN
         sync: false
+      - key: RUN_MIGRATIONS_ON_START
+        value: "true"
+      - key: MONGO_MAX_POOL_SIZE
+        value: "10"
+      - key: MONGO_MIN_POOL_SIZE
+        value: "5"
