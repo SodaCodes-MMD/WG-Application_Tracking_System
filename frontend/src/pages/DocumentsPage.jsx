@@ -3,6 +3,7 @@
  * recomputation on unrelated state changes; added role="alert" on error messages.
  */
 import { useState, useEffect, useMemo, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { getToken } from "../services/auth-service.js";
 
 import { listDocuments, deleteDocument, getDocument, addDocumentVersion, downloadDocx, aiRewriteDocument, uploadDocument, duplicateDocument, renameDocument, archiveDocument, restoreDocument } from "../services/documents-api.js";
@@ -48,6 +49,12 @@ export default function DocumentsPage() {
   const [duplicating, setDuplicating] = useState(null);
   const [showArchivedDocs, setShowArchivedDocs] = useState(false);
 
+  const location = useLocation();
+  const pendingAutoOpen = useRef(
+    location.state?.openDocId
+      ? { docId: location.state.openDocId, readOnly: !!location.state?.readOnly }
+      : null
+  );
 
   const availableTags = useMemo(
     () => [...new Set(documents.flatMap(d => d.tags || []))],
@@ -59,6 +66,18 @@ export default function DocumentsPage() {
   const displayedDocuments = useMemo(() => activeDocs, [activeDocs]);
 
   const refreshDocuments = () => setRefreshTrigger(prev => prev + 1);
+
+  const handleView = async (doc) => {
+    setSelectedDoc(doc);
+    const token = getToken();
+    const result = await getDocument(token, doc._id);
+    if (result.success && result.data.versions?.length > 0) {
+      const latestVersion = result.data.versions[result.data.versions.length - 1];
+      setSelectedVersion(latestVersion);
+      setViewingContent(latestVersion.content);
+      setIsEditing(false);
+    }
+  };
 
   useEffect(() => {
     const loadDocuments = async () => {
@@ -80,6 +99,18 @@ export default function DocumentsPage() {
       const result = await listDocuments(token, filters);
       if (result.success) {
         setDocuments(result.data);
+        const pending = pendingAutoOpen.current;
+        if (pending) {
+          pendingAutoOpen.current = null;
+          const docToOpen = result.data.find(d => d._id === pending.docId);
+          if (docToOpen) {
+            await handleView(docToOpen);
+            if (!pending.readOnly) {
+              setIsEditing(true);
+            }
+          }
+          window.history.replaceState({}, document.title);
+        }
       } else {
         setError(result.error?.message || "Failed to load documents");
       }
@@ -141,18 +172,6 @@ export default function DocumentsPage() {
   };
 
   const hasActiveFilters = filterType !== ALL || filterStatus !== ALL || filterTag;
-
-  const handleView = async (doc) => {
-    setSelectedDoc(doc);
-    const token = getToken();
-    const result = await getDocument(token, doc._id);
-    if (result.success && result.data.versions?.length > 0) {
-      const latestVersion = result.data.versions[result.data.versions.length - 1];
-      setSelectedVersion(latestVersion);
-      setViewingContent(latestVersion.content);
-      setIsEditing(false);
-    }
-  };
 
   const handleVersionChange = (version) => {
     setSelectedVersion(version);
