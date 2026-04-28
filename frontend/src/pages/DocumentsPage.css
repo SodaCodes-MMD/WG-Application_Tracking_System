@@ -94,7 +94,7 @@
 .doc-archived-toggle { width: 100%; padding: 10px 16px; font-size: 0.85rem; font-weight: 600; text-align: left; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); cursor: pointer; transition: background 0.15s; }
 .doc-archived-toggle:hover { background: var(--bg-secondary); }
 .document-card-archived { opacity: 0.75; }
-.btn-archive-document { padding: 5px 10px; font-size: 0.78rem; font-weight: 500; border: 1px solid var(--border-color); border-radius: 5px; background: transparent; color: var(--text-secondary); cursor: pointer; transition: background 0.15s; }
+.btn-archive-document { padding: 5px 10px; font-size: 0.78rem; font-weight: 500; border: 1px solid var(--border-color); border-radius: 5px; background: transparent; color: var(--text-secondary); cursor: pointer; transition: background 0.15s; min-width: 68px; }
 .btn-archive-document:hover { background: var(--bg-secondary); color: var(--text-primary); }
 .btn-restore-document { padding: 5px 10px; font-size: 0.78rem; font-weight: 500; border: 1px solid #f0c800; border-radius: 5px; background: transparent; color: #f0c800; cursor: pointer; transition: background 0.15s; }
 .btn-restore-document:hover { background: rgba(240,200,0,0.1); }

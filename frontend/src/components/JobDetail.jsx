@@ -584,6 +584,7 @@ function JobDetail({ job, onClose, onEdit, onDelete, onArchive, onStatusChange, 
                   <div>
                     <strong>{iv.roundType}</strong>
                     <p>{iv.interviewer || ""}</p>
+                    {iv.notes && <p className="jd-interview-notes">{iv.notes}</p>}
                     <small>{iv.date ? new Date(iv.date).toLocaleDateString() : "No date"}</small>
                   </div>
                   <button className="btn-jd-delete" onClick={() => deleteInterview(iv._id)} disabled={saving}>Delete</button>
